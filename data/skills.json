@@ -1,0 +1,25 @@
+{
+  "_note": "COMPÉTENCES COMMUNES : disponibles pour TOUTES les classes, sans avoir à les apprendre. Celle qui porte \"slot\": \"basic\" est le CORPS À CORPS BASIQUE de tout le monde (son propre emplacement dans la barre de combat, à côté du sort de classe et du deck). Les autres communes (ex. Garde) ne sont pas affichées en combat tant qu'elles n'ont pas de slot. (Les compétences de classe sont dans classes.json, celles des monstres dans monsters.json.) Voir LISEZMOI.md pour le format complet.",
+  "common": [
+    {
+      "id": "attaque_arme",
+      "name": "Attaque à l'arme",
+      "slot": "basic",
+      "type": "active",
+      "pa": 3,
+      "target": "enemy",
+      "range": "melee",
+      "desc": "Un coup d'arme sans prétention : peu puissant, mais toutes les classes savent le donner.",
+      "effects": [ { "type": "damage", "power": 0.6 } ]
+    },
+    {
+      "id": "garde",
+      "name": "Garde",
+      "type": "active",
+      "pa": 2,
+      "target": "self",
+      "desc": "Réduit de moitié les dégâts reçus jusqu'au début de votre prochain tour.",
+      "effects": [ { "type": "guard", "reduction": 0.5 } ]
+    }
+  ]
+}

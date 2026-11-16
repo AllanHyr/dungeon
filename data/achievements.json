@@ -1,0 +1,47 @@
+{
+  "_note": "SUCCÈS (par personnage). Un succès a une CONDITION (ce qu'il faut accomplir) et des RÉCOMPENSES : une compétence rendue accessible à CE personnage, une fonction du jeu (ex. le farm automatique), ou un titre. Il peut être réservé à certaines classes avec \"classes\": [...]. Voir docs/FARM-ET-SUCCES.md pour tous les types de conditions et de récompenses.",
+
+  "achievements": [
+    {
+      "id": "premier_sang",
+      "name": "Premier sang",
+      "icon": "skull",
+      "desc": "Franchir la 3e vague d'une session de farm.",
+      "condition": { "type": "farmBestWave", "atLeast": 3 },
+      "rewards": [ { "type": "title", "text": "Chasseur de rats" } ]
+    },
+    {
+      "id": "habitue_des_terriers",
+      "name": "Habitué des Terriers",
+      "icon": "beast",
+      "desc": "Vaincre 30 vagues de farm au total.",
+      "condition": { "type": "farmWaves", "atLeast": 30 },
+      "rewards": [ { "type": "title", "text": "Habitué des Terriers" } ]
+    },
+    {
+      "id": "aventurier",
+      "name": "Aventurier",
+      "icon": "star",
+      "desc": "Atteindre le niveau 4.",
+      "condition": { "type": "reachLevel", "atLeast": 4 },
+      "rewards": [ { "type": "title", "text": "Aventurier" } ]
+    },
+    {
+      "id": "main_tendue",
+      "name": "Main tendue",
+      "icon": "cross",
+      "classes": ["veilleur"],
+      "desc": "Terminer le donjon de la tranche 1 en groupe (au moins 2 personnages).",
+      "condition": { "type": "dungeonCleared", "tranche": 1, "minPartySize": 2 },
+      "rewards": [ { "type": "skill", "skillId": "veilleur_hate" } ]
+    },
+    {
+      "id": "equipe_pour_la_gloire",
+      "name": "Équipé pour la gloire",
+      "icon": "armor",
+      "desc": "Atteindre un niveau d'équipement de 36 (la somme des niveaux des objets portés : neuf objets de la tranche 4, par exemple).",
+      "condition": { "type": "gearLevel", "atLeast": 36 },
+      "rewards": [ { "type": "feature", "feature": "autoFarm" } ]
+    }
+  ]
+}

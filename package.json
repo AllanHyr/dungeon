@@ -1,0 +1,18 @@
+{
+  "name": "donjon",
+  "version": "2.2.0-etape6",
+  "description": "Jeu de donjon coopératif au tour par tour : combat à points d'action, farm solo, serveur en ligne avec comptes et salons, animations, sons et illustrations (étape 6)",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node serve.mjs",
+    "serve": "node server/server.mjs",
+    "admin": "node server/admin.mjs",
+    "test": "node tests/run-tests.mjs && node tests/fuzz.mjs 500 && node tests/server-api.mjs && node tests/server-rooms.mjs",
+    "test:server": "node tests/server-api.mjs && node tests/server-rooms.mjs",
+    "simulate": "node tests/simulate.mjs 100",
+    "fuzz": "node tests/fuzz.mjs 1000",
+    "test:rooms": "node tests/server-rooms.mjs"
+  },
+  "license": "UNLICENSED"
+}

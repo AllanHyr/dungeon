@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Galerie des illustrations</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  body { padding: 20px; }
+  h1 { font-family: var(--serif); color: var(--brass-4); margin: 0 0 4px; }
+  h2 { font-family: var(--serif); color: var(--brass-3); letter-spacing: .08em; margin: 26px 0 10px; font-size: 1.05rem; text-transform: uppercase; }
+  .row { display: flex; flex-wrap: wrap; gap: 22px 30px; align-items: flex-end; }
+  .item { display: grid; justify-items: center; gap: 6px; }
+  .item small { color: var(--muted); font-size: .78rem; max-width: 150px; text-align: center; }
+  .sizes { display: flex; gap: 12px; align-items: flex-end; }
+  .big svg, .art-svg { display: block; width: 100%; height: 100%; }
+  .badge { width: 96px; height: 96px; }
+  .pm { width: 160px; height: 160px; } .pl { width: 260px; height: 260px; } .ps { width: 56px; height: 56px; }
+  .scene { width: 520px; height: 300px; border: 1px solid var(--line-2); border-radius: 12px; background-size: cover; background-position: center; }
+  .vig { width: 300px; height: 150px; border: 1px solid var(--line-2); border-radius: 10px; overflow: hidden; }
+  .vig svg { width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+<h1>Galerie des illustrations</h1>
+<p class="muted">Tous les dessins du jeu, à plusieurs tailles. <code>?only=berserker</code> n'en montre qu'un, en grand.</p>
+<div id="out"></div>
+<script type="module">
+  import * as art from '../src/ui/art.js';
+  const params = new URLSearchParams(location.search);
+  const only = params.get('only');
+  const out = document.getElementById('out');
+  const el = (html) => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstElementChild; };
+  const medal = (svg, cls, size, extra = '') => `<div class="portrait has-art ${cls} ${extra}" style="width:${size}px;height:${size}px"><span class="art">${svg}</span></div>`;
+  function section(title, items) {
+    const h = el(`<h2>${title}</h2>`); out.append(h);
+    const row = el('<div class="row"></div>');
+    for (const it of items) {
+      const box = el(`<div class="item"><div class="sizes">${medal(it.svg, it.cls, 56)}${medal(it.svg, it.cls, 96)}${medal(it.svg, it.cls, only ? 360 : 168)}</div><small>${it.label}</small></div>`);
+      row.append(box);
+    }
+    out.append(row);
+  }
+  const heroes = art.heroIds().filter((id) => !only || id === only).map((id) => ({ svg: art.heroSvg(id), cls: 'role-tank', label: id }));
+  if (heroes.length) section('Héros', heroes);
+  const monsters = art.monsterIds().filter((id) => !only || id === only).map((id) => ({ svg: art.monsterSvg(id), cls: 'is-monster' + (/roi|seigneur|gardien/.test(id) ? ' is-boss' : ''), label: id }));
+  if (monsters.length) section('Monstres', monsters);
+  if (!only || only === 'scenes') {
+    out.append(el('<h2>Décors</h2>'));
+    const row = el('<div class="row"></div>');
+    for (const id of art.sceneIds()) { const item = el(`<div class="item"><div class="scene"></div><small>${id}</small></div>`); item.firstElementChild.style.backgroundImage = art.sceneCss(id); row.append(item); }
+    out.append(row);
+    out.append(el('<h2>Vignettes des cases</h2>'));
+    const row2 = el('<div class="row"></div>');
+    for (const id of art.vignetteIds()) row2.append(el(`<div class="item"><div class="vig">${art.vignetteSvg(id)}</div><small>${id}</small></div>`));
+    out.append(row2);
+  }
+</script>
+</body>
+</html>

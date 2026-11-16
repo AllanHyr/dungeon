@@ -1,0 +1,83 @@
+{
+  "_note": "TRANCHES DE NIVEAU. Une tranche est une PLAGE DE NIVEAUX (1 à 3, 4 à 7, 8 à 11...) avec ses réglages communs : longueur du plateau, types de cases, or, pièges, butin. Ses DONJONS (monstres, boss, mécaniques, table de butin) sont dans dungeons.json ; 'name' et 'description' ne servent plus que de libellé à la tranche. Pour ouvrir une tranche : mettre 'available': true, lui écrire au moins un donjon (dungeons.json) et quelques objets de ce niveau (items.json). Compatibilité : une tranche sans donjon mais avec monsterPool / bossId reçoit un donjon du même nom. Valeurs PROVISOIRES.",
+  "tranches": [
+    {
+      "id": 1,
+      "name": "Les Caves Humides",
+      "description": "Un réseau de caves infestées de rats et de gelées. Parfait pour les débutants.",
+      "available": true,
+      "minLevel": 1,
+      "maxLevel": 3,
+      "boardLength": 13,
+      "tileWeights": { "combat": 36, "treasure": 18, "trap": 12, "xp_fountain": 8, "life_fountain": 3, "low_blow": 11, "merchant": 7 },
+      "goldPerMonster": [2, 5],
+      "treasureGold": [4, 9],
+      "lootChance": 0.3,
+      "bossDrops": 2,
+      "trapDc": 9,
+      "trapDamagePct": 0.2,
+      "fountainXp": 30,
+      "rollValue": 4
+    },
+    {
+      "id": 4,
+      "name": "La Crypte Oubliée",
+      "description": "Des morts qui ne veulent pas rester couchés. Le froid mord, les pièges aussi.",
+      "available": true,
+      "minLevel": 4,
+      "maxLevel": 7,
+      "boardLength": 14,
+      "tileWeights": { "combat": 36, "treasure": 17, "trap": 13, "xp_fountain": 8, "life_fountain": 3, "low_blow": 11, "merchant": 7 },
+      "goldPerMonster": [5, 11],
+      "treasureGold": [10, 20],
+      "lootChance": 0.3,
+      "bossDrops": 2,
+      "trapDc": 11,
+      "trapDamagePct": 0.22,
+      "fountainXp": 80,
+      "rollValue": 12
+    },
+    {
+      "id": 8,
+      "name": "Les Profondeurs Déchues",
+      "description": "Là où même les aventuriers aguerris tremblent. Ici, l'erreur se paie cash.",
+      "available": true,
+      "minLevel": 8,
+      "maxLevel": 11,
+      "boardLength": 15,
+      "tileWeights": { "combat": 38, "treasure": 16, "trap": 13, "xp_fountain": 7, "life_fountain": 3, "low_blow": 11, "merchant": 7 },
+      "goldPerMonster": [10, 22],
+      "treasureGold": [20, 40],
+      "lootChance": 0.3,
+      "bossDrops": 2,
+      "trapDc": 13,
+      "trapDamagePct": 0.25,
+      "fountainXp": 160,
+      "rollValue": 28
+    },
+    {
+      "id": 12,
+      "name": "Tranche 12",
+      "description": "Contenu à venir.",
+      "available": false,
+      "minLevel": 12,
+      "maxLevel": 15
+    },
+    {
+      "id": 16,
+      "name": "Tranche 16",
+      "description": "Contenu à venir.",
+      "available": false,
+      "minLevel": 16,
+      "maxLevel": 19
+    },
+    {
+      "id": 20,
+      "name": "Tranche 20",
+      "description": "Contenu à venir.",
+      "available": false,
+      "minLevel": 20,
+      "maxLevel": 20
+    }
+  ]
+}

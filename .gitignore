@@ -1,0 +1,7 @@
+# Base de données et sauvegardes du serveur (créées au premier lancement)
+var/
+node_modules/
+# Captures des tests d'interface
+/tmp/
+*.log
+.DS_Store

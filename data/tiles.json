@@ -1,0 +1,77 @@
+{
+  "_note": "TYPES DE CASES : nom affiché, icône, textes d'ambiance. 'max' = nombre maximum par donjon, 'minPlayers' = nombre de joueurs minimum pour que la case puisse apparaître.",
+  "tiles": {
+    "combat": {
+      "name": "Embuscade",
+      "icon": "combat",
+      "flavor": [
+        "Des bruits de pas résonnent dans l'obscurité...",
+        "Quelque chose bouge juste devant vous.",
+        "Une odeur de charogne vous prend à la gorge.",
+        "Des yeux brillent dans le noir."
+      ]
+    },
+    "treasure": {
+      "name": "Trésor",
+      "icon": "treasure",
+      "flavor": [
+        "Un coffre poussiéreux repose dans un recoin.",
+        "Un squelette serre encore une sacoche contre lui.",
+        "Un éclat doré attire votre regard."
+      ]
+    },
+    "trap": {
+      "name": "Piège",
+      "icon": "trap",
+      "flavor": [
+        "Une dalle bouge sous votre pied...",
+        "Vous entendez un déclic métallique.",
+        "Le couloir semble un peu trop tranquille."
+      ]
+    },
+    "xp_fountain": {
+      "name": "Fontaine d'expérience",
+      "icon": "fountain_xp",
+      "max": 2,
+      "flavor": [
+        "Une fontaine lumineuse murmure des secrets anciens.",
+        "Une eau d'un bleu irréel coule d'une gargouille."
+      ]
+    },
+    "life_fountain": {
+      "name": "Fontaine de vie",
+      "icon": "fountain_life",
+      "max": 1,
+      "flavor": [
+        "Une source rouge et chaude jaillit de la pierre. Elle semble battre comme un cœur.",
+        "Une fontaine sacrée, protégée des ténèbres par un cercle de lumière."
+      ]
+    },
+    "low_blow": {
+      "name": "Coup bas",
+      "icon": "low_blow",
+      "minPlayers": 2,
+      "flavor": [
+        "Un compagnon trébuche... C'est le moment idéal pour une petite traîtrise.",
+        "Personne ne regarde. Une occasion en or de faire un mauvais coup.",
+        "L'ombre vous murmure à l'oreille : « Et si... ? »"
+      ]
+    },
+    "merchant": {
+      "name": "Marchand",
+      "icon": "merchant",
+      "max": 2,
+      "flavor": [
+        "Un marchand voûté vous fait signe depuis son étal de fortune.",
+        "Une lanterne se balance : un colporteur a installé son stand ici."
+      ]
+    },
+    "boss": {
+      "name": "Boss",
+      "icon": "boss",
+      "flavor": [
+        "Le sol tremble. Quelque chose d'immense vous attend au fond de la salle."
+      ]
+    }
+  }
+}

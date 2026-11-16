@@ -1,0 +1,184 @@
+{
+  "_note": "DONJONS À THÈME. Chaque tranche de niveaux (tranches.json) contient un ou plusieurs donjons. Un donjon a ses monstres ('monsterPool'), son boss ('bossId') et, s'il le faut, une escorte de boss ('bossEscort' : autant de gardes que le groupe le permet, aucun en solo). 'mechanics' = ce qu'il faut savoir avant d'entrer (affiché à l'accueil et dans l'encyclopédie) ; les mécaniques elles-mêmes vivent dans les 'passives' des monstres (monsters.json). 'loot' = la TABLE DE BUTIN du donjon : ces objets ne tombent QUE là (plus souvent que le butin ordinaire, et le boss en donne toujours un). 'setName' + 'setBonus' = la PANOPLIE du donjon : porter 2, 3... objets de sa table donne un bonus ('pieces', 'desc', 'modifiers'). 'complexity' : simple ou mecaniques. 'scene' = le décor. Un donjon peut aussi surcharger un réglage de sa tranche (boardLength, tileWeights, lootChance...). 'enrageAfterRound' / 'enragePerRound' : à partir de quel round, et de combien, les monstres frappent plus fort (sinon les valeurs de rules.json). 'minMonsters' : au moins tant de monstres par combat, même en solo (pour qu'une mécanique de groupe existe toujours). 'available': false = un aperçu « à venir ». Pour ajouter un donjon : copier un bloc. Aucun code à toucher. Valeurs PROVISOIRES.",
+
+  "dungeons": [
+    {
+      "id": "caves_humides",
+      "tranche": 1,
+      "name": "Les Caves Humides",
+      "theme": "Rats et vermine",
+      "complexity": "simple",
+      "scene": "caves",
+      "description": "Un réseau de caves infestées de rats et de gelées. Parfait pour les débutants.",
+      "monsterPool": ["rat_geant", "squelette_rouille", "gobelin_pillard", "gelee_verte", "chauve_souris_vampire"],
+      "bossId": "roi_des_rats",
+      "mechanics": [
+        { "name": "Rien de sournois", "desc": "Des monstres simples, pour apprendre les rangs, les points d'action et les dés." },
+        { "name": "Appel de la meute", "desc": "Le Roi des Rats appelle des rats en renfort (deux au plus à la fois). Ils ne rapportent rien : c'est le roi qu'il faut abattre." }
+      ],
+      "loot": ["cape_en_peau_de_rat", "dague_os", "croc_roi_rat", "faux_du_roi_rat"],
+      "setName": "Panoplie du Roi-Rat",
+      "setBonus": [
+        { "pieces": 2, "desc": "+2 d'initiative et +1 de chance.", "modifiers": [ { "stat": "ini", "flat": 2 }, { "stat": "luck", "flat": 1 } ] }
+      ]
+    },
+    {
+      "id": "crypte_oubliee",
+      "tranche": 4,
+      "name": "La Crypte Oubliée",
+      "theme": "Morts-vivants",
+      "complexity": "simple",
+      "scene": "crypt",
+      "description": "Des morts qui ne veulent pas rester couchés. Le froid mord, les pièges aussi.",
+      "monsterPool": ["goule", "garde_squelette", "cultiste_maudit", "ame_en_peine", "golem_de_boue"],
+      "bossId": "seigneur_des_ossements",
+      "mechanics": [
+        { "name": "Tireurs au fond", "desc": "Les cultistes et les âmes en peine frappent du rang arrière : le corps à corps ne les atteint qu'une fois le rang avant tombé." }
+      ],
+      "loot": ["talisman_os", "faux_d_os", "lame_cryptique", "rapiere_des_ossements", "fauchard_ossements", "coeur_crypte"],
+      "setName": "Panoplie des Ossements",
+      "setBonus": [
+        { "pieces": 2, "desc": "+6 PV.", "modifiers": [ { "stat": "hp", "flat": 6 } ] },
+        { "pieces": 3, "desc": "+8 % de dégâts.", "modifiers": [ { "stat": "damage", "pct": 0.08 } ] }
+      ]
+    },
+    {
+      "id": "repaire_coupe_jarrets",
+      "tranche": 4,
+      "name": "Le Repaire des Coupe-Jarrets",
+      "theme": "Bandits",
+      "complexity": "simple",
+      "scene": "caves",
+      "description": "Une bande de détrousseurs a pris ses quartiers dans d'anciennes galeries. Ils frappent vite, fort, et de préférence dans le dos.",
+      "monsterPool": ["coupe_jarret", "brute_du_repaire", "arbaletrier_borgne", "empoisonneuse"],
+      "bossId": "capitaine_balafre",
+      "bossEscort": ["arbaletrier_borgne"],
+      "mechanics": [
+        { "name": "Embuscade", "desc": "Les bandits infligent 25 % de dégâts en plus pendant le premier round : garde, bouclier ou provocation dès le début." },
+        { "name": "Renforts", "desc": "La Balafre siffle un coupe-jarret à la rescousse (un seul à la fois)." },
+        { "name": "Lames sales", "desc": "Saignements et poisons : un soigneur qui purifie est un vrai plus." }
+      ],
+      "loot": ["bandeau_du_borgne", "surin_du_coupe_jarret", "bottes_de_monte_en_l_air", "sabre_de_la_balafre"],
+      "setName": "Panoplie du Coupe-Jarret",
+      "setBonus": [
+        { "pieces": 2, "desc": "+2 d'initiative.", "modifiers": [ { "stat": "ini", "flat": 2 } ] },
+        { "pieces": 3, "desc": "Critique 1 point plus tôt.", "modifiers": [ { "stat": "critShift", "flat": -1 } ] }
+      ]
+    },
+    {
+      "id": "soues_de_grouinval",
+      "tranche": 4,
+      "name": "Les Soues de Grouinval",
+      "theme": "Cochons et sangliers",
+      "complexity": "simple",
+      "scene": "terriers",
+      "description": "La ferme a été abandonnée, pas les cochons. Ils ont grossi, se sont multipliés, et n'aiment pas les visiteurs.",
+      "monsterPool": ["porcelet_teigneux", "sanglier_des_fourres", "truie_colossale", "goret_boueux"],
+      "bossId": "grand_verrat",
+      "mechanics": [
+        { "name": "Charge", "desc": "Les sangliers annoncent leur Charge un round à l'avance : c'est le moment de se mettre en garde ou d'étourdir." },
+        { "name": "Fureur porcine", "desc": "Blessé, le Grand Verrat frappe 40 % plus fort : gardez de quoi finir le combat." }
+      ],
+      "loot": ["groin_porte_bonheur", "tablier_de_charcutier", "defense_de_sanglier", "couenne_du_grand_verrat"],
+      "setName": "Panoplie de Grouinval",
+      "setBonus": [
+        { "pieces": 2, "desc": "+8 PV.", "modifiers": [ { "stat": "hp", "flat": 8 } ] },
+        { "pieces": 3, "desc": "Subit 6 % de dégâts en moins.", "modifiers": [ { "stat": "taken", "pct": -0.06 } ] }
+      ]
+    },
+    {
+      "id": "profondeurs_dechues",
+      "tranche": 8,
+      "name": "Les Profondeurs Déchues",
+      "theme": "Chevaliers déchus et spectres",
+      "complexity": "mecaniques",
+      "scene": "depths",
+      "description": "Là où même les aventuriers aguerris tremblent. Ici, l'erreur se paie cash.",
+      "monsterPool": ["chevalier_dechu", "sorciere_des_marais", "spectre_affame", "horreur_rampante"],
+      "bossId": "gardien_dechu",
+      "mechanics": [
+        { "name": "Riposte", "desc": "Chaque coup porté à un chevalier déchu (ou au Gardien) vous en vaut un en retour. Les saignements et les poisons ne déclenchent rien." },
+        { "name": "Incorporel", "desc": "Les spectres subissent 30 % de dégâts en moins des coups directs, mais pas des saignements ni des poisons." }
+      ],
+      "loot": ["sceau_abysse", "cape_de_brume", "epee_sanglante", "couronne_dechue", "lame_du_gardien"],
+      "setName": "Panoplie des Déchus",
+      "setBonus": [
+        { "pieces": 2, "desc": "+1,5 d'attaque et +1 de défense.", "modifiers": [ { "stat": "atk", "flat": 1.5 }, { "stat": "def", "flat": 1 } ] },
+        { "pieces": 3, "desc": "+10 % de dégâts.", "modifiers": [ { "stat": "damage", "pct": 0.1 } ] }
+      ]
+    },
+    {
+      "id": "sanctuaire_sans_repos",
+      "tranche": 8,
+      "name": "Le Sanctuaire des Sans-Repos",
+      "theme": "Cultistes réanimateurs",
+      "complexity": "mecaniques",
+      "scene": "crypt",
+      "description": "Une secte y relève ses morts, encore et encore. Tant que les acolytes chantent, personne ne reste couché.",
+      "monsterPool": ["zelote_fanatique", "acolyte_reanimateur", "squelette_releve", "pretresse_des_cendres"],
+      "bossId": "hierophante",
+      "bossEscort": ["squelette_releve", "acolyte_reanimateur", "squelette_releve"],
+      "minMonsters": 2,
+      "mechanics": [
+        { "name": "Réanimation", "desc": "Les acolytes (et le Hiérophante) relèvent un monstre tombé avec 60 % de ses PV. Ils l'annoncent un round avant : tuez-les ou étourdissez-les d'abord. Chaque monstre ne se relève qu'une fois." },
+        { "name": "Magie noire", "desc": "Les Traits d'ombre des cultistes ignorent la défense : une grosse armure n'y change rien, seuls les boucliers et les soins comptent." },
+        { "name": "Sans repos", "desc": "Un squelette relevé se redresse tout seul la première fois qu'un coup l'abat. Un saignement ou un poison l'achève pour de bon." },
+        { "name": "Voile d'ossements", "desc": "Le Hiérophante subit 40 % de dégâts en moins tant qu'un de ses serviteurs est debout." }
+      ],
+      "loot": ["capuche_d_acolyte", "sceptre_d_os", "masque_du_hierophante", "calice_des_sans_repos"],
+      "setName": "Panoplie des Sans-Repos",
+      "setBonus": [
+        { "pieces": 2, "desc": "+3 de soin.", "modifiers": [ { "stat": "heal", "flat": 3 } ] },
+        { "pieces": 3, "desc": "Soins et boucliers 12 % plus forts.", "modifiers": [ { "stat": "healPower", "pct": 0.12 } ] }
+      ]
+    },
+    {
+      "id": "gouffre_aux_ogres",
+      "tranche": 8,
+      "name": "Le Gouffre aux Ogres",
+      "theme": "Ogres",
+      "complexity": "mecaniques",
+      "scene": "depths",
+      "description": "Ils sont gros, ils ont faim, et leurs blessures se referment à vue d'œil.",
+      "monsterPool": ["ogre_des_cryptes", "ogre_brise_os", "ogresse_chamane", "ogrillon_lanceur"],
+      "bossId": "roi_ogre",
+      "bossEscort": ["ogresse_chamane"],
+      "minMonsters": 2,
+      "mechanics": [
+        { "name": "Régénération", "desc": "Les ogres récupèrent 4 % de leurs PV à chaque tour (2,5 % pour leur roi) — sauf s'ils saignent ou sont empoisonnés. Concentrez vos coups sur un seul, ou faites-les saigner." },
+        { "name": "Brise-bouclier", "desc": "Le Coup de massue et le Fracas détruisent vos boucliers avant de frapper : ne comptez pas que sur eux." },
+        { "name": "Colère du roi", "desc": "Sous 40 % de PV, Gromm frappe 35 % plus fort." }
+      ],
+      "loot": ["dent_d_ogre", "marmite_cabossee", "ceinture_en_peau_d_ogre", "massue_de_gromm"],
+      "setName": "Panoplie de Gromm",
+      "setBonus": [
+        { "pieces": 2, "desc": "+14 PV.", "modifiers": [ { "stat": "hp", "flat": 14 } ] },
+        { "pieces": 3, "desc": "Subit 8 % de dégâts en moins.", "modifiers": [ { "stat": "taken", "pct": -0.08 } ] }
+      ]
+    },
+    {
+      "id": "citadelle_engloutie",
+      "tranche": 12,
+      "name": "La Citadelle Engloutie",
+      "theme": "Hommes-poissons et marées",
+      "available": false,
+      "description": "Sous la vase, une forteresse respire encore."
+    },
+    {
+      "id": "forges_du_titan",
+      "tranche": 16,
+      "name": "Les Forges du Titan",
+      "theme": "Golems et feu",
+      "available": false,
+      "description": "On y forge encore, bien que plus personne ne tienne le marteau."
+    },
+    {
+      "id": "aire_des_dragons",
+      "tranche": 20,
+      "name": "L'Aire des Dragons",
+      "theme": "Dragons",
+      "available": false,
+      "description": "Tout en haut, là où l'air brûle. Le bout du chemin."
+    }
+  ]
+}

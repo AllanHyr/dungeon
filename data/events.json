@@ -1,0 +1,32 @@
+{
+  "_note": "Coups bas possibles. TOUS les malus sont temporaires et limités à la run en cours : ils ne touchent JAMAIS le personnage sauvegardé ni son équipement. 'kind' est interprété par le code (poison, damage, skip, curse).",
+  "lowBlows": [
+    {
+      "id": "poison",
+      "name": "Empoisonner",
+      "kind": "poison",
+      "desc": "La cible perd des PV à chaque tour pendant un moment.",
+      "pct": 0.08,
+      "turns": 4
+    },
+    {
+      "id": "damage",
+      "name": "Faire un croche-pied",
+      "kind": "damage",
+      "desc": "La cible perd tout de suite 25% de ses PV (sans la tuer).",
+      "hpPct": 0.25
+    },
+    {
+      "id": "skip",
+      "name": "Assommer",
+      "kind": "skip",
+      "desc": "La cible passe sa prochaine action."
+    },
+    {
+      "id": "curse",
+      "name": "Maudire un objet",
+      "kind": "curse",
+      "desc": "Un objet équipé de la cible perd tous ses bonus jusqu'à la fin de la run."
+    }
+  ]
+}

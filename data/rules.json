@@ -1,0 +1,67 @@
+{
+  "_note": "RÈGLES GLOBALES — toutes les valeurs sont PROVISOIRES et faites pour être équilibrées plus tard. Modifier ce fichier change le jeu sans toucher au code.",
+
+  "maxLevel": 20,
+  "levelCap": 8,
+  "deckSize": 4,
+  "_deckSize": "Nombre de sorts ACTIFS qu'un personnage peut équiper en même temps (son « deck »). S'y ajoutent, toujours disponibles : les compétences de départ de la classe (attaque de base, sort de classe) et les compétences communes (Garde, Attaque à l'arme). Les passives ne prennent pas de place.",
+  "specLevel": 4,
+  "_specLevel": "Niveau à partir duquel on peut choisir une spécialisation (classes.json > specs). On peut en changer entre deux parties (jamais en plein donjon).",
+  "_levelCap": "PLAFOND ACTUEL de niveau (bridage de cette version). Au plafond, la montée s'arrête et l'XP gagnée est perdue (pas de réserve : le jour où on relève le plafond, chacun repart de zéro XP). maxLevel est la taille de la courbe (xpToNext) : à ne changer que pour allonger la courbe. Pour ouvrir la suite : augmenter levelCap (jamais au-delà de maxLevel).",
+  "xpToNext": [80, 120, 180, 250, 330, 420, 520, 640, 780, 940, 1120, 1320, 1540, 1780, 2040, 2320, 2620, 2940, 3280],
+  "_xpToNext": "xpToNext[0] = XP nécessaire pour passer du niveau 1 au niveau 2, etc.",
+
+  "d20": { "_note": "Limite des bonus/malus de dé donnés par les fantômes.", "rollModLimit": 4 },
+
+  "dice": {
+    "_note": "Profil de dé PAR DÉFAUT d'une compétence offensive : échec critique si le jet est <= defaultFumble, critique s'il est >= defaultCrit. Chaque compétence peut avoir son propre profil (champ 'dice').",
+    "defaultFumble": 1,
+    "defaultCrit": 20,
+    "critMult": 1.5
+  },
+
+  "combat": {
+    "_note": "Combat à points d'action (PA). Les unités jouent dans l'ordre d'une frise d'initiative, en alternant les camps.",
+    "basePa": 6,
+    "maxPa": 12,
+    "_maxPa": "Plafond de sécurité : un joueur ne peut ni avoir plus de maxPa PA par tour (objets, passifs, buffs), ni en garder plus de maxPa en réserve (gains instantanés). Sans lui, empiler les bonus de PA casserait le jeu.",
+    "moveCostPa": 1,
+    "itemCostPa": 2,
+    "iniRandom": 4,
+    "turnSeconds": 60,
+    "enrageAfterRound": 8,
+    "enragePerRound": 0.15,
+    "shieldCapPct": 1.0,
+    "triggerDepth": 2,
+    "maxPlanActions": 3,
+    "rows": ["front", "back"]
+  },
+
+  "initiative": { "_note": "Jet d'exploration sur une case combat.", "surpriseMax": 4, "ambushMin": 17 },
+
+  "regenPerTurnPct": 0.03,
+  "postCombatHealPct": 0.12,
+
+  "poison": {"pct": 0.06, "turns": 4},
+
+  "resurrection": {
+    "fountain": {"hpPct": 0.3, "poisonedHpPct": 0.05, "hpMaxPenalty": 0.1},
+    "skill": {"hpPct": 0.25, "hpMaxPenalty": 0.1, "casterHpMaxPenalty": 0.15}
+  },
+
+  "fountain": {"poisonMax": 5, "xpShareRatio": 0.6, "lifeHealPct": 0.25},
+  "lowBlow": {"reboundMax": 5},
+  "ghost": {"successMin": 8, "bonus": 2},
+  "antiCarry": {"lossPerLevel": 0.3, "minFactor": 0.05},
+  "contribution": {"tankedWeight": 0.5, "minMult": 0.5, "maxMult": 1.5},
+  "loot": {"lowerLevelWeight": 0.3, "rarityRollStep": 0.04, "dungeonTableChance": 0.3, "_dungeonTableChance": "Dans un donjon qui a sa table de butin (dungeons.json, champ loot), chaque objet trouvé a 30 % de chances de venir de cette table (objets qui ne tombent que là) ; le reste est du butin ordinaire. Le premier objet du boss en vient toujours."},
+  "shop": {"stockSize": 3, "sellRate": 0.35, "haggleBase": 1.25, "haggleStep": 0.02, "levelPriceStep": 0.3},
+
+  "partyScaling": {
+    "_note": "Les monstres s'adaptent au NOMBRE de joueurs (jamais à leur niveau).",
+    "1": {"count": [1, 1], "hp": 0.5, "atk": 0.7, "pa": 0.67},
+    "2": {"count": [1, 2], "hp": 0.75, "atk": 0.8, "pa": 0.84},
+    "3": {"count": [2, 3], "hp": 1.0, "atk": 1.0, "pa": 1.0},
+    "4": {"count": [2, 4], "hp": 1.1, "atk": 1.0, "pa": 1.0}
+  }
+}

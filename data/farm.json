@@ -1,0 +1,42 @@
+{
+  "_note": "ZONES DE FARM SOLO. Un seul personnage affronte des vagues de monstres qui montent en difficulté. Il peut s'arrêter après chaque vague (le butin va dans son coffre) ; s'il meurt, il ne perd que la vague en cours. Les récompenses sont volontairement RESTREINTES (début de jeu) : le meilleur équipement vient des donjons à plusieurs. Voir docs/FARM-ET-SUCCES.md pour le détail de chaque réglage.",
+
+  "chestCapacity": 24,
+  "_chestCapacity": "Nombre maximum d'objets dans le coffre d'un personnage. Coffre plein = on ne peut plus lancer de session (ouvre-le d'abord). Utile aussi pour borner le futur farm automatique.",
+
+  "zones": {
+    "terriers": {
+      "name": "Les Terriers",
+      "description": "L'entrée des caves, grouillante de rats, de gelées et de chauves-souris. Un seul personnage suffit : on enchaîne les vagues tant qu'on tient debout.",
+      "trancheId": 1,
+      "monsterPool": ["rat_geant", "gelee_verte", "chauve_souris_vampire", "squelette_rouille", "gobelin_pillard"],
+      "bossId": "roi_des_rats",
+
+      "waves": {
+        "_note": "Vague n : count = countStart + (n-1)/extraMonsterEvery (plafonné à countMax). Les PV et l'attaque des monstres grandissent de hpPerWave / atkPerWave à chaque vague. Toutes les bossEvery vagues, c'est le boss de la zone (avec bossScale).",
+        "countStart": 1,
+        "extraMonsterEvery": 3,
+        "countMax": 3,
+        "hpPerWave": 0.07,
+        "atkPerWave": 0.05,
+        "bossEvery": 5,
+        "bossScale": { "hp": 0.65, "atk": 0.85 }
+      },
+
+      "healBetweenWavesPct": 0.2,
+
+      "rewards": {
+        "_note": "xpMult x XP des monstres ; +xpPerWave par vague ; l'XP de la zone ne fait JAMAIS dépasser xpMaxLevel. Butin : un objet avec la probabilité lootChance après chaque vague (le boss en donne bossItems, au moins de la rareté bossMinRarity). Les raretés absentes de rarityWeights (épique, légendaire...) ne tombent JAMAIS ici. itemMaxLevel : niveau maximum des objets.",
+        "xpMult": 1.0,
+        "xpPerWave": 0.08,
+        "xpMaxLevel": 4,
+        "lootChance": 0.28,
+        "bossItems": 1,
+        "bossMinRarity": "uncommon",
+        "rarityWeights": { "common": 80, "uncommon": 18, "rare": 2 },
+        "itemMaxLevel": 1,
+        "potionChance": 0.2
+      }
+    }
+  }
+}

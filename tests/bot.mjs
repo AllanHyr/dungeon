@@ -76,6 +76,7 @@ function wantedMode(me, state = null) {
   }
   if (me.classId === 'templier') return { lumiere: 'devotion', vindicte: 'vengeance' }[me.spec] || 'protection';
   if (me.classId === 'druide') return { gardien: 'ours', restauration: 'arbre', farouche: 'felin' }[me.spec] || 'naturelle';
+  if (me.classId === 'barde') return { troubadour: 'resilience', menestrel: 'clairvoyance' }[me.spec] || 'bravoure';
   if (me.classId === 'guerrier') return { protection: 'defensive', fureur: 'offensive' }[me.spec] || 'combat'; // (Armes et sans spé : posture de combat)
   return me.spec === 'ecorche' ? 'degats' : 'reduction';
 }
@@ -125,7 +126,7 @@ function scoreSkill(state, me, s) {
     } else if (e.type === 'resurrect') score += dead.length ? 40 : 0;
     else if (e.type === 'pa') score += hpRatio(state, me) > 0.6 ? 6 : 0; // gagner des PA contre des PV : seulement s'il en a de reste
     else if (e.type === 'mode') score += me.mode !== wantedMode(me, state) ? 12 : 0; // le robot choisit le mode (l'aura) de sa spécialisation
-    else if (e.type === 'resource' && e.amount > 0 && ['templier', 'guerrier'].includes(me.classId)) score += 2 * e.amount; // de la puissance sacrée, de la rage : de quoi lancer un consommateur
+    else if (e.type === 'resource' && e.amount > 0 && ['templier', 'guerrier', 'barde'].includes(me.classId)) score += 2 * e.amount; // de la puissance sacrée, de la rage : de quoi lancer un consommateur
     else if (e.type === 'redirect') score += allies.some((a) => a.id !== me.id && hpRatio(state, a) < 0.8) ? 8 : 0; // Sacrifice : quand un allié est en danger
     else if (e.type === 'mod' && (e.pct ?? e.flat) > 0 && e.to !== 'self') score += 4;
     else if (e.type === 'mod' && (e.pct ?? e.flat) > 0) score += 3;
@@ -136,6 +137,7 @@ function scoreSkill(state, me, s) {
     else if (e.type === 'dot') { const t = aim[0]; const fresh = !t || !t.statuses.some((st) => st.id === 'dot' && st.key === (e.key || sk.id)); score += fresh ? e.power * e.turns * 6 * (e.drain && hurt.length ? 1.4 : 1) : 1; } // une douleur sur la durée : vaut presque des dégâts directs, si la cible ne l'a pas déjà
     else if (e.type === 'poison') score += 3;
     else if (e.type === 'cleanse') score += 1;
+    else if (e.type === 'tempo') score += allies.filter((a) => a.id !== me.id).length ? 14 : 0; // le Tempo : un allié joue (ou rejoue) juste après
     else if (e.type === 'expiation') score += (sk.target === 'allies' ? allies.filter((a) => !a.statuses.some((st) => st.id === 'expiation' && st.casterId === me.id)).length : allies.some((a) => !a.statuses.some((st) => st.id === 'expiation' && st.casterId === me.id)) ? 1 : 0) * 5; // l'Expiation : ses coups soigneront ces alliés
   }
   if (sk.effects.some((e) => e.type === 'guard')) score = hpRatio(state, me) < 0.4 ? 3 : 0; // la garde : seulement quand on va mal
@@ -157,6 +159,8 @@ function pickTarget(state, me, s, rand) {
   const t = s.targets.map((id) => (state.players.find((p) => p.id === id) || state.combat.monsters.find((m) => m.id === id)));
   if (sk.effects.some((e) => e.type === 'mark')) return bestFoe(state, me, t.filter((u) => !markedEnemies(state, me).includes(u)).length ? t.filter((u) => !markedEnemies(state, me).includes(u)) : t).id; // une marque de plus : sur une proie pas encore marquée
   if (sk.target === 'enemy') return bestFoe(state, me, t).id;
+  // le Tempo : sur l'allié qui frappe le plus fort (jamais sur soi)
+  if (sk.effects.some((e) => e.type === 'tempo')) { const others = t.filter((u) => u.id !== me.id); return (others.length ? others : t).sort((a, b) => computeStats(state, b).atk - computeStats(state, a).atk)[0].id; }
   if (sk.target === 'ally') return t.sort((a, b) => hpRatio(state, a) - hpRatio(state, b))[0].id;
   return rand.pick(s.targets);
 }

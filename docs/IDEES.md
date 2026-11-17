@@ -188,10 +188,23 @@ Dans `data/classes.json` (id `druide` : une ancienne sauvegarde de Druide reste 
 - **Équilibrage (robots ; `node tests/druide-sim.mjs 60`, Profondeurs niv. 8)** : en tank (tank + Prêtre Sacré + Assassin) : Guerrier Protection ~92 % · Templier Gardien ~97 % · **Druide Gardien ~97 %** (la provocation de la Patte du gardien fait toute la différence : sans elle ~70 %). En soin (Guerrier + soigneur + Assassin) : Prêtre Sacré ~92 % · **Restauration ~100 %** · Druide sans spé ~78 %. En dps (Guerrier + Prêtre + dps) : Assassin ~92 % · **Farouche ~100 %**. **Seul** (Crypte niv. 6) : Gardien ~100 %, Farouche ~93 %, Restauration 0 % (un pur soigneur seul ne tue rien).
   ⚠ Les équipes de **nouvelles classes** passent les Profondeurs à 90-100 % avec des robots : le contenu de niveau 8 devient facile pour elles. À regarder en jouant (et peut-être relever les monstres plutôt que d'affaiblir les classes).
 
-### Barde *(nouveau)* — soutien
-- Buffs de groupe : PA, dégâts, défense… Le Cantique de hâte du Veilleur est déjà un premier brouillon. 🟢
-- ⚠ Rappel du guide : un buff de PA doit presque coûter ce qu'il donne (transfert de PA d'un personnage qui les convertit mal vers un qui les convertit bien).
-- Spés à imaginer.
+### Barde ✅ *(écrit — premier jet, valeurs à régler en jouant)*
+Dans `data/classes.json` (id `barde`). Le **soutien** du groupe, au rang arrière (PV 42, attaque 5,4, défense 2,8, soin 4,5, **initiative 11** : il joue tôt).
+
+- **Ressource : Inspiration** (max 5, 0 au début de chaque combat). Ses sorts ordinaires en donnent +1 ; les grands airs en dépensent : *Crescendo* (3 : toute l'équipe +20 % de dégâts 2 tours), *Berceuse* (2 : endort un ennemi), *Ode héroïque* (5 : soin + bouclier à toute l'équipe).
+- **Sort de classe : Ballade** (menu « choisis un chant » ; `"noun": "chant", "article": "un"`) : **Bravoure** (équipe +6 % de dégâts), **Résilience** (équipe mieux soignée +15 %, −4 % de dégâts reçus), **Clairvoyance** (équipe : critique un point plus tôt). Changer de chant donne +1 inspiration (passif *Virtuose*).
+- **Sa signature : le Tempo** (nouvel effet `tempo`) : l'allié choisi joue **juste après le Barde** dans la frise (et y reste) ; **s'il avait déjà joué ce round, il rejoue tout de suite**. Relance 5 tours.
+- **Sorts de base** : Note discordante, Refrain apaisant, Tempo, Crescendo (L1), Berceuse (L3), Dissonance (L4, les ennemis −15 %), Ode héroïque (L5), Cacophonie (L6, zone + défense −20 %).
+- **Spécialisations** :
+  | | Idée | Palier 4 (automatique) | Palier 8 (1 parmi 3) | Ultime 20 *(annoncé)* |
+  | --- | --- | --- | --- | --- |
+  | **Ménestrel** (Soutien) | Le rythme et les PA | Rythme endiablé (dépenser de l'inspiration : **toute l'équipe +1 PA** au tour suivant, une fois par tour ; chants plus forts), Gammes (+2 inspiration), Tempo endiablé (+1 PA, relance 3), Grand crescendo | Hymne de hâte · Ovation · Marche triomphale | Symphonie |
+  | **Troubadour** (Soin) | Des chansons qui soignent | Voix douce (soins +20 %, Résilience plus forte), Mélopée (soin sur la durée de groupe), Refrain du troubadour, Ode de lumière | Requiem inversé (ressuscite) · Sérénade · Chœur | Chant éternel |
+  | **Skald** (Dégâts) | Le barde guerrier | Chant de guerre (+8 % ; dépenser : +15 % 2 tours), Strophe tonnante (3 inspiration, puissance 2,0), Note tranchante, Fracas des tambours | Saga funèbre · Rengaine · Cor de bataille | Ragnarök |
+- **Nouveau dans le moteur** : l'effet **`tempo`** (réordonne la frise d'initiative), `modes.article` (« un chant » / « une posture » dans le menu et le journal).
+- **Équilibrage (robots ; `node tests/barde-sim.mjs 60`, Profondeurs niv. 8)** : en soin (Guerrier + soigneur + Assassin) : Prêtre Sacré ~92 % · **Troubadour ~97 %** · Barde sans spé ~62 %. En dps (Guerrier + Prêtre + dps) : Assassin ~92 % · **Skald ~98 %** (il frappe à distance, depuis le rang arrière). En soutien : **Ménestrel ~78 %** s'il remplace le dps (moins de dégâts), **~95 %** en 4e membre. **Seul** : 0 à 5 % (un soutien seul n'a rien à soutenir).
+  ⚠ Troubadour et Skald un peu au-dessus de leurs équivalents ; leviers : les chants (aura), la Strophe, la relance du Tempo. Les robots donnent le Tempo à l'allié qui frappe le plus fort ; un joueur pourra faire mieux (rejouer un soigneur au bon moment).
+- ❓ **Questions** : le Tempo « tour de plus » est-il trop fort (le limiter à une fois par combat ?) ; faut-il un 4e chant (vitesse : initiative) ?
 
 ### Mage *(nouveau)* — dégâts à distance / zone
 - **Écoles de magie** = spécialisations (feu, givre, arcanes, etc.).

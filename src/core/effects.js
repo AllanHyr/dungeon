@@ -358,6 +358,27 @@ export function applyEffect(state, caster, e, targets, ctx) {
       break;
     }
 
+    case 'tempo': {
+      // « Tempo » (Barde) : l'allié visé joue JUSTE APRÈS le lanceur, et garde cette place dans la frise les rounds suivants.
+      // S'il a déjà joué ce round, il rejoue tout de suite : c'est un tour en plus. (En combat seulement ; jamais sur soi.)
+      const c = state.combat;
+      if (!c) break;
+      for (const u of units) {
+        if (!u.alive || u.id === caster.id) continue;
+        const tl = c.timeline;
+        const from = tl.indexOf(u.id);
+        if (from < 0) continue;
+        const already = from < c.turn; // (il a déjà joué ce round)
+        tl.splice(from, 1);
+        if (already) c.turn--; // (on a retiré une case déjà jouée : le curseur recule d'autant)
+        const me = tl.indexOf(caster.id);
+        tl.splice(me + 1, 0, u.id);
+        emit(state, { type: 'tempo', target: u.id, source: caster.id });
+        say(`   ${u.name} jouera juste après ${caster.name}${already ? ' (un tour de plus !)' : ''}.`, 'good');
+      }
+      break;
+    }
+
     case 'expiation': {
       // « Expiation » (Prêtre, spé Discipline) : un statut posé sur un allié. Les passifs du Prêtre le soignent quand il frappe (cible d'effet `"to": "expiation"`).
       for (const u of units) {
@@ -428,7 +449,7 @@ export function applyEffect(state, caster, e, targets, ctx) {
         // « toggle » : le mode suivant de la liste ; « pick » : celui que le joueur a choisi (`modeId` de son action) ; sinon un mode précis.
         const want = e.set === 'pick' ? ctx.modeId : e.set;
         u.mode = e.set === 'toggle' ? ids[(ids.indexOf(cur) + 1) % ids.length] : ids.includes(want) ? want : cur;
-        say(m.noun ? `   ${u.name} prend la ${m.list[u.mode].name}.` : `   ${u.name} passe en mode ${m.list[u.mode].name}.`, 'info'); // (« prend la Forme d'ours », « prend la Posture défensive »)
+        say(m.noun ? `   ${u.name} prend ${m.article === 'un' ? 'le' : 'la'} ${m.list[u.mode].name}.` : `   ${u.name} passe en mode ${m.list[u.mode].name}.`, 'info'); // (« prend la Forme d'ours », « prend le Chant de bravoure »)
         if (u.mode !== cur) fireTriggers(state, 'modeChange', { unit: u }); // (ex. « quand il change de mode : un bonus de 2 tours »)
       }
       break;

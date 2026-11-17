@@ -68,9 +68,9 @@ function takeTurnOf(state, id) {
 }
 
 console.log('\n● Contenu (données JSON)');
-test('le contenu se charge : 6 classes jouables (+ 4 classes de test), 3 tranches jouables', () => {
-  eq(Object.keys(loadContent({ legacy: false }).classes).sort(), ['assassin', 'druide', 'guerrier', 'pretre', 'sacrieur', 'templier']);
-  eq(Object.keys(content.classes).sort(), ['assassin', 'berserker', 'druide', 'druide_ancien', 'duelliste', 'guerrier', 'pretre', 'sacrieur', 'templier', 'veilleur']);
+test('le contenu se charge : 7 classes jouables (+ 4 classes de test), 3 tranches jouables', () => {
+  eq(Object.keys(loadContent({ legacy: false }).classes).sort(), ['assassin', 'barde', 'druide', 'guerrier', 'pretre', 'sacrieur', 'templier']);
+  eq(Object.keys(content.classes).sort(), ['assassin', 'barde', 'berserker', 'druide', 'druide_ancien', 'duelliste', 'guerrier', 'pretre', 'sacrieur', 'templier', 'veilleur']);
   eq(availableTranches(content).map((t) => t.id), [1, 4, 8]);
 });
 test('une faute dans un JSON donne une erreur claire (monstre inconnu)', () => {
@@ -3805,6 +3805,77 @@ console.log('\n● Feu de camp');
   test('le pilote automatique se repose au camp (un joueur absent n\'y bloque pas le groupe)', () => {
     const { s } = atCamp();
     eq(afkAction(s), { type: 'CAMP_ACT', activity: 'rest' });
+  });
+}
+
+console.log('\n● Barde : chants, inspiration, Tempo');
+{
+  /** Un vrai petit combat (pas l'Atelier) : Barde + Guerrier + Assassin contre des monstres, au tour du Barde. */
+  const fight = (spec = null) => {
+    const t = training([{ classId: 'barde', level: 8, spec }, { classId: 'guerrier', level: 8 }, { classId: 'assassin', level: 8 }], { count: 2 });
+    takeTurnOf(t, 'p1');
+    return t;
+  };
+  const run = (t, p, id, target) => { const sk = content.skills[id]; const tg = Array.isArray(target) ? target : [target]; for (const e of sk.effects) applyEffect(t, p, e, tg, { outcome: 'hit', skill: sk }); };
+
+  test('le Barde : soutien au rang arrière, inspiration (max 5, à 0), Ballade en sort de classe, chants « un chant » ; deck Note / Refrain / Tempo / Crescendo', () => {
+    const cls = content.classes.barde;
+    eq([cls.startRow, cls.classSkill, cls.resource.id, cls.resource.max, cls.modes.default, cls.modes.noun, cls.modes.article], ['back', 'barde_ballade', 'inspiration', 5, 'bravoure', 'chant', 'un']);
+    const ch = createCharacter(content, { id: 'b', name: 'B', classId: 'barde' });
+    fillDeck(content, ch);
+    eq(ch.deck, ['barde_note', 'barde_refrain', 'barde_tempo', 'barde_crescendo']);
+    for (const spec of ['menestrel', 'troubadour', 'skald']) eq(cls.skills.filter((x) => x.spec === spec && x.level === 8).length, 3, `${spec} : 3 choix au palier 8`);
+  });
+
+  test('les chants profitent à TOUTE l\'équipe ; changer de chant donne +1 inspiration', () => {
+    const t = fight();
+    const [p, war] = t.players;
+    const base = computeStats(t, war);
+    eq(p.mode, 'bravoure');
+    const without = (() => { p.alive = false; const d = computeStats(t, war).damage; p.alive = true; return d; })();
+    assert(Math.abs(base.damage - without - 0.06) < 1e-9, `Bravoure : dégâts +6 % pour le Guerrier (${without} → ${base.damage})`);
+    eq(p.resources.inspiration ?? 0, 0);
+    assert(act(t, p.id, { act: 'skill', skillId: 'barde_ballade', modeId: 'clairvoyance' }).ok);
+    eq(p.resources.inspiration, 1, '+1 inspiration en changeant de chant');
+    eq(computeStats(t, war).critShift, base.critShift - 1, 'Clairvoyance : le Guerrier critique un point plus tôt');
+    p.mode = 'resilience';
+    assert(computeStats(t, war).healTaken > 1 && computeStats(t, war).taken < 1, 'Résilience : mieux soigné, moins de dégâts');
+  });
+
+  test('Tempo : l\'allié joue JUSTE APRÈS le Barde ; s\'il avait déjà joué ce round, il rejoue tout de suite', () => {
+    const t = fight();
+    const [p, war, sin] = t.players;
+    const tl = t.combat.timeline;
+    // On place l'Assassin AVANT le Barde dans la frise, comme s'il avait déjà joué ce round
+    tl.splice(tl.indexOf(sin.id), 1);
+    tl.splice(tl.indexOf(p.id), 0, sin.id);
+    t.combat.turn = tl.indexOf(p.id);
+    assert(tl.indexOf(sin.id) < t.combat.turn, 'l\'Assassin a déjà joué');
+    run(t, p, 'barde_tempo', sin);
+    eq(tl[t.combat.turn], p.id, 'le curseur reste sur le Barde');
+    eq(tl[t.combat.turn + 1], sin.id, 'l\'Assassin joue juste après lui');
+    eq(tl.filter((id) => id === sin.id).length, 1, 'il n\'apparaît qu\'une fois dans la frise');
+    // Fin du tour du Barde : c'est bien à l'Assassin
+    p.pa = 0;
+    act(t, p.id, { act: 'endTurn' });
+    eq(t.pending.actor, sin.id, 'c\'est au tour de l\'Assassin');
+    eq(p.resources.inspiration, 1);
+  });
+
+  test('Crescendo dépense 3 inspiration : toute l\'équipe +20 % de dégâts ; Ménestrel : chaque dépense donne +1 PA à toute l\'équipe au tour suivant', () => {
+    const t = fight();
+    const [p, war] = t.players;
+    p.resources.inspiration = 2;
+    assert(!checkUsable(t, p, content.skills.barde_crescendo).ok, '2 ne suffisent pas');
+    p.resources.inspiration = 3;
+    assert(cast(t, p.id, 'barde_crescendo').ok);
+    eq(p.resources.inspiration, 0);
+    assert(war.statuses.some((x) => x.id === 'mod' && x.stat === 'damage' && x.pct === 0.2), 'le Guerrier a +20 %');
+    const m = fight('menestrel');
+    const [mp, mw] = m.players;
+    mp.resources.inspiration = 3;
+    assert(cast(m, mp.id, 'barde_grand_crescendo').ok);
+    assert(mw.statuses.some((x) => x.id === 'mod' && x.stat === 'pa' && x.flat === 1), 'Rythme endiablé : +1 PA au prochain tour du Guerrier');
   });
 }
 

@@ -546,5 +546,54 @@ function druide(u) {
   return wrap(u, { defs, inner, bg: ['#203a1c', '#060a05', '#a8ff8a'], at: [32, 36], halo: 0.34 });
 }
 
+/** Le Barde : chapeau à larges bords et longue plume rouge, sourire en coin, moustache fine, cape bleu nuit, luth au manche qui dépasse de l'épaule, notes dorées qui flottent. */
+function barde(u) {
+  const defs = [
+    lin(`${u}skin`, [[0, '#f2cfae'], [0.55, '#c7956c'], [1, '#6e4732']]),
+    lin(`${u}skinD`, [[0, '#a9785a'], [1, '#4d3122']], [0, 0, 0, 1]),
+    lin(`${u}hat`, [[0, '#3a4a8a'], [0.5, '#22295a'], [1, '#0d1028']]),
+    lin(`${u}cape`, [[0, '#2e3a78'], [1, '#0b0e24']], [0, 0, 0, 1]),
+    lin(`${u}vest`, [[0, '#a8323a'], [1, '#4a1016']], [0, 0, 0, 1]),
+    lin(`${u}plume`, [[0, '#ff7a5a'], [0.6, '#c8202a'], [1, '#5a0a10']], [0, 0, 1, 1]),
+    lin(`${u}wood`, [[0, '#d89a52'], [0.6, '#8a5428'], [1, '#3e2210']]),
+    lin(`${u}gold`, [[0, '#fff0b8'], [0.5, '#d9a441'], [1, '#7c5518']]),
+    lin(`${u}hair`, [[0, '#8a5a2e'], [1, '#3a2210']]),
+    glow(u, 'eye', '#7ad0ff', 0.7)
+  ].join('');
+  const notes = [[16, 30, 1], [86, 20, 0.85], [92, 46, 0.7]].map(([x, y, s]) => `<g transform="translate(${x} ${y}) scale(${s})" fill="url(#${u}gold)"><ellipse cx="0" cy="6" rx="3.2" ry="2.4" transform="rotate(-20)"/><path d="M2.6 5 V-6 L8 -4 V-1 L3.6 -2.6 V5" /></g>`).join('');
+  const inner = `
+${notes}
+<!-- manche du luth derrière l'épaule gauche -->
+<path d="M12 96 L30 52" stroke="url(#${u}wood)" stroke-width="4.4" stroke-linecap="round"/>
+<path d="M28 56 L36 40 L40 44 L32 58 Z" fill="url(#${u}wood)"/>
+<g stroke="#f3e2b8" stroke-width=".5" opacity=".8"><path d="M13 95 L31 53 M14.4 95.6 L32.4 53.6"/></g>
+<!-- cape, gilet et col -->
+<path d="M3 100 L9 84 C18 73 32 69 40 69 L60 69 C68 69 82 73 91 84 L97 100 Z" fill="url(#${u}cape)"/>
+<path d="M38 70 L62 70 L60 100 L40 100 Z" fill="url(#${u}vest)"/>
+<g fill="url(#${u}gold)"><circle cx="50" cy="78" r="1.4"/><circle cx="50" cy="85" r="1.4"/><circle cx="50" cy="92" r="1.4"/></g>
+<path d="M40 69 L50 80 L60 69" fill="none" stroke="#f3e6cf" stroke-width="2.2" stroke-linejoin="round"/>
+<!-- cou et visage -->
+<path d="M43 56 L43 70 C47 73 53 73 57 70 L57 56 Z" fill="url(#${u}skinD)"/>
+<path d="M35 44 C33 54 34 62 38 66 L36 50 Z M65 44 C67 54 66 62 62 66 L64 50 Z" fill="url(#${u}hair)"/>
+<ellipse cx="50" cy="46" rx="14.200" ry="16.600" fill="url(#${u}skin)"/>
+<!-- yeux malicieux -->
+<path d="M39.800 45 C41.400 43 45 42.800 47 44.600 C45 46.200 41.400 46.400 39.800 45 Z" fill="#fff6e6"/>
+<path d="M60.200 45 C58.600 43 55 42.800 53 44.600 C55 46.200 58.600 46.400 60.200 45 Z" fill="#fff6e6"/>
+<circle cx="43.400" cy="44.700" r="1.200" fill="#1d4a6a"/><circle cx="56.600" cy="44.700" r="1.200" fill="#1d4a6a"/>
+<path d="M39 41.400 L47 41.600 M53 40.800 L61 42.200" stroke="#4a2c18" stroke-width="1.300" stroke-linecap="round"/>
+<!-- nez, moustache fine, sourire en coin -->
+<path d="M49 45 L47.800 52 C49.400 53 50.600 53 52.200 52 L51 45 Z" fill="#a8775a" opacity=".8"/>
+<path d="M41 55 C45 53 48 54.200 50 55 C52 54.200 55 53 59 55 C56 54.600 53 56 50 56.200 C47 56 44 54.600 41 55 Z" fill="#4a2c18"/>
+<path d="M45 59 C48 60.600 52 60.400 56 58" fill="none" stroke="#7a3a2a" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M48 63 L50 66 L52 63" fill="#4a2c18"/>
+<!-- chapeau à larges bords et plume -->
+<path d="M20 34 C30 28 70 26 82 32 C78 36 70 37 60 36 C52 35.500 46 35.500 38 36.500 C30 37.500 24 37 20 34 Z" fill="url(#${u}hat)"/>
+<path d="M34 34 C33 22 40 13 51 13 C62 13 68 21 67 33 C58 31 44 31 34 34 Z" fill="url(#${u}hat)"/>
+<path d="M34 31 C44 28.500 58 28.500 67 30.500" fill="none" stroke="url(#${u}gold)" stroke-width="2"/>
+<path d="M64 29 C74 16 86 8 96 6 C90 14 82 24 68 32 Z" fill="url(#${u}plume)"/>
+<path d="M66 30 C76 20 86 12 94 8" fill="none" stroke="#ffd2b8" stroke-width=".8" stroke-linecap="round" opacity=".8"/>`;
+  return wrap(u, { defs, inner, bg: ['#1c2650', '#06070f', '#9ab8ff'], at: [32, 36], halo: 0.34 });
+}
+
 // (les quatre premières classes, retirées du jeu, restent dessinées : les tests s'en servent encore ; l'ancien Druide s'appelle druide_ancien)
-export const HEROES = { berserker, veilleur, druide, druide_ancien: druideAncien, duelliste, sacrieur, assassin, templier, pretre, guerrier };
+export const HEROES = { berserker, veilleur, druide, druide_ancien: druideAncien, duelliste, sacrieur, assassin, templier, pretre, guerrier, barde };

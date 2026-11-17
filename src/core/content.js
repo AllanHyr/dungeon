@@ -37,7 +37,7 @@ export const ITEM_TYPES = {
 export const RANDOM_TILE_TYPES = ['combat', 'treasure', 'trap', 'xp_fountain', 'life_fountain', 'low_blow', 'merchant'];
 
 // ---- Vocabulaire du format des compétences (tout ce que le moteur comprend) ----
-export const EFFECT_TYPES = ['damage', 'heal', 'shield', 'hot', 'dot', 'poison', 'mod', 'taunt', 'stun', 'guard', 'move', 'resource', 'pa', 'resurrect', 'cleanse', 'survive', 'mode', 'redirect', 'mark', 'reanimate', 'breakShield', 'summon', 'expiation'];
+export const EFFECT_TYPES = ['damage', 'heal', 'shield', 'hot', 'dot', 'poison', 'mod', 'taunt', 'stun', 'guard', 'move', 'resource', 'pa', 'resurrect', 'cleanse', 'survive', 'mode', 'redirect', 'mark', 'reanimate', 'breakShield', 'summon', 'expiation', 'tempo'];
 export const EFFECT_TARGETS = ['target', 'self', 'allies', 'allAllies', 'enemies', 'allEnemies', 'lowestAlly', 'source', 'attacker', 'randomEnemy', 'lowestEnemy', 'expiation'];
 export const TRIGGER_EVENTS = ['combatStart', 'turnStart', 'turnEnd', 'dealDamage', 'takeDamage', 'kill', 'crit', 'fumble', 'wouldDie', 'modeChange', 'spend'];
 export const SKILL_TARGETS = ['enemy', 'enemies', 'ally', 'allies', 'self', 'deadAlly', 'lowestAlly'];

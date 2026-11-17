@@ -3478,7 +3478,7 @@ console.log('\n● Prêtre : forme d\'ombre, Expiation, soin en trop en bouclier
     eq(p.mode, 'ombre');
   });
 
-  test('Discipline : le Bouclier pose l\'Expiation ; les dégâts du Prêtre soignent les alliés qui la portent (60 %, 40 % en ombre), pas les autres', () => {
+  test('Discipline : le Bouclier pose l\'Expiation ; les dégâts du Prêtre soignent les alliés qui la portent (80 %, 55 % en ombre), pas les autres', () => {
     const t = pr('discipline');
     const [p, ally] = t.players;
     const [m] = t.combat.monsters;
@@ -3490,14 +3490,14 @@ console.log('\n● Prêtre : forme d\'ombre, Expiation, soin en trop en bouclier
     ally.hp = Math.round(max * 0.3); p.hp = Math.round(computeStats(t, p).hpMax * 0.5);
     const a0 = ally.hp, p0 = p.hp;
     const dmg = dealDamage(t, p, m, 20);
-    eq(ally.hp - a0, Math.round(dmg * 0.6), 'l\'allié sous Expiation regagne 60 % des dégâts');
+    eq(ally.hp - a0, Math.round(dmg * 0.8), 'l\'allié sous Expiation regagne 80 % des dégâts');
     eq(p.hp, p0, 'le Prêtre, sans Expiation, rien');
     p.mode = 'ombre';
     const a1 = ally.hp;
     const dmg2 = dealDamage(t, p, m, 20);
-    eq(ally.hp - a1, Math.round(dmg2 * 0.4), 'en forme d\'ombre : 40 %');
+    eq(ally.hp - a1, Math.round(dmg2 * 0.55), 'en forme d\'ombre : 55 %');
     // Un autre Prêtre ne profite pas de cette Expiation (elle est liée à son lanceur)
-    eq(skillBlurb(content.skills.pretre_bouclier_discipline), 'bouclier ×1.5, expiation 3 t. · un allié');
+    eq(skillBlurb(content.skills.pretre_bouclier_discipline), 'bouclier ×1.9, expiation 3 t. · un allié');
   });
 
   test('Sacré (Égide divine) : 60 % du soin EN TROP devient un bouclier ; sans la spé, le surplus est perdu', () => {

@@ -13,20 +13,25 @@ const ONLY = Number(process.argv[3]) || null;
 const B = {
   'sacrieur:bastion': { spec: 'bastion', learn: ['sacrieur_peau_de_pierre'], deck: ['sacrieur_sacrifice', 'sacrieur_morsure', 'sacrieur_punition', 'sacrieur_carapace'] },
   'templier:gardien': { spec: 'gardien', learn: ['templier_serment_fer'], deck: ['templier_frappe', 'templier_main_protection', 'templier_verdict', 'templier_rempart'], low: ['templier_frappe', 'templier_main_protection', 'templier_verdict', 'templier_benediction'] },
-  'templier:lumiere': { spec: 'lumiere', learn: ['templier_source_vie'], deck: ['templier_frappe', 'templier_benediction', 'templier_imposition', 'templier_eclat'] },
   'assassin:executeur': { spec: 'executeur', learn: ['assassin_boucherie'], deck: ['assassin_boucherie', 'assassin_estoc', 'assassin_dos', 'assassin_coup_de_grace'], low: ['assassin_garrot', 'assassin_estoc', 'assassin_dos', 'assassin_coup_de_grace'] },
+  'assassin:venin': { spec: 'venin', learn: ['assassin_predateur_toxique'], deck: ['assassin_nuage', 'assassin_estoc', 'assassin_lame_venimeuse', 'assassin_coup_de_grace'] },
   'pretre:sacre': { spec: 'sacre', learn: ['pretre_hymne'], deck: ['pretre_chatiment', 'pretre_soin', 'pretre_soin_superieur', 'pretre_hymne'], low: ['pretre_chatiment', 'pretre_soin', 'pretre_soin_superieur', 'pretre_bouclier'] },
-  'pretre:ombre': { spec: 'ombre', learn: ['pretre_eruption'], deck: ['pretre_douleur', 'pretre_toucher_vampirique', 'pretre_mort', 'pretre_eruption'], low: ['pretre_chatiment', 'pretre_douleur', 'pretre_toucher_vampirique', 'pretre_mort'] },
-  'assassin:venin': { spec: 'venin', learn: ['assassin_predateur_toxique'], deck: ['assassin_nuage', 'assassin_estoc', 'assassin_lame_venimeuse', 'assassin_coup_de_grace'] }
+  'pretre:discipline': { spec: 'discipline', learn: ['pretre_schisme'], deck: ['pretre_douleur', 'pretre_penitence', 'pretre_bouclier', 'pretre_soin'] },
+  'guerrier:protection': { spec: 'protection', learn: ['guerrier_mur_boucliers'], deck: ['guerrier_frappe', 'guerrier_bloc', 'guerrier_provocation', 'guerrier_execution'] },
+  'guerrier:armes': { spec: 'armes', learn: ['guerrier_brise_armure'], deck: ['guerrier_frappe', 'guerrier_frappe_mortelle', 'guerrier_execution', 'guerrier_brise_armure'], low: ['guerrier_frappe', 'guerrier_frappe_mortelle', 'guerrier_execution', 'guerrier_brise_genou'] },
+  'druide:gardien': { spec: 'gardien', learn: ['druide_regeneration_frenetique'], deck: ['druide_coup_patte', 'druide_rugissement', 'druide_peau_ecorce', 'druide_regeneration_frenetique'], low: ['druide_coup_patte', 'druide_rugissement', 'druide_peau_ecorce', 'druide_epine_sauvage'] },
+  'druide:restauration': { spec: 'restauration', learn: ['druide_abondance'], deck: ['druide_bourgeon', 'druide_toucher', 'druide_croissance', 'druide_floraison_sauvage'] },
+  'druide:farouche': { spec: 'farouche', learn: ['druide_frenesie_feline'], deck: ['druide_coup_patte', 'druide_lacerer', 'druide_morsure_feroce', 'druide_epine_sauvage'] }
 };
+// Équipes de NOUVELLES classes (les anciennes, retirées du jeu, gardent une colonne de référence).
 const TEAMS = {
-  'anciennes': ['berserker', 'veilleur', 'duelliste'],
-  'tank+soin+dps': ['sacrieur:bastion', 'templier:lumiere', 'assassin:executeur'],
-  'avec venin': ['templier:gardien', 'veilleur', 'assassin:venin'],
-  'avec prêtres': ['templier:gardien', 'pretre:sacre', 'pretre:ombre'],
-  '3 tanks': ['templier:gardien', 'templier:gardien', 'sacrieur:bastion'],
-  'duo': ['sacrieur:bastion', 'assassin:executeur'],
-  'solo tank': ['sacrieur:bastion']
+  'équilibrée A': ['guerrier:protection', 'pretre:sacre', 'assassin:executeur'],
+  'équilibrée B': ['templier:gardien', 'druide:restauration', 'guerrier:armes'],
+  'équilibrée C': ['druide:gardien', 'pretre:discipline', 'assassin:venin'],
+  '3 tanks': ['templier:gardien', 'guerrier:protection', 'sacrieur:bastion'],
+  'duo': ['guerrier:protection', 'pretre:sacre'],
+  'solo tank': ['guerrier:protection'],
+  'anciennes (réf.)': ['berserker', 'veilleur', 'duelliste']
 };
 
 function winRate(dungeon, members) {
@@ -44,8 +49,8 @@ function winRate(dungeon, members) {
 
 const names = Object.keys(TEAMS);
 console.log(`--- Victoires (%) par donjon et par équipe — ${N} parties par case, héros du niveau de la tranche, équipement correct ---`);
-console.log(''.padEnd(34) + names.map((n) => n.padStart(15)).join(''));
+console.log(''.padEnd(34) + names.map((n) => n.padStart(17)).join(''));
 for (const d of content.dungeonList.filter((x) => x.available !== false && (!ONLY || x.tranche === ONLY))) {
-  const row = names.map((n) => `${winRate(d, TEAMS[n])}`.padStart(15)).join('');
+  const row = names.map((n) => `${winRate(d, TEAMS[n])}`.padStart(17)).join('');
   console.log(`${String(d.tranche).padStart(2)} ${d.name.padEnd(31)}${row}`);
 }

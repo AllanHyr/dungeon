@@ -327,7 +327,7 @@ node tests/run-tests.mjs        # 244 tests de règles (PA, rangs, dés, bouclie
 node tests/server-api.mjs       # 36 tests du SERVEUR (sans navigateur : on parle à l'API) : comptes, sessions, mots de passe, limites anti-abus, tricheries refusées, parties complètes jouées par un robot, fichiers publics, outil d'administration
 node tests/server-rooms.mjs     # 21 tests des SALONS (sans navigateur) : un héros par compte, prêt / réglages / retirer / quitter, parties à 2-3 joueurs jouées par des robots, tricheries refusées, rien de secret envoyé, temps réel, minuteur du serveur, redémarrage
 node tests/fuzz.mjs 1000        # 1000 parties (avec un donjon, des spécialisations et des talents tirés au hasard), salles d'entraînement et sessions de farm « chaotiques » : aucune erreur attendue (et une action refusée ne change jamais l'état)
-node tests/donjons-sim.mjs 40        # équilibrage des DONJONS : chaque donjon joué par six équipes de robots (anciennes classes, nouvelles, trois tanks, duo, solo)
+node tests/donjons-sim.mjs 40        # équilibrage des DONJONS : chaque donjon joué par des équipes de robots (trois équipes équilibrées de nouvelles classes, trois tanks, duo, solo)
 node tests/templier-sim.mjs 60       # équilibrage du Templier : le compare au Berserker, avec chaque spécialisation (équipe de 3, Caves / Crypte / Profondeurs, et en solo)
 node tests/pretre-sim.mjs 60         # équilibrage du Prêtre : le compare au Veilleur (soin) et l'Ombre au Duelliste (dps), avec chaque spécialisation, et en solo
 node tests/guerrier-sim.mjs 60       # équilibrage du Guerrier : la Protection face aux autres tanks, Armes et Fureur face aux dps, et en solo

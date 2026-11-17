@@ -263,22 +263,26 @@ Dans `data/classes.json` (id `druide` : une ancienne sauvegarde de Druide reste 
 | 8 | Le Gouffre aux Ogres | Ogres | **Régénération** (4 % par tour, coupée par un saignement ou un poison), **Brise-bouclier** (massue, Fracas), **Colère du roi** | Gromm le Ventru (avec une chamane) |
 | 12 / 16 / 20 | La Citadelle Engloutie · Les Forges du Titan · L'Aire des Dragons | *aperçus* | à écrire | — |
 
-**Équilibrage (robots, 30 parties par case, victoires ; `node tests/donjons-sim.mjs 30`)** :
+**Équilibrage pour les NOUVELLES classes** (robots, 40 parties par case, victoires ; `node tests/donjons-sim.mjs 40`). Héros du niveau de la tranche, équipement correct.
+Équipe A = Guerrier Protection + Prêtre Sacré + Assassin Exécuteur · B = Templier Gardien + Druide Restauration + Guerrier Armes · C = Druide Gardien + Prêtre Discipline + Assassin Venin · duo = Guerrier Protection + Prêtre Sacré.
 
-| Donjon | anciennes classes | tank + soin + dps | avec venin | 3 tanks | duo | tank seul |
-| --- | --- | --- | --- | --- | --- | --- |
-| Caves Humides | 100 | 100 | 100 | 100 | 100 | 100 |
-| Crypte Oubliée | 90 | 97 | 100 | 100 | 100 | 100 |
-| Coupe-Jarrets | 73 | 100 | 97 | 100 | 100 | 100 |
-| Grouinval | 87 | 100 | 100 | 100 | 93 | 100 |
-| Profondeurs Déchues | 77 | 97 | 87 | 100 | 77 | 97 |
-| Sans-Repos | 37 | 100 | 67 | 97 | 87 | 97 |
-| Gouffre aux Ogres | 27 | 83 | 60 | **3** | 33 | **0** |
+| Donjon | A | B | C | 3 tanks | duo | tank seul | anciennes (réf.) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Caves Humides | 100 | 100 | 90 | 100 | 100 | 95 | 98 |
+| Crypte Oubliée | 98 | 95 | 80 | 95 | 90 | 83 | 43 |
+| Coupe-Jarrets | 88 | 95 | 88 | 70 | 93 | 95 | 23 |
+| Grouinval | 85 | 95 | 80 | 95 | 95 | 95 | 38 |
+| Profondeurs Déchues | 73 | 100 | 53 | 93 | 73 | 48 | 55 |
+| Sans-Repos | 75 | 98 | 60 | 83 | 55 | 50 | 20 |
+| Gouffre aux Ogres | 88 | 45 | 90 | **5** | 25 | **15** | 13 |
 
-- ✅ Le **Gouffre aux Ogres** fait ce qu'on voulait : une équipe équilibrée passe, trois tanks ou un tank seul n'y arrivent pas (la régénération et le brise-bouclier annulent leur lenteur).
-- ⚠ Partout ailleurs, **les tanks passent encore trop bien** (3 tanks ou un tank seul ~100 %) : c'est un réglage de classes (Bastion, Gardien), pas de donjons. Une « impatience » propre à un donjon (`enrageAfterRound`) a été essayée sur le Sanctuaire : elle punissait surtout les équipes lentes *sans* tank (venin : 67 → 25 %), elle a été retirée.
-- ⚠ Les **anciennes classes** peinent dans les deux donjons à mécaniques (27 à 37 %) : elles n'ont ni saignement fiable ni attaque à distance régulière.
-- ⚠ En **solo**, les donjons à mécaniques imposent 2 monstres par combat (`minMonsters`) : c'est plus dur qu'un donjon simple, exprès.
+Cibles : une équipe équilibrée gagne ~85-90 % en tranche 4, ~70-75 % en tranche 8 ; le Gouffre aux Ogres reste celui qui punit les mauvaises compositions.
+**Ce qui a changé** (avant, ces équipes gagnaient 93-100 % partout sauf aux Ogres) :
+- **Monstres renforcés** (attaque × / PV ×) : Crypte 1,25 / 1,28 · Coupe-Jarrets 1,15 / 1,15 · Grouinval 1,15 / 1,2 · Profondeurs 1,05 / 1,07 · Sanctuaire 1,1 / 1,15. Caves (débutants) et Gouffre aux Ogres inchangés.
+- **Le duo n'est plus avantagé** (`partyScaling` « 2 » dans `rules.json` : PV 0,75 → 0,85, attaque 0,8 → 0,87, PA 0,84 → 0,9) : un tank + un soigneur gagnait 98-100 % partout, mieux qu'un trio.
+- **Prêtre Discipline renforcé** (c'était lui qui faisait tomber l'équipe C) : Expiation 60 → 80 % (ombre 40 → 55 %), Rayonnement 1,1 → 1,4, bouclier 1,5 → 1,9.
+
+⚠ **Restent à surveiller en jouant** : l'équipe **B passe presque partout** (Templier Gardien + Druide Restauration : beaucoup de protection et de soin sur la durée) sauf aux Ogres (45 %) ; le **Discipline** reste faible au Sanctuaire ; les équipes de **3 tanks** passent encore la tranche 4 et les Profondeurs. Ce sont des réglages de **classes**, pas de donjons. Les anciennes classes (retirées) servent seulement de repère.
 
 **Ajouté ensuite** : ✅ **renforts** (le Roi des Rats appelle jusqu'à 2 rats, La Balafre un coupe-jarret ; ils ne rapportent rien) · ✅ **panoplies** (chaque table de butin est une panoplie : bonus à 2 pièces, puis à 3) · ✅ **collection** dans l'encyclopédie (donjons terminés, monstres vaincus, butin trouvé ; rien n'est caché, on voit ce qui manque).
 

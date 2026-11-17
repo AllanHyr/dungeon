@@ -60,7 +60,7 @@
   "partyScaling": {
     "_note": "Les monstres s'adaptent au NOMBRE de joueurs (jamais à leur niveau).",
     "1": {"count": [1, 1], "hp": 0.5, "atk": 0.7, "pa": 0.67},
-    "2": {"count": [1, 2], "hp": 0.75, "atk": 0.8, "pa": 0.84},
+    "2": {"count": [1, 2], "hp": 0.85, "atk": 0.87, "pa": 0.9},
     "3": {"count": [2, 3], "hp": 1.0, "atk": 1.0, "pa": 1.0},
     "4": {"count": [2, 4], "hp": 1.1, "atk": 1.0, "pa": 1.0}
   }

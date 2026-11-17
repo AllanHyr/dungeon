@@ -100,6 +100,8 @@ const profile = {
   await page.waitForSelector('.modal');
   await shot('34-inventaire-run');
   await page.keyboard.press('Escape');
+  await page.waitForSelector('.modal', { state: 'detached' }).catch(() => {});
+  await page.waitForSelector('.advance-card .btn-primary'); // (la fin du tour du butin peut prendre un instant)
 
   // ----- Scénario : coup bas
   await page.click('.advance-card .btn-primary');

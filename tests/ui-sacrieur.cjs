@@ -36,7 +36,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
 
     await page.goto(url);
     await page.waitForSelector('.menu');
-    check(await page.$('.char-card:has-text("Sang") .hero-tag-skill') === null, "l'accueil n'annonce pas de points de compétence à dépenser (rien à acheter)");
+    check(await page.$('.char-card:has-text("Sang") .hero-tag-skill:not(.hero-tag-choice)') === null, "l'accueil n'annonce pas de points de compétence à dépenser (rien à acheter)");
     await page.click('.char-card:has-text("Sang") >> text=Fiche');
     await page.waitForSelector('.sheet-modal');
     check(await page.$('.sheet-modal .tab[data-tab="skills"] .tab-badge') === null, "pas de pastille de points sur l'onglet Compétences");

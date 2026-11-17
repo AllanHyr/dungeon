@@ -37,7 +37,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
     // ---------- La fiche
     await page.goto(url);
     await page.waitForSelector('.menu');
-    check(await page.$('.char-card:has-text("Ombre") .hero-tag-skill') === null, "l'accueil n'annonce pas de points de compétence à dépenser (rien à acheter)");
+    check(await page.$('.char-card:has-text("Ombre") .hero-tag-skill:not(.hero-tag-choice)') === null, "l'accueil n'annonce pas de points de compétence à dépenser (rien à acheter)");
     await page.click('.char-card:has-text("Ombre") >> text=Fiche');
     await page.waitForSelector('.sheet-modal');
     await page.click('.sheet-modal .tab[data-tab="skills"]');

@@ -23,7 +23,7 @@ import { resolveMode } from '../fx.js';
 import { vignetteSvg, sceneCss, sceneIdFor } from '../art.js';
 import {
   computeStats, getCombatView, skillOf, activeSkillIds, checkUsable, needsPick, validTargets, skillWorksOutside,
-  itemPrice, shopPrice, sellPrice, canBeRevived, wornFor, unitById, totalShield, otherRow, rarityOf, waveInfo, farmZone, chestInfo, previewXpCapped
+  itemPrice, shopPrice, sellPrice, canBeRevived, wornFor, unitById, totalShield, otherRow, rarityOf, waveInfo, farmZone, chestInfo, previewXpCapped, campDeckOptions
 } from '../../core/index.js';
 
 const ROW_NAME = { front: 'avant', back: 'arrière' };
@@ -326,7 +326,9 @@ function unitCard(run, p) {
     p.alive
       ? hpBar(p.hp, stats.hpMax)
       : h('div', { class: 'ghost-note' }, icon('ghost', 16), p.resurrected ? 'Fantôme (déjà ressuscité une fois)' : 'Fantôme — peut encore aider'),
-    p.alive && p.statuses.length ? h('div', { class: 'chips' }, p.statuses.map(statusChip)) : null,
+    p.alive && (p.statuses.length || p.campBuffs?.length)
+      ? h('div', { class: 'chips' }, p.statuses.map(statusChip), unitEffects(c, p).filter((e) => e.kind === 'camp').map((e) => effectChip(e))) // (+ les bonus du feu de camp)
+      : null,
     p.hpMaxPenalty ? h('div', { class: 'small tone-bad' }, `PV max -${Math.round(p.hpMaxPenalty * 100)} % (jusqu'à la fin de la run)`) : null,
     p.cursedUid ? h('div', { class: 'small tone-bad' }, icon('curse', 12), ' Un objet est maudit') : null,
     ghostBtns.length ? h('div', { class: 'row gap wrap' }, ghostBtns) : null,
@@ -400,6 +402,7 @@ function scene(run) {
     case 'roll': wrap.append(tileCard(run, tile), sceneRoll(run, tile)); break;
     case 'choice': wrap.append(...sceneChoice(run, tile)); break;
     case 'shop': wrap.append(tileCard(run, tile), sceneShop(run, tile)); break;
+    case 'camp': wrap.append(tileCard(run, tile), sceneCamp(run, tile)); break;
     case 'combat': wrap.append(...sceneCombat(run)); break;
     case 'farm': wrap.append(...sceneFarmBreak(run)); break;
     default: wrap.append(h('p', null, 'État inconnu : ' + pend.kind));
@@ -550,6 +553,49 @@ function lootView(run) {
 }
 
 // ---------------- Marchand ----------------
+
+// ---------------- Feu de camp ----------------
+// Chacun à son tour (le héros dont c'est le tour au camp) : changer ses sorts équipés, puis choisir UNE activité.
+
+function sceneCamp(run, tile) {
+  const c = app.content;
+  const actor = playerById(run, run.pending.actor);
+  const mine = yourTurn(run);
+  const acts = Object.entries(c.rules.camp?.activities || {});
+  const size = c.rules.deckSize ?? 4;
+  const options = campDeckOptions(run, actor);
+  const deck = Array.isArray(actor.deck) ? actor.deck : options.slice(0, size);
+  const slotSelect = (i) => {
+    const cur = deck[i] || '';
+    return h('label', { class: 'camp-slot' },
+      h('span', { class: 'muted small' }, `Sort ${i + 1}`),
+      h('select', {
+        class: 'input', disabled: !mine, dataset: { slot: String(i) }, 'aria-label': `Sort équipé n° ${i + 1}`,
+        onChange: (e) => act({ type: 'CAMP_DECK', slot: i, skillId: e.target.value || null })
+      },
+        h('option', { value: '', selected: !cur }, '— libre —'),
+        options.map((id) => h('option', { value: id, selected: id === cur }, `${c.skills[id].name}${deck.includes(id) && id !== cur ? ' (déjà équipé)' : ''}`))));
+  };
+  const done = tile.done || {};
+  return h('div', { class: 'card camp-card' },
+    h('div', { class: 'row space center wrap' },
+      h('h3', null, 'Au coin du feu'),
+      h('div', { class: 'camp-roll' }, (tile.queue || []).map((id) => {
+        const p = playerById(run, id);
+        const what = done[id] ? c.rules.camp.activities[done[id]]?.name : null;
+        return h('span', { class: `chip-btn ${id === actor.id ? 'on' : ''} ${what ? 'is-done' : ''}`, title: what || (id === actor.id ? 'À son tour' : 'En attente') }, what ? icon('check', 13) : null, p.name);
+      }))),
+    h('p', null, mine
+      ? h('span', null, h('b', null, actor.name), ' : change tes sorts si tu veux, puis choisis une activité.')
+      : h('span', { class: 'muted' }, `${actor.name} est au coin du feu : à son tour de choisir.`)),
+    h('div', { class: 'camp-deck' },
+      h('h4', null, 'Sorts équipés'),
+      h('div', { class: 'camp-slots' }, Array.from({ length: size }, (_, i) => slotSelect(i)))),
+    h('div', { class: 'camp-acts' }, acts.map(([id, a]) => h('button', {
+      type: 'button', class: 'camp-act', dataset: { activity: id }, disabled: !mine,
+      onClick: () => { play('click'); act({ type: 'CAMP_ACT', activity: id }); }
+    }, icon(a.icon || 'star', 26), h('b', null, a.name), h('span', { class: 'muted small' }, a.desc)))));
+}
 
 function sceneShop(run, tile) {
   const c = app.content;

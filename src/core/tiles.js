@@ -9,7 +9,7 @@
 
 import { randInt } from './rng.js';
 import {
-  log, headline, social, getPlayer, livingPlayers, ghosts, assert, clamp
+  log, headline, social, getPlayer, livingPlayers, ghosts, assert, clamp, emit, currentTile
 } from './util.js';
 import { decider, queueLoot, finishTile } from './flow.js';
 import { applyDamage, addStatus, healUnit, reviveUnit, canBeRevived } from './units.js';
@@ -383,6 +383,101 @@ const merchant = {
 };
 
 // ============================================================
+//  Feu de camp
+// ============================================================
+// Chaque héros VIVANT, à son tour (en partant de celui sous les projecteurs), peut changer ses sorts équipés (CAMP_DECK)
+// puis choisit UNE activité (CAMP_ACT) : se reposer, affûter ses armes, monter la garde (rules.json > camp).
+// Un bonus de camp dure quelques COMBATS (`campBuffs` du héros) : il compte comme un modificateur (stats.js).
+
+/** Les héros qui vont camper, dans l'ordre : celui sous les projecteurs d'abord, puis les suivants. */
+function campOrder(state) {
+  const first = decider(state);
+  const n = state.players.length;
+  const start = Math.max(0, state.players.indexOf(first));
+  const out = [];
+  for (let k = 0; k < n; k++) {
+    const p = state.players[(start + k) % n];
+    if (p.alive) out.push(p.id);
+  }
+  return out;
+}
+
+const camp = {
+  onReveal(state, tile) {
+    tile.queue = campOrder(state);
+    tile.done = {};
+    headline(state, 'Un feu de camp : chacun peut changer ses sorts et choisir une activité.', 'good');
+    nextCamper(state, tile);
+  }
+};
+
+/** Au suivant de camper, ou on lève le camp. */
+function nextCamper(state, tile) {
+  const next = tile.queue.find((id) => !tile.done[id] && getPlayer(state, id)?.alive);
+  if (!next) {
+    log(state, 'Le groupe lève le camp.', 'info');
+    finishTile(state);
+    return;
+  }
+  state.phase = 'tile';
+  state.pending = { kind: 'camp', actor: next };
+}
+
+/** Les sorts qu'un héros peut équiper au camp : ses sorts actifs (pas le sort de classe, pas une version évoluée, de sa spécialisation). */
+export function campDeckOptions(state, p) {
+  const c = state.content;
+  const cls = c.classes[p.classId];
+  return p.skills.filter((id) => {
+    const sk = c.skills[id];
+    return sk && sk.type === 'active' && !sk.replaces && id !== cls.classSkill && sk.classId === p.classId && (!sk.spec || sk.spec === p.spec) && (sk.level ?? 1) <= p.effLevel;
+  });
+}
+
+/** Change UN emplacement du deck (slot 0 à 3) : `skillId` à mettre, ou null pour le vider. */
+export function campDeck(state, a) {
+  const pend = state.pending;
+  assert(pend?.kind === 'camp', "Ce n'est pas le moment de changer ses sorts.");
+  const p = getPlayer(state, pend.actor);
+  const size = state.content.rules.deckSize ?? 4;
+  const slot = Number(a.slot);
+  assert(Number.isInteger(slot) && slot >= 0 && slot < size, 'Emplacement invalide.');
+  const deck = Array.isArray(p.deck) ? p.deck.slice() : campDeckOptions(state, p).slice(0, size);
+  const id = a.skillId ?? null;
+  if (id !== null) {
+    assert(typeof id === 'string' && campDeckOptions(state, p).includes(id), 'Ce sort ne peut pas être équipé.');
+    const other = deck.indexOf(id);
+    if (other >= 0) deck.splice(other, 1); // (déjà équipé ailleurs : il change de place)
+  }
+  while (deck.length < size) deck.push(null);
+  deck[slot] = id;
+  p.deck = deck.filter(Boolean);
+  log(state, id ? `${p.name} équipe ${state.content.skills[id].name}.` : `${p.name} retire un sort de sa barre.`, 'info');
+}
+
+/** L'activité du héros au camp, puis au suivant. */
+export function campAct(state, a) {
+  const pend = state.pending;
+  assert(pend?.kind === 'camp', 'Pas de feu de camp ici.');
+  const act = state.content.rules.camp?.activities?.[a.activity];
+  assert(act, 'Activité inconnue.');
+  const p = getPlayer(state, pend.actor);
+  const tile = currentTile(state);
+  if (act.healPct) {
+    const real = healUnit(state, p, p, unitStats(state, p).hpMax * act.healPct);
+    p.statuses = p.statuses.filter((st) => st.id !== 'poison');
+    log(state, `${p.name} se repose près du feu (+${real} PV).`, 'good');
+  }
+  if (act.stat) {
+    p.campBuffs = (p.campBuffs || []).filter((b) => b.id !== a.activity);
+    p.campBuffs.push({ id: a.activity, name: act.name, stat: act.stat, pct: act.pct, combats: act.combats ?? 1 });
+    log(state, `${p.name} : ${act.name.toLowerCase()} (${act.desc}).`, 'good');
+  }
+  emit(state, { type: 'camp', target: p.id, activity: a.activity });
+  tile.done[p.id] = a.activity;
+  nextCamper(state, tile);
+}
+
+// ============================================================
 //  Registre : type de case -> comportement
 // ============================================================
 export const tileHandlers = {
@@ -393,5 +488,6 @@ export const tileHandlers = {
   xp_fountain: xpFountain,
   life_fountain: lifeFountain,
   low_blow: lowBlow,
-  merchant
+  merchant,
+  camp
 };

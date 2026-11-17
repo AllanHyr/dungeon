@@ -115,6 +115,11 @@ export function unitEffects(content, unit, state = null) {
       desc: `Absorbe ${Math.round(shield)} dégâts avant que les PV soient touchés. Il ne compte pas comme des PV.` });
   }
   for (const st of unit.statuses || []) out.push({ kind: 'status', ...statusInfo(st) });
+  // Les bonus du FEU DE CAMP : quelques combats
+  for (const b of unit.campBuffs || []) {
+    out.push({ kind: 'camp', id: 'camp', key: `camp:${b.id}`, name: b.name, short: b.name, icon: STAT_ICON[b.stat] || 'flame', tone: 'buff', turns: null,
+      desc: `${describeMods([b])}, encore ${b.combats} combat${b.combats > 1 ? 's' : ''} (feu de camp).` });
+  }
   // Les PARTICULARITÉS d'un monstre (régénération, riposte...) : permanentes, propres à son espèce.
   if (unit.kind === 'monster') {
     for (const id of unit.passives || []) {

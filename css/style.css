@@ -1869,3 +1869,16 @@ html.fx-playing .run { pointer-events: none; } /* (le temps d'une animation : un
 .hero-delete:hover:not(:disabled) { color: #ff8a7a; border-color: #b0614f; }
 .delete-who { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
 .delete-who b { font-family: var(--serif); font-size: 1.15rem; }
+
+/* ---------- Feu de camp ---------- */
+.camp-card h4 { margin: 10px 0 6px; font-family: var(--serif); font-size: 0.82rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brass-3); }
+.camp-roll { display: flex; flex-wrap: wrap; gap: 6px; }
+.camp-roll .is-done { opacity: 0.7; }
+.camp-slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.camp-slot { display: grid; gap: 3px; min-width: 0; }
+.camp-slot select { width: 100%; min-width: 0; box-sizing: border-box; }
+.camp-acts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 14px; }
+.camp-act { display: grid; justify-items: center; gap: 4px; text-align: center; padding: 14px 10px; border-radius: 12px; border: 1px solid var(--brass); background: linear-gradient(180deg, rgba(255, 154, 58, 0.12), var(--ink-3)); cursor: pointer; color: inherit; }
+.camp-act:hover:not(:disabled) { border-color: var(--lantern); box-shadow: 0 0 18px rgba(245, 168, 59, 0.2); }
+.camp-act:disabled { opacity: 0.5; cursor: default; }
+.camp-act svg { color: var(--brass-4); }

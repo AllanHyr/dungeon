@@ -210,11 +210,14 @@ Dans `data/classes.json` (id `druide` : une ancienne sauvegarde de Druide reste 
 - **Équilibre des rôles** : tanks (Sacrieur, Templier, Guerrier, Druide) en nombre ; tenir le compte au fur et à mesure.
 - **18+ spécialisations** : commencer par 2 classes terminées plutôt que 6 à moitié.
 
-## 4. Feu de camp et événements (idées de la session 3)
-- **Feu de camp** : nouvelle case (comme `merchant`), avec un budget d'actions limité (façon Darkest Dungeon, sans le stress) : se reposer (PV), **changer ses sorts équipés**, manger (buff de nourriture pour la suite du donjon). 🟡
-  - Position : au moins un camp **garanti** à mi-parcours (si on ne change de sorts qu'en donjon, il doit être fiable), plus éventuellement des camps aléatoires.
-  - Variantes plus tard : un PNJ rare qui apparaît (changement de sorts / spé), des rencontres de camp.
-  - ⚠ À plusieurs (salons) : chaque joueur doit pouvoir agir au camp, avec le minuteur du serveur.
+## 4. Feu de camp ✅ *(premier jet)* et événements
+- ✅ **Feu de camp** : une case (`camp`) **garantie au milieu de chaque donjon** (une tranche ou un donjon peut l'enlever : `"camp": false`). Chaque héros **vivant**, à son tour (celui sous les projecteurs d'abord — à plusieurs, chacun joue son héros avec le minuteur du serveur), peut **changer ses sorts équipés** (un emplacement à la fois, parmi ses sorts actifs) puis choisit **une activité** :
+  - **Se reposer** : 35 % des PV max, et plus de poison ;
+  - **Affûter ses armes** : +12 % de dégâts pendant les **2 prochains combats** ;
+  - **Monter la garde** : −12 % de dégâts reçus pendant les 2 prochains combats.
+  Tout se règle dans `rules.json` (`camp.activities`). Le bonus s'affiche sur la carte du héros ; le deck choisi au camp est **gardé après la partie**. Le pilote automatique (joueur absent) se repose.
+  Effet sur l'équilibrage (robots) : +3-4 points de victoire au niveau 8, rien de notable en tranche 4.
+- Pistes : un **repas** (bonus de nourriture pour tout le groupe), un **PNJ rare** au camp (changer de spécialisation), des **rencontres de camp** (une embuscade pendant le repos ?), un camp aléatoire en plus dans les longs donjons.
 
 ## 4 bis. Le coup bas : à revoir
 - **Constat** (lu dans `src/core/tiles.js` et `data/events.json`) : 4 malus purs (poison, −25 % PV, assommer, maudire un objet) contre un allié ; risque de retour de bâton sur un jet ≤ 5. **Aucun gain pour celui qui frappe.** Et **en solo (un seul héros) il n'y a aucune cible** : la case ne propose que « ne rien faire ».
@@ -237,7 +240,7 @@ Dans `data/classes.json` (id `druide` : une ancienne sauvegarde de Druide reste 
    - Les spécialisations du Duelliste sont des **exemples** (palier 4 seulement) : elles seront remplacées par les vraies classes.
    - ✅ Fait depuis : le **palier 8** des spés (un choix parmi trois), les **cumuls de venin** (`dot` `stack`), la **marque**, les **auras de groupe**, le choix d'un mode par menu (`pick`).
    - ✅ Fait depuis : l'**écran de présentation de classe à la création** (rôles, sort de classe, ressource ou formes / postures / auras, passif, sorts de départ, 3 spécialisations et leur ultime : tout est lu dans classes.json), le statut **anti-soin** (blessure profonde du Guerrier : stat `healTaken`).
-   - ❌ Pas encore fait : le **palier 12** et le **niveau 20** des spés (aujourd'hui des aperçus), le **feu de camp** (changer de sorts en donjon).
+   - ❌ Pas encore fait : le **palier 12** et le **niveau 20** des spés (aujourd'hui des aperçus), ~~le feu de camp~~ ✅ (voir §4).
 3. Avec les classes : statuts « de classe ». ✅ mode (Sacrieur), marque (Assassin, dont les sorts atteignent tous les rangs), aura (Templier), forme (Prêtre : lumière / ombre). posture (Guerrier), forme (Druide : sorts réservés à une forme).
 4. (Plus tard) **Créatures invoquées**, puis le Nécromancien (école du Mage).
 

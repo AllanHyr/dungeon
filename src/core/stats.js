@@ -68,6 +68,7 @@ export function collectModifiers(state, unit) {
     for (const id of unit.passives || []) out.push(...(c.skills[id]?.modifiers || []));
   }
   for (const st of unit.statuses) if (st.id === 'mod') out.push({ stat: st.stat, pct: st.pct, flat: st.flat });
+  for (const b of unit.campBuffs || []) out.push({ stat: b.stat, pct: b.pct }); // (bonus du feu de camp : quelques combats)
   for (const a of auraSources(state, unit)) out.push(...a.mods);
   return out;
 }

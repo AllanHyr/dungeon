@@ -7,7 +7,7 @@ import {
   canLearnSkill, skillRequirements, resetSkills, getCombatView, validTargets, resolveDice, skillOf, totalShield, checkUsable,
   createFarm, applyFarmResult, openChest, chestInfo, addXpCapped, checkAchievements, hasFeature, gearLevel, achievementProgress, titlesOf, waveInfo,
   EQUIP_SLOTS, slotsFor, planEquip, equipFromBag, unequipToBag, twoHandedWorn, applyCharacterAction, CHARACTER_ACTIONS, cleanName,
-  afkAction, whoMustAct, turnKey, xpForNext
+  afkAction, whoMustAct, turnKey, xpForNext, campDeckOptions
 } from '../src/core/index.js';
 import { dungeonsOf, dungeonIdOf, dungeonRules, canBeRaised, activeSets } from '../src/core/index.js';
 import { hotkeyIndex, keyLabel, learnKey } from '../src/ui/keys.js';
@@ -23,7 +23,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { rollFarmItem } from '../src/core/farm.js';
 import { rollItem, rollShopItem } from '../src/core/loot.js';
-import { makeMonster, spawnMonsters, planMonsters } from '../src/core/combat.js';
+import { makeMonster, spawnMonsters, planMonsters, endCombat } from '../src/core/combat.js';
 import { nextFloat } from '../src/core/rng.js';
 import { reviveUnit, applyDamage } from '../src/core/units.js';
 import { castSkill, dealDamage, applyEffect, fireTriggers, targetDamagePct } from '../src/core/effects.js';
@@ -523,9 +523,10 @@ test('les coups bas ne touchent JAMAIS le personnage sauvegardé', () => {
   assert(s.players.some((p) => p.cursedUid), 'un objet est maudit dans la run');
   eq(JSON.stringify(chars), before, 'personnage intact');
   const victim = s.players.find((p) => p.cursedUid);
-  const withCurse = computeStats(s, victim).atk + computeStats(s, victim).def;
+  const total = () => { const st = computeStats(s, victim); return st.hpMax + st.atk + st.def + st.heal + st.ini + st.luck + st.save + st.pa; };
+  const withCurse = total();
   victim.cursedUid = null;
-  assert(computeStats(s, victim).atk + computeStats(s, victim).def > withCurse, 'la malédiction retire les bonus');
+  assert(total() > withCurse, 'la malédiction retire les bonus');
 });
 test('les coups bas peuvent rebondir (jet de 5 ou moins)', () => {
   let rebounds = 0, successes = 0;
@@ -3715,6 +3716,95 @@ console.log('\n● Druide : formes, sorts réservés à une forme, rangs');
     const ch = sanitizeProfile(real, { characters: [{ id: 'a', name: 'Pip', classId: 'druide', level: 5, skills: ['druide_rosee', 'druide_racines'] }] }).characters[0];
     eq([ch.classId, ch.level], ['druide', 5]);
     assert(ch.skills.every((id) => real.skills[id]?.classId === 'druide') && !ch.skills.includes('druide_rosee'), 'les anciens sorts disparaissent');
+  });
+}
+
+console.log('\n● Feu de camp');
+{
+  /** Une run de 2 héros (niveau 6, tranche 4), arrêtée juste devant le feu de camp. */
+  const atCamp = (seed = 7) => {
+    const chars = makeParty(content, ['guerrier', 'pretre'], 6, 'decent', seed);
+    const s = createRun(content, { tranche: 4, mode: 'tranche' }, chars, seed);
+    const i = s.dungeon.board.findIndex((t) => t.type === 'camp');
+    s.dungeon.position = i - 1;
+    assert(dispatch(s, { type: 'ADVANCE' }).ok);
+    return { s, chars };
+  };
+
+  test('un feu de camp est GARANTI au milieu de chaque donjon (et un seul) ; « camp »: false l\'enlève', () => {
+    for (const d of content.dungeonList.filter((x) => x.available !== false)) {
+      for (let seed = 1; seed <= 5; seed++) {
+        const s = createRun(content, { tranche: d.tranche, dungeon: d.id, mode: 'tranche' }, makeParty(content, ['sacrieur', 'pretre'], d.tranche, 'none', seed), seed);
+        const b = s.dungeon.board;
+        eq(b.filter((t) => t.type === 'camp').length, 1, `${d.id} : un seul camp`);
+        eq(b[Math.floor((b.length - 1) / 2)].type, 'camp', `${d.id} : au milieu`);
+        assert(b.filter((t) => t.type === 'combat').length >= 4, 'les combats garantis sont toujours là');
+      }
+    }
+    const raw = loadRaw();
+    raw.tranches.tranches.find((t) => t.id === 1).camp = false;
+    const c2 = buildContent(raw);
+    const s = createRun(c2, { tranche: 1, mode: 'tranche' }, makeParty(c2, ['sacrieur'], 1, 'none', 1), 1);
+    eq(s.dungeon.board.filter((t) => t.type === 'camp').length, 0, 'sans camp');
+  });
+
+  test('au camp, chaque héros VIVANT choisit à son tour (celui sous les projecteurs d\'abord) ; ensuite on lève le camp', () => {
+    const { s } = atCamp();
+    eq(s.pending.kind, 'camp');
+    const first = s.pending.actor;
+    assert(!dispatch(s, { type: 'CAMP_ACT', activity: 'danser' }).ok, 'activité inconnue refusée');
+    assert(dispatch(s, { type: 'CAMP_ACT', activity: 'sharpen' }).ok);
+    const second = s.pending.actor;
+    assert(s.pending.kind === 'camp' && second !== first, 'au suivant');
+    const p2 = s.players.find((p) => p.id === second);
+    p2.hp = 5;
+    p2.statuses.push({ id: 'poison', pct: 0.05, turns: 3 });
+    assert(dispatch(s, { type: 'CAMP_ACT', activity: 'rest' }).ok);
+    assert(p2.hp > 5 && !p2.statuses.some((x) => x.id === 'poison'), 'se reposer soigne et retire le poison');
+    eq(s.pending.kind, 'advance', 'tout le monde a choisi : on lève le camp');
+    // un héros mort ne campe pas
+    const { s: s2 } = atCamp(9);
+    const other = s2.players.find((p) => p.id !== s2.pending.actor);
+    other.alive = false;
+    assert(dispatch(s2, { type: 'CAMP_ACT', activity: 'rest' }).ok);
+    eq(s2.pending.kind, 'advance', 'le fantôme ne campe pas');
+  });
+
+  test('« Affûter ses armes » : +12 % de dégâts pendant 2 combats, puis plus rien', () => {
+    const { s } = atCamp();
+    const p = s.players.find((x) => x.id === s.pending.actor);
+    const before = computeStats(s, p).damage;
+    dispatch(s, { type: 'CAMP_ACT', activity: 'sharpen' });
+    assert(Math.abs(computeStats(s, p).damage - before - 0.12) < 1e-9, 'dégâts +12 %');
+    const chip = unitEffects(content, p).find((e) => e.kind === 'camp');
+    assert(chip && /2 combats/.test(chip.desc), JSON.stringify(chip));
+    // deux fins de combat
+    for (let k = 0; k < 2; k++) { s.combat = { monsters: [], round: 1 }; endCombat(s); }
+    assert(!(p.campBuffs || []).length && Math.abs(computeStats(s, p).damage - before) < 1e-9, 'le bonus est parti après 2 combats');
+  });
+
+  test('changer ses sorts au camp : un emplacement à la fois, seulement ses sorts ; le nouveau deck est gardé après la partie', () => {
+    const { s, chars } = atCamp();
+    const p = s.players.find((x) => x.id === s.pending.actor);
+    const ch = chars.find((c) => c.id === p.charId);
+    const opts = campDeckOptions(s, p);
+    const fresh = opts.find((id) => !p.deck.includes(id));
+    assert(fresh, 'un sort à équiper');
+    assert(!dispatch(s, { type: 'CAMP_DECK', slot: 0, skillId: 'sacrieur_carapace' }).ok, 'pas le sort d\'une autre classe');
+    assert(!dispatch(s, { type: 'CAMP_DECK', slot: 9, skillId: fresh }).ok, 'emplacement invalide');
+    assert(!dispatch(s, { type: 'CAMP_DECK', slot: 0, skillId: content.classes[p.classId].classSkill }).ok, 'pas le sort de classe');
+    assert(dispatch(s, { type: 'CAMP_DECK', slot: 3, skillId: fresh }).ok);
+    eq(p.deck[3], fresh);
+    // la partie se termine (victoire) : le personnage garde ce deck
+    s.phase = 'ended';
+    s.result = { won: true, outcome: 'victory', applied: false, players: s.players.map((x) => ({ charId: x.charId, playerId: x.id, xp: { total: 0 } })) };
+    applyRunResult(content, chars, s);
+    assert(ch.deck.includes(fresh), `le deck du personnage garde ${fresh}`);
+  });
+
+  test('le pilote automatique se repose au camp (un joueur absent n\'y bloque pas le groupe)', () => {
+    const { s } = atCamp();
+    eq(afkAction(s), { type: 'CAMP_ACT', activity: 'rest' });
   });
 }
 

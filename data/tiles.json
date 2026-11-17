@@ -57,6 +57,15 @@
         "L'ombre vous murmure à l'oreille : « Et si... ? »"
       ]
     },
+    "camp": {
+      "name": "Feu de camp",
+      "icon": "flame",
+      "flavor": [
+        "Une alcôve à l'abri des courants d'air, des pierres noircies : d'autres ont campé ici avant vous.",
+        "Un vieux foyer, du bois sec à portée de main. Le groupe peut souffler un moment.",
+        "Le silence, enfin. Une flamme, et chacun s'occupe comme il l'entend."
+      ]
+    },
     "merchant": {
       "name": "Marchand",
       "icon": "merchant",

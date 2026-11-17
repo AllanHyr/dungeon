@@ -333,6 +333,8 @@ export function endCombat(state) {
   for (const p of state.players) {
     clearCombatStatuses(p);
     p.resources = {};
+    // (les bonus du feu de camp durent quelques combats)
+    if (p.campBuffs?.length) p.campBuffs = p.campBuffs.map((b) => ({ ...b, combats: b.combats - 1 })).filter((b) => b.combats > 0);
   }
 
   let xp = 0;

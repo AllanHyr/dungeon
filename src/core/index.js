@@ -21,7 +21,7 @@ export {
   skillOf, activeSkillIds, skillGroup, skillPaCost, checkUsable, checkUsable as skillUsable, validTargets, needsPick, needsModePick, modeOptions, resolveDice, skillWorksOutside
 } from './skills.js';
 export { canEquip, slotsFor, planEquip, equipFromBag, unequipToBag, wornFor, twoHandedWorn, itemPrice, itemSummary, itemDef, rarityOf } from './items.js';
-export { shopPrice } from './tiles.js';
+export { shopPrice, campDeckOptions } from './tiles.js';
 export { sellPrice } from './inventory.js';
 export { canBeRevived, canBeRaised, totalShield } from './units.js';
 export { unitById, otherRow } from './geometry.js';

@@ -344,8 +344,36 @@ function boss(u) {
   return svgOf(360, 120, defs, inner);
 }
 
+
+/** Le feu de camp : un foyer de pierres au milieu, des bûches, des sacs posés, la lueur chaude qui repousse le noir. */
+function camp(u) {
+  const defs = vignetteBase(u, '#1e130c', '#060403', '#ff9a3a', [180, 74], 0.6) + [
+    lin(`${u}log`, [[0, '#6a4426'], [1, '#2a170a']], [0, 0, 0, 1]),
+    lin(`${u}hearth`, [[0, '#6a625a'], [1, '#26221e']], [0, 0, 0, 1]),
+    lamp(u, 'fl', '#ffc86a', 0.8),
+    lin(`${u}bag`, [[0, '#7a5a3a'], [1, '#2e1e10']], [0, 0, 0, 1]),
+    lamp(u, 'fire', '#ffb04a', 0.95)
+  ].join('');
+  const stones = [[150, 96], [162, 100], [176, 102], [190, 102], [204, 100], [214, 96]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="8" ry="4.6" fill="url(#${u}hearth)"/>`).join('');
+  const sparks = [[172, 34], [186, 26], [196, 40], [166, 46], [204, 22]].map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${1 + (i % 2) * 0.6}" fill="#ffd27a" opacity="${0.5 + (i % 3) * 0.15}"/>`).join('');
+  const inner = `
+<rect width="360" height="120" fill="url(#${u}bg)"/>${wall(u, '#ffc890')}
+<circle cx="182" cy="76" r="120" fill="url(#${u}fire)"/>
+<path d="M0 98 C60 92 120 100 180 96 C240 92 300 100 360 96 V120 H0 Z" fill="#0a0604"/>
+<!-- sacs et couverture posés près du feu -->
+<path d="M70 104 C66 88 74 78 86 78 C98 78 104 88 102 104 Z" fill="url(#${u}bag)"/><path d="M78 80 C82 74 92 74 96 80" fill="none" stroke="#a07a4a" stroke-width="1.4"/>
+<path d="M262 106 C270 96 300 94 316 100 C306 108 278 110 262 106 Z" fill="#5a2a22"/><path d="M266 104 C280 100 298 99 312 101" fill="none" stroke="#a8584a" stroke-width="1" opacity=".7"/>
+<!-- bûches en croix -->
+<path d="M150 98 L212 84" stroke="url(#${u}log)" stroke-width="8" stroke-linecap="round"/><path d="M152 84 L214 98" stroke="url(#${u}log)" stroke-width="8" stroke-linecap="round"/>
+${stones}
+<!-- les flammes -->
+${flame(u, 182, 70, 2.4)}${flame(u, 170, 78, 1.4)}${flame(u, 195, 78, 1.5)}
+${sparks}`;
+  return svgOf(360, 120, defs, inner);
+}
+
 export const VIGNETTES = {
-  treasure, trap, merchant, low_blow, combat, boss,
+  treasure, trap, merchant, low_blow, combat, boss, camp,
   xp_fountain: (u) => fountain(u),
   life_fountain: (u) => fountain(u, { life: true })
 };

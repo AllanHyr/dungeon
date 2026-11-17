@@ -19,7 +19,7 @@ import { effectiveLevel, computeStats } from './stats.js';
 import { generateBoard } from './board.js';
 import { newPlayerStats } from './journal.js';
 import { startTurn, resolveLootChoice, finishTile } from './flow.js';
-import { tileHandlers } from './tiles.js';
+import { tileHandlers, campDeck, campAct } from './tiles.js';
 import { playerAction, timeoutTurn, useConsumable, startCombat, spawnTrainingDummies } from './combat.js';
 import { startFarmWave, farmNext } from './farm.js';
 import { castSkill } from './effects.js';
@@ -357,6 +357,13 @@ function handle(state, a) {
     case 'SHOP_SELL':
       shopSell(state, a);
       break;
+    case 'CAMP_DECK': // feu de camp : changer un sort équipé (le héros dont c'est le tour au camp)
+      campDeck(state, a);
+      break;
+    case 'CAMP_ACT': // feu de camp : son activité (se reposer, affûter, monter la garde)
+      campAct(state, a);
+      break;
+
     case 'SHOP_LEAVE':
       assert(pend?.kind === 'shop', 'Pas de marchand ici.');
       log(state, 'Le groupe quitte le marchand.', 'info');

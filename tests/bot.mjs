@@ -256,6 +256,12 @@ export function chooseAction(state, rand, combatMode = 'smart', opts = {}) {
       }
       return { type: 'SHOP_LEAVE' };
     }
+    case 'camp': {
+      // Feu de camp : se reposer si on est blessé, sinon affûter ses armes (un tank monte la garde).
+      const me = state.players.find((x) => x.id === p.actor);
+      if (hpRatio(state, me) < 0.7) return { type: 'CAMP_ACT', activity: 'rest' };
+      return { type: 'CAMP_ACT', activity: state.content.classes[me.classId].role === 'tank' ? 'watch' : 'sharpen' };
+    }
     case 'combat':
       return combatAction(state, p.actor, rand, combatMode);
     case 'farm': {

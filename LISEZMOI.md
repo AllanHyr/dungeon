@@ -81,7 +81,7 @@ node server/server.mjs        # Node 22.13 ou plus récent, rien à installer ->
    Chaque donjon dit tout de suite s'il convient à l'équipe : *Adapté*, *Risqué* ou *Très dangereux*. Les étiquettes sur un héros disent ce qu'il y a à faire (points de compétence à dépenser, coffre à ouvrir).
    *(En ligne, chaque joueur amène UN héros dans un salon ; l'équipe de 1 à 4 héros sert à jouer seul, hors ligne.)*
 2. Chaque tour : le joueur sous les projecteurs clique **Avancer**, lance le **D20**, puis décide.
-3. Cases possibles : combat, trésor, piège, fontaine d'XP, fontaine de vie (rare), coup bas, marchand, et le boss à la fin.
+3. Cases possibles : combat, trésor, piège, fontaine d'XP, fontaine de vie (rare), coup bas, marchand, un **feu de camp garanti au milieu** (chacun peut changer ses sorts équipés et choisir : se reposer, affûter ses armes ou monter la garde), et le boss à la fin.
    *(Ou, sur l'accueil, l'onglet **Zone de farm solo** : un seul personnage, des vagues de monstres, un coffre — voir §3.)*
 4. Un mort devient **fantôme** : il peut encore aider. Il peut être ressuscité (fontaine de vie ou compétence du Veilleur), **une seule fois par run**.
 5. **L'équipement** : 14 emplacements (tête, épaules, dos, torse, mains, ceinture, jambes, pieds, cou, 2 anneaux, relique, main droite et main gauche). Une arme à
@@ -323,7 +323,7 @@ dans un JSON, le jeu affiche une erreur en français qui dit où chercher.
 ## 6. Les tests
 
 ```bash
-node tests/run-tests.mjs        # 244 tests de règles (PA, rangs, dés, boucliers, passifs, donjons à thème et mécaniques de monstres, butin exclusif, description des bonus et malus, marque et venin de l'Assassin, puissance sacrée et auras du Templier, formes et Expiation du Prêtre, rage, postures et blessure profonde du Guerrier, formes du Druide, équipement à 14 emplacements, raccourcis clavier, farm, coffre, succès, actions sur les personnages, niveau effectif, stasis, coups bas, sauvegarde, pilote automatique...)
+node tests/run-tests.mjs        # 249 tests de règles (PA, rangs, dés, boucliers, passifs, donjons à thème et mécaniques de monstres, butin exclusif, description des bonus et malus, marque et venin de l'Assassin, puissance sacrée et auras du Templier, formes et Expiation du Prêtre, rage, postures et blessure profonde du Guerrier, formes du Druide, feu de camp, équipement à 14 emplacements, raccourcis clavier, farm, coffre, succès, actions sur les personnages, niveau effectif, stasis, coups bas, sauvegarde, pilote automatique...)
 node tests/server-api.mjs       # 36 tests du SERVEUR (sans navigateur : on parle à l'API) : comptes, sessions, mots de passe, limites anti-abus, tricheries refusées, parties complètes jouées par un robot, fichiers publics, outil d'administration
 node tests/server-rooms.mjs     # 21 tests des SALONS (sans navigateur) : un héros par compte, prêt / réglages / retirer / quitter, parties à 2-3 joueurs jouées par des robots, tricheries refusées, rien de secret envoyé, temps réel, minuteur du serveur, redémarrage
 node tests/fuzz.mjs 1000        # 1000 parties (avec un donjon, des spécialisations et des talents tirés au hasard), salles d'entraînement et sessions de farm « chaotiques » : aucune erreur attendue (et une action refusée ne change jamais l'état)
@@ -358,6 +358,7 @@ node tests/ui-pretre.cjs http://localhost:8765/ /tmp   # le Prêtre : fiche (3 s
 node tests/ui-guerrier.cjs http://localhost:8765/ /tmp # le Guerrier : fiche (3 spés, sorts évolués, palier 8), combat (rage, Exécution grisée, choix de la posture, blessure profonde), téléphone
 node tests/ui-druide.cjs http://localhost:8765/ /tmp   # le Druide : fiche (3 spés, sorts évolués, palier 8), combat (choix de la forme, changement de rang, sorts grisés hors de leur forme), téléphone
 node tests/ui-personnages.cjs http://localhost:8765/ /tmp # les places de personnages (8 par défaut) et la suppression d'un héros (corbeille sur sa carte, confirmation en tapant son nom), téléphone
+node tests/ui-camp.cjs http://localhost:8765/ /tmp       # le feu de camp : au milieu du donjon, chacun change ses sorts puis choisit une activité (repos, affûter, garde), téléphone
 node tests/ui-assassin.cjs http://localhost:8765/ /tmp # l'Assassin : fiche (sorts évolués selon la spé, palier 8), combat (Marque gratuite puis 1 PA, proie marquée, venin cumulable), téléphone
 node tests/ui-sacrieur.cjs http://localhost:8765/ /tmp # le Sacrieur : fiche (sort de classe, deck, spécialisations automatiques), combat (modes Endurance / Fureur, Pacte de sang), téléphone
 node tests/ui-barre.cjs http://localhost:8765/ /tmp    # la barre de combat en trois blocs : corps à corps, sort de classe, deck et emplacements libres, touches, téléphone

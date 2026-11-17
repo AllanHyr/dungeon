@@ -6,6 +6,7 @@
 // En cas de défaite ou d'abandon : on perd la progression de la run et le loot
 // non récupéré, mais JAMAIS le personnage ni son équipement.
 
+import { pruneDeck } from './progression.js';
 import { EQUIP_SLOTS, dungeonRules, dungeonIdOf } from './content.js';
 import { addXp, levelFactor, previewXp } from './progression.js';
 import { buildJournal } from './journal.js';
@@ -131,6 +132,13 @@ export function applyRunResult(content, characters, state) {
     // Le sac de la run devient l'inventaire du personnage (butin récupéré, objets achetés...).
     ch.inventory = p.bag.map((it) => ({ uid: it.uid, id: it.id }));
     for (const slot of EQUIP_SLOTS) ch.equipment[slot] = p.equipment[slot] ? { uid: p.equipment[slot].uid, id: p.equipment[slot].id } : null;
+    // Les sorts équipés au feu de camp restent équipés après la partie (seulement ceux que le personnage peut équiper).
+    if (Array.isArray(p.deck) && Array.isArray(ch.deck) && p.deck.join() !== ch.deck.join()) {
+      const before = ch.deck;
+      ch.deck = p.deck.slice();
+      pruneDeck(content, ch);
+      if (!ch.deck.length) ch.deck = before;
+    }
   }
   res.applied = true;
 }

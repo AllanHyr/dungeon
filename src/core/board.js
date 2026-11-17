@@ -44,6 +44,12 @@ export function generateBoard(state, partySize) {
     board.push(makeTile(state, i, type));
   }
 
+  // Le FEU DE CAMP : garanti au milieu du donjon (on peut l'enlever : "camp": false dans la tranche ou le donjon).
+  if (c.tiles.camp && tranche.camp !== false && length >= 5) {
+    const mid = Math.floor((length - 1) / 2);
+    board[mid] = makeTile(state, mid, 'camp');
+  }
+
   // Garanties : au moins quelques combats et au moins un trésor.
   ensureAtLeast(state, board, tranche, 'combat', tranche.minCombats ?? 4);
   ensureAtLeast(state, board, tranche, 'treasure', 1);
@@ -65,7 +71,7 @@ function ensureAtLeast(state, board, tranche, type, wanted) {
   while (count() < wanted && safety-- > 0) {
     const candidates = board.filter((t) => {
       if (t.index === 0 && type === 'combat') return false;
-      if (['combat', 'life_fountain'].includes(t.type) || t.type === type) return false;
+      if (['combat', 'life_fountain', 'camp'].includes(t.type) || t.type === type) return false;
       if (type === 'combat') {
         // éviter 3 combats de suite
         const a = board[t.index - 1]?.type === 'combat' && board[t.index - 2]?.type === 'combat';

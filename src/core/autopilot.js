@@ -18,6 +18,7 @@ export function afkAction(state) {
     case 'roll': return { type: 'ROLL' };
     case 'combat': return { type: 'TIMEOUT' }; // le tour se termine (les PA restants sont perdus)
     case 'shop': return { type: 'SHOP_LEAVE' };
+    case 'camp': return { type: 'CAMP_ACT', activity: 'rest' }; // au feu de camp : se reposer (sans toucher à ses sorts)
     case 'farm': return { type: 'FARM_STOP' }; // le farm est solo, mais au cas où : on part avec ce qu'on a gagné
     case 'choice': {
       // « keep » = garder le butin ; « skip » = passer son chemin (fontaines) ; « pass » = rester honnête (coup bas)

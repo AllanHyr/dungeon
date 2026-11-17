@@ -121,7 +121,7 @@ export function cleanAction(raw) {
 }
 
 // Quelles actions de partie existent, et à qui elles « appartiennent » (voir authorize)
-const BY_ACTOR = new Set(['ADVANCE', 'ROLL', 'CHOOSE', 'SHOP_LEAVE', 'FARM_NEXT', 'FARM_STOP', 'TIMEOUT']); // le joueur dont c'est le tour
+const BY_ACTOR = new Set(['ADVANCE', 'ROLL', 'CHOOSE', 'SHOP_LEAVE', 'CAMP_DECK', 'CAMP_ACT', 'FARM_NEXT', 'FARM_STOP', 'TIMEOUT']); // le joueur dont c'est le tour
 const BY_PLAYER_FIELD = { COMBAT_ACT: 'playerId', EQUIP: 'playerId', UNEQUIP: 'playerId', USE_ITEM: 'playerId', USE_SKILL: 'playerId', GHOST: 'playerId', SHOP_SELL: 'playerId', SHOP_BUY: 'buyerId', GIVE: 'fromId' };
 const LOCAL_ONLY = new Set(['TRAINING_RESET', 'END_TRAINING']); // la salle d'entraînement se joue dans le navigateur, jamais ici
 

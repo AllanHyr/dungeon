@@ -130,6 +130,11 @@ export function checkUsable(state, unit, sk, { inCombat = !!state.combat } = {})
     return no('Utilisable seulement en combat.');
   }
   if (sk.needsMark && inCombat && !markedEnemies(state, unit).length) return no('Aucune cible marquée.');
+  // `modes` : la compétence ne se lance que dans ces modes de classe (les formes du Druide). Hors combat, pas de forme : elle est libre.
+  if (sk.modes && inCombat && unit.kind === 'player' && !sk.modes.includes(unit.mode)) {
+    const list = state.content.classes[unit.classId]?.modes?.list || {};
+    return no(`${sk.modes.map((m) => list[m]?.name || m).join(' ou ')} requise.`);
+  }
   if (sk.spend && (unit.resources?.[sk.spend.id] ?? 0) < sk.spend.amount) return no(`${sk.spend.amount} ${resourceName(state, unit, sk.spend.id)} requis.`);
   if (!validTargets(state, unit, sk).length) return no(sk.target === 'deadAlly' ? 'Personne à ressusciter.' : 'Aucune cible à portée.');
   return { ok: true };

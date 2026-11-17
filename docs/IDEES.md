@@ -173,10 +173,20 @@ Dans `data/classes.json` (id `guerrier`). Tank au rang avant (PV 56, attaque 6,2
   ⚠ Comme les autres nouveaux tanks, il est **très solide seul** et aux petits niveaux ; Armes et Fureur sont **au-dessus** du Duelliste. Leviers : le malus du Brise-genou, la Posture de combat (+5/−5), Enragé, la puissance du Déchaînement, la défense du Rempart d'acier.
 - ❓ **Questions** : la posture doit-elle être gratuite la 1re fois (comme les autres sorts de classe) ? Trois postures ou deux ? Le Coup de bouclier (étourdir) à 5 rage est-il trop fort ?
 
-### Druide
-- **Sort de classe : Changement de forme** : le **premier changement du combat est gratuit** (ou choisi avant d'entrer en combat, ❓), les suivants coûtent **1 PA**. 🟡
-- Une forme par spé : *Tank* (ours) · *Soin* (arbre / humanoïde) · *DPS* (félin ou oiseau).
-- Les sorts sont marqués « utilisable seulement sous telle forme ». 🟡 (condition de forme)
+### Druide ✅ *(réécrit — premier jet, valeurs à régler en jouant)*
+Dans `data/classes.json` (id `druide` : une ancienne sauvegarde de Druide reste un Druide, avec le nouveau kit). PV 46, attaque 5,6, défense 3, **soin 5,5**, rang arrière au départ.
+
+- **Sort de classe : Métamorphose** (1re gratuite, ensuite 1 PA ; un menu de choix comme l'Aura sacrée, `"noun": "forme"`) : **Naturelle** (sans bonus), **Ours** (défense +40 %, reçus −10 %, dégâts −10 %, soins −30 % ; **passe au rang avant**), **Arbre** (soins +30 %, défense +10 %, dégâts −40 % ; **rang arrière**), **Félin** (dégâts +30 %, critique dès 19, reçus +10 %, soins −40 % ; **rang avant**). Changer de forme rend 5 % des PV max (passif *Esprit sauvage*, déclencheur `modeChange`).
+- **Sorts réservés à une forme** (nouveau champ `modes` d'une compétence) : *Coup de patte* (Ours ou Félin : bouclier en ours, saignement en félin), *Toucher guérisseur* et *Floraison sauvage* (Naturelle ou Arbre), *Rugissement* (Ours), *Lacérer* (Félin, saignement cumulable). *Épine sauvage*, *Bourgeon* (soin sur 4 tours) et *Étreinte des racines* (immobilise) se lancent dans toutes les formes. Un sort hors de sa forme est grisé, et le détail dit « Forme d'ours ou Forme de félin requise ».
+- **Spécialisations** (palier 4 automatique ; palier 8 = 1 choix parmi 3 ; aperçus 12 et ultime 20) :
+  | | Forme | Palier 4 (automatique) | Palier 8 (1 parmi 3) | Ultime 20 *(annoncé)* |
+  | --- | --- | --- | --- | --- |
+  | **Gardien** (Tank) | Ours | Cuir épais (PV +15 % ; en ours −10 % de plus et un bouclier à chaque coup reçu), Peau d'écorce, **Patte du gardien** (en ours : bouclier et **provocation** jusqu'à son prochain tour), Rugissement de défi | Régénération frénétique · Instinct de survie · Charge sauvage (assomme) | Colosse de la forêt |
+  | **Restauration** (Soin) | Arbre | Arbre de vie (soins +15 % ; en arbre, l'équipe regagne 2 % à chacun de ses tours), Croissance sauvage, Bourgeon vivace (purifie), Toucher régénérant | Tranquillité (35 % à toute l'équipe) · Renaissance (ressuscite) · Abondance (4 % à chaque tour, toutes formes) | Forêt éternelle |
+  | **Farouche** (Dégâts) | Félin | Instinct du prédateur (+10 % sur les cibles qui saignent, saignements +20 %), **Morsure féroce**, Griffure, Lacération profonde (2 cumuls d'un coup) | Frénésie féline (+2 PA en achevant) · Bond (n'importe quel rang) · Saignements sauvages | Fureur sauvage |
+- **Nouveau dans le moteur** : `modes` sur une compétence (elle ne se lance que dans ces modes ; libre hors combat), `modes.noun` (« forme »), le journal dit « prend la Forme d'ours ».
+- **Équilibrage (robots ; `node tests/druide-sim.mjs 60`, Profondeurs niv. 8)** : en tank (tank + Prêtre Sacré + Assassin) : Guerrier Protection ~92 % · Templier Gardien ~97 % · **Druide Gardien ~97 %** (la provocation de la Patte du gardien fait toute la différence : sans elle ~70 %). En soin (Guerrier + soigneur + Assassin) : Prêtre Sacré ~92 % · **Restauration ~100 %** · Druide sans spé ~78 %. En dps (Guerrier + Prêtre + dps) : Assassin ~92 % · **Farouche ~100 %**. **Seul** (Crypte niv. 6) : Gardien ~100 %, Farouche ~93 %, Restauration 0 % (un pur soigneur seul ne tue rien).
+  ⚠ Les équipes de **nouvelles classes** passent les Profondeurs à 90-100 % avec des robots : le contenu de niveau 8 devient facile pour elles. À regarder en jouant (et peut-être relever les monstres plutôt que d'affaiblir les classes).
 
 ### Barde *(nouveau)* — soutien
 - Buffs de groupe : PA, dégâts, défense… Le Cantique de hâte du Veilleur est déjà un premier brouillon. 🟢
@@ -227,7 +237,7 @@ Dans `data/classes.json` (id `guerrier`). Tank au rang avant (PV 56, attaque 6,2
    - Les spécialisations du Duelliste sont des **exemples** (palier 4 seulement) : elles seront remplacées par les vraies classes.
    - ✅ Fait depuis : le **palier 8** des spés (un choix parmi trois), les **cumuls de venin** (`dot` `stack`), la **marque**, les **auras de groupe**, le choix d'un mode par menu (`pick`).
    - ❌ Pas encore fait : l'**écran de présentation de classe à la création**, le **palier 12** et le **niveau 20** des spés (aujourd'hui des aperçus), le statut **anti-soin**, le **feu de camp** (changer de sorts en donjon).
-3. Avec les classes : statuts « de classe ». ✅ mode (Sacrieur), marque (Assassin, dont les sorts atteignent tous les rangs), aura (Templier), forme (Prêtre : lumière / ombre). posture (Guerrier). Reste : forme (Druide).
+3. Avec les classes : statuts « de classe ». ✅ mode (Sacrieur), marque (Assassin, dont les sorts atteignent tous les rangs), aura (Templier), forme (Prêtre : lumière / ombre). posture (Guerrier), forme (Druide : sorts réservés à une forme).
 4. (Plus tard) **Créatures invoquées**, puis le Nécromancien (école du Mage).
 
 ## Plafond de niveau 8 — ✅ fait

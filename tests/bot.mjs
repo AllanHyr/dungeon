@@ -75,6 +75,7 @@ function wantedMode(me, state = null) {
     return hurt ? 'lumiere' : 'ombre';
   }
   if (me.classId === 'templier') return { lumiere: 'devotion', vindicte: 'vengeance' }[me.spec] || 'protection';
+  if (me.classId === 'druide') return { gardien: 'ours', restauration: 'arbre', farouche: 'felin' }[me.spec] || 'naturelle';
   if (me.classId === 'guerrier') return { protection: 'defensive', fureur: 'offensive' }[me.spec] || 'combat'; // (Armes et sans spé : posture de combat)
   return me.spec === 'ecorche' ? 'degats' : 'reduction';
 }

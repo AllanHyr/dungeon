@@ -428,7 +428,7 @@ export function applyEffect(state, caster, e, targets, ctx) {
         // « toggle » : le mode suivant de la liste ; « pick » : celui que le joueur a choisi (`modeId` de son action) ; sinon un mode précis.
         const want = e.set === 'pick' ? ctx.modeId : e.set;
         u.mode = e.set === 'toggle' ? ids[(ids.indexOf(cur) + 1) % ids.length] : ids.includes(want) ? want : cur;
-        say(`   ${u.name} passe en mode ${m.list[u.mode].name}.`, 'info');
+        say(m.noun ? `   ${u.name} prend la ${m.list[u.mode].name}.` : `   ${u.name} passe en mode ${m.list[u.mode].name}.`, 'info'); // (« prend la Forme d'ours », « prend la Posture défensive »)
         if (u.mode !== cur) fireTriggers(state, 'modeChange', { unit: u }); // (ex. « quand il change de mode : un bonus de 2 tours »)
       }
       break;

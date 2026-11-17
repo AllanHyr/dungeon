@@ -131,7 +131,7 @@ function veilleur(u) {
 }
 
 /** Le Druide : capuche de feuilles, bois de cerf, regard de lumière verte, bâton à cristal. */
-function druide(u) {
+function druideAncien(u) {
   const defs = [
     lin(`${u}cloak`, [[0, '#56854a'], [0.5, '#2e5a34'], [1, '#0f241a']]),
     lin(`${u}hood`, [[0, '#6aa05a'], [0.5, '#37663a'], [1, '#143020']], [0.1, 0, 0.9, 1]),
@@ -492,5 +492,59 @@ function guerrier(u) {
   return wrap(u, { defs, inner, bg: ['#4a2418', '#0a0706', '#ff9a6a'], at: [30, 36], halo: 0.34 });
 }
 
+
+/** Le Druide : capuche de feuilles surmontée de bois de cerf, visage tatoué de spirales, yeux verts, collier de crocs et de graines, bâton noueux fleuri. */
+function druide(u) {
+  const defs = [
+    lin(`${u}skin`, [[0, '#ecc7a0'], [0.55, '#b98962'], [1, '#634130']]),
+    lin(`${u}skinD`, [[0, '#9f7458'], [1, '#4a3022']], [0, 0, 0, 1]),
+    lin(`${u}leaf`, [[0, '#9fd76a'], [0.5, '#3f7a2c'], [1, '#13300f']]),
+    lin(`${u}leafD`, [[0, '#4d7d33'], [1, '#0e2009']], [0, 0, 0, 1]),
+    lin(`${u}bark`, [[0, '#8a6a46'], [0.6, '#4d3520'], [1, '#22160c']]),
+    lin(`${u}antler`, [[0, '#f1e6cf'], [1, '#9a8763']]),
+    glow(u, 'eye', '#8dff7a', 0.95)
+  ].join('');
+  const inner = `
+<!-- bois de cerf -->
+<g stroke="url(#${u}antler)" stroke-width="2.6" stroke-linecap="round" fill="none">
+  <path d="M38 22 C33 14 31 8 27 3 M33 13 C28 12 25 10 22 7 M31 8 C33 5 33 3 33 1"/>
+  <path d="M62 22 C67 14 69 8 73 3 M67 13 C72 12 75 10 78 7 M69 8 C67 5 67 3 67 1"/>
+</g>
+<!-- bâton noueux fleuri, derrière l'épaule droite -->
+<path d="M84 100 C83 80 87 60 82 38 C80 30 84 24 88 20" stroke="url(#${u}bark)" stroke-width="4" stroke-linecap="round" fill="none"/>
+<circle cx="88" cy="19" r="3.2" fill="#f4a8c8"/><circle cx="86" cy="16.5" r="2.2" fill="#ffd2e4"/><circle cx="91" cy="21" r="2" fill="#e88ab0"/>
+<!-- capuche de feuilles -->
+<path d="M25 56 C20 32 32 14 50 12 C68 14 80 32 75 56 C77 68 73 77 67 81 L33 81 C27 77 23 68 25 56 Z" fill="url(#${u}leaf)"/>
+<g fill="url(#${u}leafD)" opacity=".75">${[[28, 40, -30], [32, 28, -20], [40, 19, -8], [60, 19, 8], [68, 28, 20], [72, 40, 30], [26, 54, -40], [74, 54, 40]].map(([x, y, r]) => `<path d="M${x} ${y} c3 -5 8 -5 9 0 c-1 4 -6 5 -9 0 Z" transform="rotate(${r} ${x} ${y})"/>`).join('')}</g>
+<!-- épaules : cape de feuilles et peau -->
+<path d="M3 100 L9 84 C18 73 32 69 40 69 L60 69 C68 69 82 73 91 84 L97 100 Z" fill="url(#${u}leafD)"/>
+<path d="M38 70 L62 70 L60 100 L40 100 Z" fill="url(#${u}bark)"/>
+<!-- collier de crocs et de graines -->
+<path d="M37 72 C42 79 58 79 63 72" fill="none" stroke="#3a2a18" stroke-width="1"/>
+<g>${[[39, 74, '#f1e6cf'], [43, 77, '#c98a3a'], [47, 78.6, '#f1e6cf'], [50, 79, '#7db04a'], [53, 78.6, '#f1e6cf'], [57, 77, '#c98a3a'], [61, 74, '#f1e6cf']].map(([x, y, col]) => `<ellipse cx="${x}" cy="${y}" rx="1.3" ry="2" fill="${col}"/>`).join('')}</g>
+<!-- cou et visage -->
+<path d="M42 56 L42 70 C46 73 54 73 58 70 L58 56 Z" fill="url(#${u}skinD)"/>
+<ellipse cx="50" cy="45" rx="14.200" ry="16.800" fill="url(#${u}skin)"/>
+<!-- tatouages en spirale -->
+<g stroke="#2f6b3a" stroke-width="1" fill="none" opacity=".8">
+  <path d="M38 50 c-2 -3 1 -6 4 -4 c2 2 0 5 -2 4"/>
+  <path d="M62 50 c2 -3 -1 -6 -4 -4 c-2 2 0 5 2 4"/>
+  <path d="M50 30 l0 5 M47 32 l3 3 l3 -3"/>
+</g>
+<!-- bord de capuche -->
+<path d="M34 41 C35 27 42 21 50 21 C58 21 65 27 66 41 C61 31 56 28 50 28 C44 28 39 31 34 41 Z" fill="url(#${u}leafD)"/>
+<!-- yeux verts -->
+<circle cx="43.400" cy="44" r="5" fill="url(#${u}eye)"/><circle cx="56.600" cy="44" r="5" fill="url(#${u}eye)"/>
+<path d="M39.800 44.400 C41.400 42 45 42 47 43.800 C45 45.800 41.400 46 39.800 44.400 Z" fill="#effde6"/>
+<path d="M60.200 44.400 C58.600 42 55 42 53 43.800 C55 45.800 58.600 46 60.200 44.400 Z" fill="#effde6"/>
+<circle cx="43.400" cy="44.100" r="1.150" fill="#1d5a1a"/><circle cx="56.600" cy="44.100" r="1.150" fill="#1d5a1a"/>
+<path d="M39 40.600 L47 41.600 M61 40.600 L53 41.600" stroke="#3a2a18" stroke-width="1.300" stroke-linecap="round" fill="none"/>
+<!-- nez, bouche, barbe courte -->
+<path d="M49 44 L47.800 51.500 C49.400 52.600 50.600 52.600 52.200 51.500 L51 44 Z" fill="#a17050" opacity=".8"/>
+<path d="M38 52 C39 62 44 66 50 66.500 C56 66 61 62 62 52 C58 58 55 59 50 59 C45 59 42 58 38 52 Z" fill="#5a4026"/>
+<path d="M45.500 56 C48 57.200 52 57.200 54.500 56" fill="none" stroke="#2a1a10" stroke-width="1" stroke-linecap="round"/>`;
+  return wrap(u, { defs, inner, bg: ['#203a1c', '#060a05', '#a8ff8a'], at: [32, 36], halo: 0.34 });
+}
+
 // (les quatre premières classes, retirées du jeu, restent dessinées : les tests s'en servent encore ; l'ancien Druide s'appelle druide_ancien)
-export const HEROES = { berserker, veilleur, druide, druide_ancien: druide, duelliste, sacrieur, assassin, templier, pretre, guerrier };
+export const HEROES = { berserker, veilleur, druide, druide_ancien: druideAncien, duelliste, sacrieur, assassin, templier, pretre, guerrier };

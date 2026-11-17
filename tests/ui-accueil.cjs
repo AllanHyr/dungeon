@@ -32,7 +32,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await page.goto(url);
   await page.waitForSelector('.menu');
   check(!!(await page.$('.welcome')), 'sans héros, la page ne propose qu\'une chose : « Bienvenue »');
-  check((await page.$$('.welcome .class-card')).length === 5, 'les 5 classes sont présentées, avec leur rôle et leur description');
+  check((await page.$$('.welcome .class-card')).length === 6, 'les 6 classes sont présentées, avec leur rôle et leur description');
   check(!(await page.$('.view-switch')) && !(await page.$('.home-grid')) && !(await page.$('.launch-bar')), 'ni onglets, ni choix de donjon, ni bouton de lancement tant qu\'il n\'y a pas de héros');
   await page.screenshot({ path: `${out}/120-accueil-bienvenue.png` });
 

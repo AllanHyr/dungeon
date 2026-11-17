@@ -68,9 +68,9 @@ function takeTurnOf(state, id) {
 }
 
 console.log('\n● Contenu (données JSON)');
-test('le contenu se charge : 5 classes jouables (+ 4 classes de test), 3 tranches jouables', () => {
-  eq(Object.keys(loadContent({ legacy: false }).classes).sort(), ['assassin', 'guerrier', 'pretre', 'sacrieur', 'templier']);
-  eq(Object.keys(content.classes).sort(), ['assassin', 'berserker', 'druide_ancien', 'duelliste', 'guerrier', 'pretre', 'sacrieur', 'templier', 'veilleur']);
+test('le contenu se charge : 6 classes jouables (+ 4 classes de test), 3 tranches jouables', () => {
+  eq(Object.keys(loadContent({ legacy: false }).classes).sort(), ['assassin', 'druide', 'guerrier', 'pretre', 'sacrieur', 'templier']);
+  eq(Object.keys(content.classes).sort(), ['assassin', 'berserker', 'druide', 'druide_ancien', 'duelliste', 'guerrier', 'pretre', 'sacrieur', 'templier', 'veilleur']);
   eq(availableTranches(content).map((t) => t.id), [1, 4, 8]);
 });
 test('une faute dans un JSON donne une erreur claire (monstre inconnu)', () => {
@@ -3630,6 +3630,82 @@ console.log('\n● Guerrier : rage, postures, blessure profonde, riposte');
     fm.hp = b0;
     run(f, fp, 'guerrier_dechainement', fm);
     eq(b0 - fm.hp, 2 * one, `deux coups de ${one}`);
+  });
+}
+
+console.log('\n● Druide : formes, sorts réservés à une forme, rangs');
+{
+  const dru = (spec = null, level = 8) => { const t = training([{ classId: 'druide', level, spec }, { classId: 'pretre', level: 8 }], { count: 2 }); takeTurnOf(t, 'p1'); return t; };
+  const pick = (t, p, modeId) => act(t, p.id, { act: 'skill', skillId: 'druide_metamorphose', modeId });
+
+  test('le Druide : rang arrière, Métamorphose en sort de classe (4 formes), deck Épine / Bourgeon / Coup de patte / Toucher', () => {
+    const cls = content.classes.druide;
+    eq([cls.role, cls.startRow, cls.classSkill, cls.modes.default, cls.modes.noun], ['healer', 'back', 'druide_metamorphose', 'naturelle', 'forme']);
+    eq(Object.keys(cls.modes.list), ['naturelle', 'ours', 'arbre', 'felin']);
+    const ch = createCharacter(content, { id: 'd', name: 'D', classId: 'druide' });
+    fillDeck(content, ch);
+    eq(ch.deck, ['druide_epine_sauvage', 'druide_bourgeon', 'druide_coup_patte', 'druide_toucher']);
+    for (const spec of ['gardien', 'restauration', 'farouche']) eq(cls.skills.filter((x) => x.spec === spec && x.level === 8).length, 3, `${spec} : 3 choix au palier 8`);
+  });
+
+  test('Métamorphose : 1re gratuite puis 1 PA ; l\'Ours passe au rang avant, l\'Arbre au rang arrière ; chaque forme change les stats', () => {
+    const t = dru();
+    const p = t.players[0];
+    const base = computeStats(t, p);
+    eq(p.row, 'back');
+    eq(skillPaCost(p, content.skills.druide_metamorphose), 0);
+    assert(pick(t, p, 'ours').ok);
+    eq([p.mode, p.row], ['ours', 'front']);
+    const ours = computeStats(t, p);
+    assert(ours.def > base.def * 1.35 && ours.taken < base.taken, `Ours : défense ${base.def} → ${ours.def}`);
+    eq(skillPaCost(p, content.skills.druide_metamorphose), 1);
+    p.pa = 6;
+    assert(pick(t, p, 'arbre').ok);
+    eq([p.mode, p.row], ['arbre', 'back']);
+    assert(computeStats(t, p).healPower > base.healPower, 'Arbre : soins plus forts');
+    p.pa = 6;
+    assert(pick(t, p, 'felin').ok);
+    eq(p.row, 'front');
+    assert(computeStats(t, p).damage > base.damage && computeStats(t, p).critShift === base.critShift - 1, 'Félin : dégâts et critiques');
+  });
+
+  test('un sort réservé à une forme : refusé dans les autres (la raison le dit), libre hors combat', () => {
+    const t = dru();
+    const p = t.players[0];
+    const patte = content.skills.druide_coup_patte;
+    const no = checkUsable(t, p, patte);
+    assert(!no.ok && /Forme d'ours ou Forme de félin requise/.test(no.reason), no.reason);
+    assert(pick(t, p, 'ours').ok);
+    assert(checkUsable(t, p, patte).ok, 'en Ours : possible');
+    assert(!checkUsable(t, p, content.skills.druide_toucher).ok, 'le Toucher guérisseur ne se lance pas en Ours');
+    const view = getCombatView(t, p.id).skills.find((x) => x.skillId === 'druide_toucher');
+    assert(view && !view.usable && /requise/.test(view.reason || ''), JSON.stringify(view));
+    // validation des JSON : une forme inconnue est expliquée
+    const raw = loadRaw();
+    raw.classes.classes.druide.skills.find((x) => x.id === 'druide_coup_patte').modes = ['dragon'];
+    let msg = '';
+    try { buildContent(raw); } catch (e) { msg = e.message; }
+    assert(msg.includes('dragon') && msg.includes('druide_coup_patte'), msg);
+  });
+
+  test('le Coup de patte change selon la forme : bouclier en Ours, saignement en Félin', () => {
+    const t = dru();
+    const p = t.players[0];
+    const [m] = t.combat.monsters;
+    const sk = content.skills.druide_coup_patte;
+    p.mode = 'ours';
+    for (const e of sk.effects) applyEffect(t, p, e, [m], { outcome: 'hit', skill: sk });
+    assert(totalShield(p) > 0 && !m.statuses.some((x) => x.id === 'dot'), 'Ours : bouclier, pas de saignement');
+    p.shields = []; p.mode = 'felin';
+    for (const e of sk.effects) applyEffect(t, p, e, [m], { outcome: 'hit', skill: sk });
+    assert(totalShield(p) === 0 && m.statuses.some((x) => x.id === 'dot' && x.name === 'Griffures'), 'Félin : saignement, pas de bouclier');
+  });
+
+  test('une vieille sauvegarde de l\'ANCIEN Druide reste un Druide (nouveau kit, niveau gardé)', () => {
+    const real = loadContent({ legacy: false });
+    const ch = sanitizeProfile(real, { characters: [{ id: 'a', name: 'Pip', classId: 'druide', level: 5, skills: ['druide_rosee', 'druide_racines'] }] }).characters[0];
+    eq([ch.classId, ch.level], ['druide', 5]);
+    assert(ch.skills.every((id) => real.skills[id]?.classId === 'druide') && !ch.skills.includes('druide_rosee'), 'les anciens sorts disparaissent');
   });
 }
 

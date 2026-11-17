@@ -299,6 +299,7 @@ La stat `dot` (`{ "stat": "dot", "pct": 0.25 }` dans une passive) augmente les d
 } }
 ```
 
+* **un sort réservé à certains modes** : `"modes": ["ours", "felin"]` sur une compétence active : en combat elle ne se lance que dans ces modes (grisée sinon, avec la raison « Forme d'ours ou Forme de félin requise ») ; hors combat elle est libre. Le Druide s'en sert pour ses formes ;
 * `"noun": "posture"` (dans `modes`, facultatif) : le nom de ce qu'on choisit dans le menu (« Posture : choisis une posture ») ; sans lui, « aura » si les modes en donnent une, sinon « mode ». Le Guerrier s'en sert ;
 * le bonus s'applique à **tous les héros vivants de l'équipe, le porteur compris**, **en combat seulement**, tant que le porteur est vivant et garde ce mode ; jamais aux monstres ;
 * un sort change d'aura avec l'effet `{ "type": "mode", "set": "pick" }` : **le joueur choisit** l'aura. Un clic sur le sort ouvre, dans le panneau du sort, **une icône par mode** (l'actuel est grisé,

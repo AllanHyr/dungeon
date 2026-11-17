@@ -337,6 +337,10 @@ export function buildContent(raw) {
         if (e?.if) checkModeRefs([e.if], `compétence "${sk.id}" (effet "${e.type}")`);
         if (e?.type === 'mode' && e.set !== 'toggle' && e.set !== 'pick' && !modeIds.includes(e.set)) fail(`compétence "${sk.id}" : effet "mode" : 'set' "${e.set}" inconnu dans la classe "${id}" (toggle, pick ou ${modeIds.length ? list(modeIds) : 'aucun mode : ajoute "modes" à la classe'}).`);
       }
+      if (sk.modes !== undefined) {
+        if (!Array.isArray(sk.modes) || !sk.modes.length) fail(`compétence "${sk.id}" : 'modes' doit être une liste de modes de la classe (ex. ["ours"]) : la compétence ne se lance que dans ces modes.`);
+        for (const m of sk.modes) if (!modeIds.includes(m)) fail(`compétence "${sk.id}" : 'modes' : "${m}" n'est pas un mode de la classe "${id}" (${modeIds.length ? list(modeIds) : 'aucun mode : ajoute "modes" à la classe'}).`);
+      }
       if (sk.auto !== undefined) {
         if (sk.auto !== true) fail(`compétence "${sk.id}" : 'auto' doit valoir true (débloquée automatiquement avec la spécialisation).`);
         if (sk.spec === undefined) fail(`compétence "${sk.id}" : une compétence 'auto' doit être rattachée à une spécialisation ('spec').`);

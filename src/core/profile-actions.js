@@ -28,6 +28,9 @@ export const CHARACTER_ACTIONS = ['CHAR_CREATE', 'CHAR_DELETE', 'CHAR_EQUIP', 'C
 
 /** Combien de personnages au maximum (une limite de sécurité pour une base de données partagée). */
 export const MAX_CHARACTERS = 30;
+
+/** Le nombre de places de personnages : celui du serveur s'il en impose un, sinon `maxCharacters` de rules.json (8). */
+export const characterSlots = (content, override = null) => override ?? content.rules.maxCharacters ?? MAX_CHARACTERS;
 const MAX_NAME = 24;
 
 /** Nettoie un nom de personnage : pas de caractères de contrôle, pas d'espaces en trop, 24 caractères au plus. */
@@ -121,7 +124,8 @@ export function applyCharacterAction(content, characters, action, ctx = {}) {
 function create(content, characters, action, ctx) {
   assert(typeof ctx.newId === 'function', 'Création impossible ici.');
   assert(typeof action.classId === 'string' && content.classes[action.classId], 'Classe inconnue.');
-  assert(characters.length < (ctx.maxCharacters ?? MAX_CHARACTERS), `Tu as déjà ${characters.length} personnages : c'est le maximum.`);
+  const slots = characterSlots(content, ctx.maxCharacters);
+  assert(characters.length < slots, `Toutes tes places sont prises (${characters.length} sur ${slots}) : supprime un personnage pour en créer un autre.`);
   const ch = createCharacter(content, { id: ctx.newId(), name: cleanName(action.name), classId: action.classId });
   characters.push(ch);
   return { ok: true, character: ch, unlocked: checkAchievements(content, ch) };

@@ -25,6 +25,6 @@ export { shopPrice } from './tiles.js';
 export { sellPrice } from './inventory.js';
 export { canBeRevived, canBeRaised, totalShield } from './units.js';
 export { unitById, otherRow } from './geometry.js';
-export { applyCharacterAction, CHARACTER_ACTIONS, MAX_CHARACTERS, cleanName } from './profile-actions.js';
+export { applyCharacterAction, CHARACTER_ACTIONS, MAX_CHARACTERS, characterSlots, cleanName } from './profile-actions.js';
 export { settleRun } from './settle.js';
 export { afkAction, whoMustAct, turnKey } from './autopilot.js';

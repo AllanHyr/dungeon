@@ -17,7 +17,7 @@ import { redraw, startRun, startFarm, savedRunInfo, resumeRun, discardSavedRun, 
 import { portrait, xpBar, equipStrip, previewStats, statsLine, btn, progressBar } from '../components.js';
 import { assess, VERDICT, VERDICT_SENTENCE, modeEffects, listFr, plural } from '../assess.js';
 import { openSheet } from './sheet.js';
-import { openSaveModal, openHelpModal, openCreateModal, openTrainingModal, openChestModal, openAccountModal } from './dialogs.js';
+import { openSaveModal, openHelpModal, openCreateModal, openTrainingModal, openChestModal, openAccountModal, openDeleteCharacter, heroSlots } from './dialogs.js';
 import { play, isSoundEnabled } from '../sound.js';
 import { openSoundLab } from './sound-lab.js';
 import { dungeonPicker, dungeonBrief, comingSoonNote, selectedDungeon } from './dungeons.js';
@@ -201,7 +201,11 @@ function heroesPanel(chars, view) {
   const room = view === 'room';
   const locks = lockedCharIds();
   const cards = chars.map((ch) => heroCard(ch, view, locks));
-  const newTile = h('button', { class: 'char-card new-card', type: 'button', onClick: () => openCreateModal() }, icon('plus', 22), h('span', null, 'Nouveau héros'));
+  const slots = heroSlots();
+  const full = app.profile.characters.length >= slots;
+  const newTile = full
+    ? h('div', { class: 'char-card new-card is-full', title: 'Supprime un personnage (bouton corbeille sur sa carte) pour libérer une place.' }, icon('lock', 20), h('span', null, `Places pleines (${slots}/${slots})`), h('small', { class: 'muted' }, 'Supprime un héros pour en créer un autre'))
+    : h('button', { class: 'char-card new-card', type: 'button', onClick: () => openCreateModal() }, icon('plus', 22), h('span', null, 'Nouveau héros'), h('small', { class: 'muted' }, `${app.profile.characters.length} / ${slots} places`));
   const count = app.ui.team.length;
   return h('section', { class: 'panel home-heroes' },
     h('h2', null, h('span', { class: 'step' }, '1'), farm || room ? 'Ton héros' : 'Tes héros',
@@ -278,7 +282,11 @@ function heroCard(ch, view, locks) {
       : null,
     h('div', { class: 'char-actions' },
       tags,
-      h('button', { class: 'btn btn-small', type: 'button', title: 'Équipement, compétences, succès', onClick: (e) => { e.stopPropagation(); openSheet(ch.id); } }, h('span', null, 'Fiche', h('span', { class: 'btn-extra' }, ' & équipement')))));
+      h('button', { class: 'btn btn-small', type: 'button', title: 'Équipement, compétences, succès', onClick: (e) => { e.stopPropagation(); openSheet(ch.id); } }, h('span', null, 'Fiche', h('span', { class: 'btn-extra' }, ' & équipement'))),
+      h('button', {
+        class: 'btn btn-small btn-ghost hero-delete', type: 'button', disabled: locks.has(ch.id), title: locks.has(ch.id) ? 'Dans la partie en cours : impossible de le supprimer' : `Supprimer ${ch.name}`, 'aria-label': `Supprimer ${ch.name}`,
+        onClick: (e) => { e.stopPropagation(); openDeleteCharacter(ch.id); }
+      }, icon('trash', 15))));
 }
 
 // ============================================================

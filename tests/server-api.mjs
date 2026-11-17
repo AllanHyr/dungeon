@@ -215,8 +215,9 @@ const main = async () => {
     app.game.config.maxCharacters = 2;
     await create(bob, 'Un', 'sacrieur'); await create(bob, 'Deux', 'sacrieur');
     const third = await bob.post('/api/character', { type: 'CHAR_CREATE', name: 'Trois', classId: 'sacrieur' });
-    assert(!third.json.ok && /maximum/.test(third.json.error), third.text);
-    app.game.config.maxCharacters = 30;
+    assert(!third.json.ok && /places/.test(third.json.error), third.text);
+    eq((await bob.get('/api/profile')).json.maxCharacters, 2, 'le profil dit combien de places ce serveur donne');
+    app.game.config.maxCharacters = null; // (retour au nombre de places de rules.json)
   });
 
   console.log('\n● Parties (le farm solo ; les donjons sont dans tests/server-rooms.mjs)');

@@ -1861,3 +1861,11 @@ html.fx-playing .run { pointer-events: none; } /* (le temps d'une animation : un
   .create-foot .row { width: 100%; }
   .create-foot .row .btn { flex: 1; }
 }
+
+/* ---------- Places de personnages et suppression ---------- */
+.new-card small { display: block; margin-top: 2px; font-size: 0.78rem; }
+.new-card.is-full { cursor: default; opacity: 0.75; border-style: dashed; }
+.hero-delete { margin-left: auto; color: var(--muted); }
+.hero-delete:hover:not(:disabled) { color: #ff8a7a; border-color: #b0614f; }
+.delete-who { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+.delete-who b { font-family: var(--serif); font-size: 1.15rem; }

@@ -10,7 +10,7 @@ import { portrait, previewStats, statsLine } from '../components.js';
 import { itemCard, skillIconName } from '../format.js';
 import { firstKeys } from '../keys.js';
 import { openSheet } from './sheet.js';
-import { chestInfo, levelCap, specsOf } from '../../core/index.js';
+import { chestInfo, levelCap, specsOf, characterSlots } from '../../core/index.js';
 import { exportCode, importCode, addImported } from '../../storage/profile.js';
 import { play } from '../sound.js';
 
@@ -68,6 +68,8 @@ export function classShowcase(content, cls) {
 /** @param classId  la classe déjà choisie à l'ouverture (l'accueil la propose en grand quand on n'a encore aucun héros) */
 export function openCreateModal(classId = null) {
   const content = app.content;
+  const slots = heroSlots();
+  if (app.profile.characters.length >= slots) return toast(`Toutes tes places sont prises (${app.profile.characters.length} sur ${slots}) : supprime un personnage pour en créer un autre.`, 'bad');
   const state = { name: '', classId: content.classes[classId] ? classId : Object.keys(content.classes)[0] };
   openModal({
     title: 'Nouveau personnage',
@@ -111,6 +113,61 @@ export function openCreateModal(classId = null) {
           h('div', { class: 'row end gap' },
             h('button', { class: 'btn', onClick: () => closeModal() }, 'Annuler'),
             h('button', { class: 'btn btn-primary', onClick: create }, 'Créer le personnage')))
+      ];
+    }
+  });
+}
+
+// ---------------- Places et suppression d'un personnage ----------------
+
+/** Le nombre de places de personnages : celui du serveur en ligne, sinon `maxCharacters` de rules.json. */
+export const heroSlots = () => characterSlots(app.content, app.gateway?.maxCharacters ?? null);
+
+/**
+ * Supprimer un personnage : une vraie confirmation (on tape son nom), parce que c'est définitif.
+ * Refusé pendant qu'il est dans une partie. `onDone` : appelé après la suppression (ex. fermer la fiche).
+ */
+export function openDeleteCharacter(charId, onDone = null) {
+  const content = app.content;
+  const ch = app.profile.characters.find((c) => c.id === charId);
+  if (!ch) return;
+  if (lockedCharIds().has(ch.id)) return toast(`${ch.name} est dans la partie en cours : reprends-la ou abandonne-la d'abord.`, 'bad');
+  const cls = content.classes[ch.classId];
+  const items = Object.values(ch.equipment || {}).filter(Boolean).length + (ch.inventory || []).length + (ch.chest || []).length;
+  const state = { typed: '', busy: false };
+  const same = (a, b) => a.trim().toLocaleLowerCase('fr') === b.trim().toLocaleLowerCase('fr');
+  openModal({
+    title: `Supprimer ${ch.name} ?`,
+    className: 'delete-modal',
+    render: (api) => {
+      const ok = same(state.typed, ch.name) && !state.busy;
+      const confirm = async () => {
+        if (!same(state.typed, ch.name) || state.busy) return;
+        state.busy = true;
+        api.refresh();
+        const res = await characterAction({ type: 'CHAR_DELETE', charId: ch.id });
+        state.busy = false;
+        if (!res.ok) return api.refresh();
+        app.ui.team = (app.ui.team || []).filter((id) => id !== ch.id);
+        persistProfile();
+        closeModal();
+        toast(`${ch.name} a quitté l'aventure.`, 'info');
+        onDone?.();
+        redraw();
+      };
+      setTimeout(() => document.getElementById('delete-confirm-name')?.focus({ preventScroll: true }), 30);
+      return [
+        h('div', { class: 'delete-who' }, portrait(ch.classId, 56),
+          h('div', null, h('b', null, ch.name), h('div', { class: 'muted small' }, `${cls.name} · niveau ${ch.level}${items ? ` · ${items} objet${items > 1 ? 's' : ''}` : ''}`))),
+        h('p', null, 'Ce personnage, son équipement, son sac et son coffre seront ', h('b', null, 'définitivement perdus'), '.',
+          app.gateway.canExport ? ' Si tu veux le garder, copie d\'abord son code (fiche > Infos, ou « Sauvegarde »).' : ''),
+        h('label', { class: 'field' }, h('span', null, `Pour confirmer, écris son nom : « ${ch.name} »`),
+          h('input', { type: 'text', class: 'input', id: 'delete-confirm-name', autocomplete: 'off', value: state.typed,
+            onInput: (e) => { state.typed = e.target.value; const b = document.getElementById('delete-confirm-btn'); if (b) b.disabled = !same(state.typed, ch.name); },
+            onKeydown: (e) => e.key === 'Enter' && confirm() })),
+        h('div', { class: 'row end gap' },
+          h('button', { class: 'btn', onClick: () => closeModal() }, 'Annuler'),
+          h('button', { class: 'btn btn-danger', id: 'delete-confirm-btn', disabled: !ok, onClick: confirm }, icon('trash', 16), 'Supprimer définitivement'))
       ];
     }
   });

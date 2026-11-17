@@ -373,6 +373,15 @@ console.log('\n● Actions sur les personnages (les mêmes règles en local et s
     eq(chars.length, 1);
     assert(!act(chars, { type: 'CHAR_CREATE', name: 'X', classId: 'magicien' }).ok, 'classe inconnue');
     assert(!act(chars, { type: 'CHAR_CREATE', name: 'X', classId: 'berserker' }, { maxCharacters: 1 }).ok, 'limite');
+    // Les PLACES : 8 par défaut (rules.json), un serveur peut en imposer un autre nombre ; pleines, le message dit quoi faire
+    eq(content.rules.maxCharacters, 8);
+    const many = [];
+    for (let i = 0; i < 8; i++) assert(act(many, { type: 'CHAR_CREATE', name: `H${i}`, classId: 'sacrieur' }).ok, `place ${i + 1}`);
+    const full = act(many, { type: 'CHAR_CREATE', name: 'Neuf', classId: 'sacrieur' });
+    assert(!full.ok && /8 sur 8/.test(full.error) && /supprime/.test(full.error), full.error);
+    assert(act(many, { type: 'CHAR_CREATE', name: 'Neuf', classId: 'sacrieur' }, { maxCharacters: 10 }).ok, 'un serveur peut donner plus de places');
+    assert(act(many, { type: 'CHAR_DELETE', charId: many[0].id }).ok);
+    eq(many.length, 8, 'supprimer libère une place');
     eq(act([], { type: 'CHAR_CREATE', name: '', classId: 'veilleur' }).character.name, 'Veilleur', 'nom vide : le nom de la classe');
     eq(cleanName('a'.repeat(100)).length, 24);
     assert(!applyCharacterAction(content, [], { type: 'CHAR_CREATE', name: 'x', classId: 'berserker' }).ok, "sans fabrique d'identifiants, on ne crée rien");

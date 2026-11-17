@@ -22,6 +22,7 @@ import {
 } from '../../core/index.js';
 import { EQUIP_SLOTS } from '../../core/content.js';
 import { exportCode } from '../../storage/profile.js';
+import { openDeleteCharacter } from './dialogs.js';
 
 const ROLE_FR = { tank: 'Tank', healer: 'Soigneur', damage: 'Dégâts' };
 
@@ -743,16 +744,7 @@ function infoTab(ch, locked = false) {
       }, icon('save', 16), 'Copier le code de ce personnage') : null,
       h('button', {
         class: 'btn btn-danger', disabled: locked,
-        onClick: async () => {
-          const warning = app.gateway.canExport ? " (Exporte-le d'abord si tu veux le garder.)" : '';
-          if (await confirmBox({ title: `Supprimer ${ch.name} ?`, text: `Ce personnage, son équipement et son coffre seront définitivement perdus.${warning}`, okLabel: 'Supprimer', danger: true })) {
-            const res = await characterAction({ type: 'CHAR_DELETE', charId: ch.id });
-            if (res.ok) {
-              closeModal();
-              redraw();
-            }
-          }
-        }
+        onClick: () => openDeleteCharacter(ch.id)
       }, icon('trash', 16), 'Supprimer le personnage'))
   ];
 }

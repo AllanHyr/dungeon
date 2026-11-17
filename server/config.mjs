@@ -31,7 +31,7 @@ export function loadConfig(env = process.env, overrides = {}) {
     trustProxy: env.DONJON_TRUST_PROXY === '1', // derrière Caddy / nginx : lire l'adresse du visiteur dans X-Forwarded-For
     cookieSecure: env.DONJON_COOKIE_SECURE ?? 'auto', // 'auto' (HTTPS détecté), '1' (toujours) ou '0' (jamais)
     maxUsers: num(env.DONJON_MAX_USERS, 200),
-    maxCharacters: num(env.DONJON_MAX_CHARACTERS, 30),
+    maxCharacters: env.DONJON_MAX_CHARACTERS ? num(env.DONJON_MAX_CHARACTERS, null) : null, // null : le nombre de places de rules.json (maxCharacters)
     sessionDays: num(env.DONJON_SESSION_DAYS, 30),
     scryptCost: 16384, // coût du hachage des mots de passe (les tests le baissent pour aller vite). NE PAS le changer sur un serveur en service : les mots de passe déjà enregistrés ne seraient plus reconnus.
     // Limites anti-abus (par adresse) : essais de connexion ratés / 10 min pour un même pseudo, essais de connexion / 10 min, créations de compte / heure, requêtes API / minute

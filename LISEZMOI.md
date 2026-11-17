@@ -357,6 +357,7 @@ node tests/ui-templier.cjs http://localhost:8765/ /tmp # le Templier : fiche (so
 node tests/ui-pretre.cjs http://localhost:8765/ /tmp   # le Prêtre : fiche (3 spés, sorts évolués, palier 8), combat (forme de lumière puis d'ombre, relance, Expiation visible sur l'allié), téléphone
 node tests/ui-guerrier.cjs http://localhost:8765/ /tmp # le Guerrier : fiche (3 spés, sorts évolués, palier 8), combat (rage, Exécution grisée, choix de la posture, blessure profonde), téléphone
 node tests/ui-druide.cjs http://localhost:8765/ /tmp   # le Druide : fiche (3 spés, sorts évolués, palier 8), combat (choix de la forme, changement de rang, sorts grisés hors de leur forme), téléphone
+node tests/ui-personnages.cjs http://localhost:8765/ /tmp # les places de personnages (8 par défaut) et la suppression d'un héros (corbeille sur sa carte, confirmation en tapant son nom), téléphone
 node tests/ui-assassin.cjs http://localhost:8765/ /tmp # l'Assassin : fiche (sorts évolués selon la spé, palier 8), combat (Marque gratuite puis 1 PA, proie marquée, venin cumulable), téléphone
 node tests/ui-sacrieur.cjs http://localhost:8765/ /tmp # le Sacrieur : fiche (sort de classe, deck, spécialisations automatiques), combat (modes Endurance / Fureur, Pacte de sang), téléphone
 node tests/ui-barre.cjs http://localhost:8765/ /tmp    # la barre de combat en trois blocs : corps à corps, sort de classe, deck et emplacements libres, touches, téléphone

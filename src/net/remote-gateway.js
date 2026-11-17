@@ -137,6 +137,7 @@ export function createRemoteGateway({ content, apiBase, hello, storage, onUnauth
       if (!r.ok) return r;
       gw.user = r.user;
       gw.room = r.room || null;
+      gw.maxCharacters = r.maxCharacters ?? null; // (le nombre de places de ce serveur)
       profile.characters.splice(0, profile.characters.length, ...r.characters);
       runInfo = r.run;
       Object.assign(profile, emptyProfile(), { characters: profile.characters });

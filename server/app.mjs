@@ -41,6 +41,7 @@ import {
 import { HttpError, clientIp, isHttps, sameOrigin, readJson, sendJson, securityHeaders, serveStatic } from './http-utils.mjs';
 import { ContentManager, GameService, cleanAction } from './game.mjs';
 import { RoomService } from './rooms.mjs';
+import { characterSlots } from '../src/core/index.js';
 import { createHub } from './hub.mjs';
 import { TurnTimers } from './timers.mjs';
 
@@ -86,7 +87,8 @@ export async function createGameServer(config) {
     secure: config.cookieSecure === '1' || (config.cookieSecure === 'auto' && ctx.https)
   });
   const profileBody = (user) => ({
-    ok: true, user, characters: game.loadCharacters(user.id), run: game.runSummary(user.id), room: rooms.viewOf(user.id), contentVersion: contentManager.version
+    ok: true, user, characters: game.loadCharacters(user.id), run: game.runSummary(user.id), room: rooms.viewOf(user.id), contentVersion: contentManager.version,
+    maxCharacters: characterSlots(game.content(), config.maxCharacters)
   });
 
   const routes = {

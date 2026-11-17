@@ -291,7 +291,7 @@ sudo systemctl restart donjon`), ou devant la commande en test.
 | `DONJON_TRUST_PROXY` | `0` | `1` quand Caddy / nginx est devant : le jeu lit alors l'adresse du visiteur et « c'est du HTTPS » dans les en-têtes `X-Forwarded-*`. |
 | `DONJON_COOKIE_SECURE` | `auto` | Cookie de connexion réservé au HTTPS : `auto` (dès que le HTTPS est détecté), `1` (toujours), `0` (jamais). |
 | `DONJON_MAX_USERS` | `200` | Nombre maximal de comptes. |
-| `DONJON_MAX_CHARACTERS` | `30` | Nombre maximal de personnages par compte. |
+| `DONJON_MAX_CHARACTERS` | *(celui du jeu : 8)* | Nombre de **places** de personnages par compte. Par défaut, celui de `data/rules.json` (`maxCharacters`, 8) ; le joueur voit ses places à l'accueil et doit supprimer un héros pour en créer un autre. |
 | `DONJON_SESSION_DAYS` | `30` | Durée d'une connexion (elle se prolonge tant qu'on joue). |
 | `DONJON_LOG` | `api` | Ce que le serveur écrit : `api` (les requêtes de l'API et les erreurs), `all` (tout), `quiet` (rien). |
 

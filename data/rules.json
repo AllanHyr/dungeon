@@ -3,6 +3,8 @@
 
   "maxLevel": 20,
   "levelCap": 8,
+  "maxCharacters": 8,
+  "_maxCharacters": "Nombre de PLACES de personnages par joueur (par navigateur hors ligne, par compte en ligne). Pleines : il faut supprimer un personnage pour en créer un autre. Un serveur peut en imposer un autre nombre (DONJON_MAX_CHARACTERS).",
   "deckSize": 4,
   "_deckSize": "Nombre de sorts ACTIFS qu'un personnage peut équiper en même temps (son « deck »). S'y ajoutent, toujours disponibles : les compétences de départ de la classe (attaque de base, sort de classe) et les compétences communes (Garde, Attaque à l'arme). Les passives ne prennent pas de place.",
   "specLevel": 4,

@@ -99,21 +99,22 @@ convient : note alors le chemin de `node`, `which node`, pour la ligne `ExecStar
 
 ### 3.2 Copier le jeu
 
-Sur **ton ordinateur**, envoie l'archive du jeu :
+**Le plus simple : depuis GitHub** (le dépôt `AllanHyr/dungeon`). Sur **le VPS** : git, un utilisateur dédié (qui ne peut rien faire
+d'autre que faire tourner le jeu), les fichiers, et le dossier où la base sera écrite.
 
 ```bash
-scp donjon-etape4a-serveur.zip UTILISATEUR@IP_DU_VPS:/tmp/
-```
-
-Sur **le VPS** : un utilisateur dédié (qui ne peut rien faire d'autre que faire tourner le jeu), les fichiers, et le dossier
-où la base sera écrite.
-
-```bash
+sudo apt-get install -y git
 sudo useradd --system --home-dir /opt/donjon --shell /usr/sbin/nologin donjon
-sudo unzip -o /tmp/donjon-etape4a-serveur.zip -d /opt
+sudo git clone https://github.com/AllanHyr/dungeon.git /opt/donjon
 sudo mkdir -p /opt/donjon/var
 sudo chown -R donjon:donjon /opt/donjon/var
 ```
+
+(Si le dépôt est **privé**, `git clone` demande un identifiant : utilise un *token* GitHub en lecture seule à la place du mot de passe,
+ou une clé SSH de déploiement. `var/` n'est jamais dans le dépôt : la base de données reste sur le VPS.)
+
+*Sans git* : envoie une archive depuis ton ordinateur (`scp donjon.zip UTILISATEUR@IP_DU_VPS:/tmp/`), puis sur le VPS
+`sudo unzip -o /tmp/donjon.zip -d /opt` à la place du `git clone` (le dossier doit s'appeler `/opt/donjon`).
 
 Les fichiers du jeu appartiennent à `root` (le service peut les lire mais pas les modifier) ; seul `var/` est à lui.
 Essai à blanc, pour vérifier que tout démarre :
@@ -368,19 +369,16 @@ sudo systemctl start donjon
 
 ## 7. Mettre à jour le jeu
 
-Sur **ton ordinateur**, envoie la nouvelle version :
-
-```bash
-scp donjon-NOUVELLE-VERSION.zip UTILISATEUR@IP_DU_VPS:/tmp/
-```
-
-Sur **le VPS** : une sauvegarde par prudence, puis la nouvelle version par-dessus l'ancienne (`var/`, donc la base, n'est pas touché), puis un redémarrage :
+**Avec git** (installation du §3.2) : une sauvegarde par prudence, la nouvelle version (`var/`, donc la base, n'est pas touché), puis un redémarrage :
 
 ```bash
 cd /opt/donjon && sudo -u donjon node server/admin.mjs backup
-sudo unzip -o /tmp/donjon-NOUVELLE-VERSION.zip -d /opt
+sudo git -C /opt/donjon pull
 sudo systemctl restart donjon
 ```
+
+*Avec une archive* : `scp donjon-NOUVELLE-VERSION.zip UTILISATEUR@IP_DU_VPS:/tmp/`, puis sur le VPS la même sauvegarde,
+`sudo unzip -o /tmp/donjon-NOUVELLE-VERSION.zip -d /opt` et le redémarrage.
 
 * Les **parties en cours ne sont pas perdues** : elles sont dans la base, les joueurs les reprennent après le redémarrage
   (une partie commencée avec une version du jeu incompatible est abandonnée, sans toucher aux personnages).

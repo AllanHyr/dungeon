@@ -38,7 +38,7 @@ const profile = {
   check(g.heroes === 10, `10 portraits de classes, anciennes comprises (${g.heroes})`);
   check(g.monsters >= 20, `${g.monsters} portraits de monstres`);
   check(g.scenes === 5, `5 décors (${g.scenes})`);
-  check(g.vignettes === 8, `8 vignettes de cases (${g.vignettes})`);
+  check(g.vignettes === 9, `9 vignettes de cases, feu de camp compris (${g.vignettes})`);
   await page.screenshot({ path: `${out}/90-galerie.png`, fullPage: true });
 
   console.log('\n● Les héros à l\'accueil');

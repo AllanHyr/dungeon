@@ -81,6 +81,12 @@ const out = process.argv[3] || '/tmp/shots';
       await sleep(150);
       continue;
     }
+    if (await page.$('.camp-card')) {
+      await shot('08b-feu-de-camp');
+      await page.click('.camp-act[data-activity="rest"]');
+      await sleep(150);
+      continue;
+    }
     if (await page.$('.shop-card')) {
       await shot('08-marchand');
       await page.click('.shop-card >> text=Quitter le marchand');

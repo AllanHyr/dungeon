@@ -50,7 +50,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       screen: $('.end-screen') ? 'end' : $('.run') ? 'run' : $('.lobby') ? 'lobby' : $('.menu') ? 'menu' : $('.auth') ? 'login' : '?',
       mine: !!($('#turn-banner.mine') || $('.dock.my-turn')),
       theirs: !!($('#turn-banner.theirs') || $('.dock.spectator')),
-      kind: $('.advance-card') ? 'advance' : $('.roll-card') ? 'roll' : $('.loot-card') ? 'loot' : $('.choice-card') ? 'choice' : $('.shop-card') ? 'shop' : $('.action-card') ? 'combat' : $('.center-card') ? 'over' : null,
+      kind: $('.advance-card') ? 'advance' : $('.roll-card') ? 'roll' : $('.loot-card') ? 'loot' : $('.choice-card') ? 'choice' : $('.shop-card') ? 'shop' : $('.camp-card') ? 'camp' : $('.action-card') ? 'combat' : $('.center-card') ? 'over' : null,
       advance: dis('#advance-btn'), roll: dis('#roll-btn'), shopLeave: dis('#shop-leave'), endTurn: dis('.end-turn'),
       choices: [...document.querySelectorAll('.choice-card .btn, .loot-card .btn')].map((b) => b.disabled),
       skills: [...document.querySelectorAll('.skill-btn')].map((b) => b.disabled),
@@ -114,6 +114,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         else if (s.kind === 'loot') ok = await click('.loot-card .btn-primary');
         else if (s.kind === 'choice') ok = (await click('.choice-card .btn-primary')) || (await click('.choice-card .btn:not([disabled])'));
         else if (s.kind === 'shop') ok = await click('#shop-leave');
+        else if (s.kind === 'camp') ok = await click('.camp-act[data-activity="rest"]'); // (au feu de camp : chacun à son tour)
         else if (s.kind === 'over') ok = await click('.center-card .btn-primary');
         else if (s.kind === 'combat') {
           if (await page.$('.fighter.targetable')) ok = await click('.fighter.targetable');

@@ -10,7 +10,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
 
 const profile = {
   version: 1, nextCharNumber: 5, settings: { sound: false, fx: 'min' }, lastTeam: ['c1', 'c2', 'c3', 'c4'], lastSetup: { tranche: 1, mode: 'tranche', stasisLevel: 1 },
-  characters: ['berserker', 'veilleur', 'druide', 'duelliste'].map((classId, i) => ({
+  characters: ['sacrieur', 'pretre', 'guerrier', 'assassin'].map((classId, i) => ({
     id: `c${i + 1}`, name: ['Thorne', 'Maeve', 'Sylve', 'Gundar'][i], classId, level: 4, xp: 0, skills: [], inventory: [], equipment: {}, stats: { runs: 0, wins: 0, deaths: 0 }
   }))
 };
@@ -35,7 +35,7 @@ const profile = {
     vignettes: document.querySelectorAll('.vig svg').length,
     svg: document.querySelectorAll('.portrait svg').length
   }));
-  check(g.heroes === 9, `9 portraits de classes (${g.heroes})`);
+  check(g.heroes === 10, `10 portraits de classes, anciennes comprises (${g.heroes})`);
   check(g.monsters >= 20, `${g.monsters} portraits de monstres`);
   check(g.scenes === 5, `5 décors (${g.scenes})`);
   check(g.vignettes === 8, `8 vignettes de cases (${g.vignettes})`);
@@ -58,7 +58,7 @@ const profile = {
   console.log('\n● Le champ de bataille');
   await page.evaluate(async () => {
     const { startTraining } = await import('/src/ui/controller.js');
-    startTraining([{ classId: 'berserker', level: 5 }, { classId: 'veilleur', level: 5 }, { classId: 'druide', level: 5 }, { classId: 'duelliste', level: 5 }], { dummy: 'mannequin_agressif', count: 2, atkScale: 1 });
+    startTraining([{ classId: 'sacrieur', level: 5 }, { classId: 'pretre', level: 5 }, { classId: 'guerrier', level: 5 }, { classId: 'assassin', level: 5 }], { dummy: 'mannequin_agressif', count: 2, atkScale: 1 });
   });
   await page.waitForSelector('.stage');
   const stage = await page.evaluate(() => {
@@ -96,7 +96,7 @@ const profile = {
   const swapped = await page.evaluate(async (src) => {
     const { app } = await import('/src/ui/state.js');
     const { redraw } = await import('/src/ui/controller.js');
-    app.content.classes.berserker.art = src;
+    app.content.classes.sacrieur.art = src;
     app.content.monsters.mannequin_agressif.art = src;
     redraw();
     return { heroImg: document.querySelectorAll('.fighter.player img.art-img').length, monsterImg: document.querySelectorAll('.fighter.monster img.art-img').length };
@@ -108,7 +108,7 @@ const profile = {
   await page.evaluate(async () => {
     const { app } = await import('/src/ui/state.js');
     const { startRun } = await import('/src/ui/controller.js');
-    delete app.content.classes.berserker.art; delete app.content.monsters.mannequin_agressif.art;
+    delete app.content.classes.sacrieur.art; delete app.content.monsters.mannequin_agressif.art;
     await startRun({ tranche: 1, mode: 'tranche', stasisLevel: 1 }, ['c1', 'c2', 'c3']);
   });
   await page.waitForSelector('.advance-card');

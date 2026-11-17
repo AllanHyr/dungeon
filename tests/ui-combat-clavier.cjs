@@ -7,13 +7,21 @@ const out = process.argv[3] || '/tmp/shots';
 const failures = [];
 const check = (cond, message) => { if (!cond) { failures.push(message); console.log('  ❌', message); } else console.log('  ✅', message); };
 
-/** Lance l'atelier : un Duelliste seul (toujours lui qui joue) contre 2 mannequins agressifs. Ses cases, dans l'ordre : Attaque à l'arme (corps à corps basique), Fente (sort de classe), puis le deck : Estoc, Coup de grâce (grisé : il faut de l'Élan), Danse des lames (zone), Lame empoisonnée... */
+/** Lance l'atelier : une Assassin seule (toujours elle qui joue) contre 2 mannequins agressifs. Ses cases, dans l'ordre : Attaque à l'arme (corps à corps basique), Marque mortelle (sort de classe), puis le deck : Estoc de l'ombre, Coup dans le dos (en relance : grisé), Tourbillon de lames (zone), Lame venimeuse. */
 async function openTraining(page) {
   await page.goto(url);
   await page.waitForSelector('.menu');
   await page.evaluate(async () => {
     const { startTraining } = await import('/src/ui/controller.js');
-    startTraining([{ classId: 'duelliste', level: 5 }], { dummy: 'mannequin_agressif', count: 2, atkScale: 1 });
+    startTraining([{ classId: 'assassin', level: 5 }], { dummy: 'mannequin_agressif', count: 2, atkScale: 1 });
+    // Un deck choisi, et le Coup dans le dos en relance (il sera grisé)
+    const { app } = await import('/src/ui/state.js');
+    const { redraw } = await import('/src/ui/controller.js');
+    await new Promise((r) => setTimeout(r, 300));
+    const p = app.run.players[0];
+    p.deck = ['assassin_estoc', 'assassin_dos', 'assassin_tourbillon', 'assassin_lame_venimeuse'];
+    p.cooldowns.assassin_dos = 2;
+    redraw();
   });
   await page.waitForSelector('.stage');
   await page.waitForTimeout(400);
@@ -53,11 +61,11 @@ const slotName = (page, i) => page.$eval(`.hotbar .slot >> nth=${i} >> .slot-lab
     await page.waitForTimeout(100);
     check(await armed(page) === null, 'Échap annule');
 
-    // « é » (2e touche) = Fente : une autre attaque, qui demande aussi une cible
+    // « é » (2e touche) = Marque mortelle (sort de classe), qui demande aussi une cible
     await press(page, { key: 'é', code: 'Digit2' });
     await page.waitForTimeout(120);
     const second = await armed(page);
-    check(second === 'duelliste_fente', `« é » lance la 2e compétence (${second})`);
+    check(second === 'assassin_marque', `« é » lance la 2e compétence (${second})`);
     await press(page, { key: 'Escape', code: 'Escape' });
     await page.waitForTimeout(100);
 
@@ -83,9 +91,9 @@ const slotName = (page, i) => page.$eval(`.hotbar .slot >> nth=${i} >> .slot-lab
     await page.waitForTimeout(100);
     check(await armed(page) === null, 'Ctrl + touche : ignoré (c\'est un raccourci du navigateur)');
 
-    // Une case indisponible : « Coup de grâce » (il faut 3 Élan) est la 4e case, touche « ' »
+    // Une case indisponible : « Coup dans le dos » (en relance) est la 4e case, touche « ' »
     const idx = await page.$$eval('.hotbar .slot', (els) => els.findIndex((e) => e.classList.contains('unusable') && !e.classList.contains('util')));
-    check(idx === 3, `« Coup de grâce » est grisé (case n° ${idx + 1})`);
+    check(idx === 3, `« Coup dans le dos » est grisé (case n° ${idx + 1})`);
     await press(page, { key: "'", code: 'Digit4' });
     await page.waitForTimeout(150);
     check(await page.$eval('.hotbar .slot >> nth=3', (e) => e.classList.contains('shake')), 'sa case tremble quand on appuie sur sa touche');
@@ -94,13 +102,13 @@ const slotName = (page, i) => page.$eval(`.hotbar .slot >> nth=${i} >> .slot-lab
     check(await armed(page) === null, 'sans rien lancer');
     await page.screenshot({ path: `${out}/95-clavier-grand.png` });
 
-    // Une compétence de zone (pas de cible à choisir) : « ( » = Danse des lames, lancée tout de suite
+    // Une compétence de zone (pas de cible à choisir) : « ( » = Tourbillon de lames, lancé tout de suite
     const flamesBefore = await page.$$eval('.flame.on', (e) => e.length);
     await press(page, { key: '(', code: 'Digit5' });
     await page.waitForTimeout(250);
     await page.waitForFunction(() => !document.documentElement.classList.contains('fx-playing'), null, { timeout: 20000 }); // (le coup se joue, puis l'écran montre le résultat)
     const flamesAfter = await page.$$eval('.flame.on', (e) => e.length);
-    check(flamesAfter < flamesBefore, `« ( » lance la Danse des lames directement (PA ${flamesBefore} → ${flamesAfter})`);
+    check(flamesAfter < flamesBefore, `« ( » lance le Tourbillon de lames directement (PA ${flamesBefore} → ${flamesAfter})`);
     check((await page.$$('.hotbar .slot')).length <= 10, 'toutes les cases ont une touche (10 au maximum)');
     await ctx.close();
   }
@@ -197,7 +205,7 @@ const slotName = (page, i) => page.$eval(`.hotbar .slot >> nth=${i} >> .slot-lab
     await page.waitForTimeout(150);
     const scrolled = await page.$eval('.hotbar', (e) => Math.round(e.scrollLeft));
     check(scrolled > 20, `la barre de compétences défile (${scrolled}px)`);
-    await page.tap('.hotbar .slot-btn >> nth=4'); // « Danse des lames » : une compétence de zone
+    await page.tap('.hotbar .slot-btn >> nth=4'); // « Tourbillon de lames » : une compétence de zone
     await page.waitForTimeout(250);
     const keep = await page.$eval('.hotbar', (e) => { const s = e.querySelector('.is-selected'); const hr = e.getBoundingClientRect(); const sr = s ? s.getBoundingClientRect() : null; return { left: Math.round(e.scrollLeft), visible: !!sr && sr.left >= hr.left - 1 && sr.right <= hr.right + 1 }; });
     check(keep.left > 0 && keep.visible, `après le toucher, la barre n'est pas revenue au début (${keep.left}px) et la case choisie est visible`);

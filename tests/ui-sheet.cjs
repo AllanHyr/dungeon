@@ -8,10 +8,10 @@ const out = process.argv[3] || '/tmp/shots';
 const profile = {
   version: 1, nextCharNumber: 3, settings: { sound: false }, lastTeam: ['c1'], lastSetup: { tranche: 4, mode: 'tranche', stasisLevel: 1 },
   characters: [
-    { id: 'c1', name: 'Thorne', classId: 'berserker', level: 8, xp: 300, skills: ['berserker_colere', 'berserker_saignee', 'berserker_peau_epaisse'],
+    { id: 'c1', name: 'Thorne', classId: 'sacrieur', level: 8, xp: 300, skills: [],
       inventory: [{ uid: 'i1', id: 'potion_mineure' }, { uid: 'i2', id: 'lame_cryptique' }, { uid: 'i3', id: 'couronne_dechue' }, { uid: 'i4', id: 'sceau_veilleur' }, { uid: 'i6', id: 'gourdin_cabosse' }],
       equipment: { weapon: { uid: 'e1', id: 'hallebarde_fer_noir' }, armor: { uid: 'e2', id: 'harnois_sombre' }, trinket: null }, stats: { runs: 9, wins: 6, deaths: 2 } },
-    { id: 'c2', name: 'Pip', classId: 'druide', level: 1, xp: 0, skills: [], inventory: [{ uid: 'p1', id: 'baton_if' }], equipment: { weapon: null, armor: null, trinket: null }, stats: { runs: 0, wins: 0, deaths: 0 } }
+    { id: 'c2', name: 'Pip', classId: 'pretre', level: 1, xp: 0, skills: [], inventory: [{ uid: 'p1', id: 'baton_if' }], equipment: { weapon: null, armor: null, trinket: null }, stats: { runs: 0, wins: 0, deaths: 0 } }
   ]
 };
 
@@ -103,40 +103,19 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
     check(await page.$('.dslot[data-slot="chest"].empty') !== null, 'retirer vide le torse');
     check(await page.$('.bag-row[data-item="harnois_sombre"]') !== null, "l'objet est dans le sac");
 
-    // ---------- Compétences
+    // ---------- Compétences : une classe sans arbre à points (spécialisation, talents, barre)
     await page.click('.sheet-modal .tab[data-tab="skills"]');
     await sleep(250);
-    check(await page.$eval('.sk-points-num', (e) => e.textContent) === '5', '5 points de compétence à dépenser (8 − 3)');
-    check((await page.$$('.node.is-known')).length === 6, '6 nœuds connus (3 de départ + 3 appris)');
-    check(await page.$('.node[data-skill="berserker_tourbillon"].is-ready') !== null, 'Tourbillon est apprenable');
-    check(await page.$('.node[data-skill="berserker_frenesie"].is-locked') !== null, 'Frénésie est verrouillée');
-    check(await page.$('.node.is-active') !== null && await page.$('.node.is-passive') !== null, 'il y a des actives (carrées) et des passives (rondes)');
-
-    // Une compétence verrouillée : la liste des conditions dit ce qui manque
-    await page.click('.node[data-skill="berserker_frenesie"]');
-    await sleep(150);
-    check(await page.$('.sk-panel .req-list li.ko') !== null, 'la liste des conditions montre au moins une condition manquante');
-    check(await page.$eval('.sk-panel .sd2-foot .btn', (b) => b.disabled), 'le bouton « Apprendre » est désactivé tant qu\'il manque quelque chose');
+    check((await page.$$('.spec-card')).length === 3, 'trois spécialisations');
+    check(await page.$('.sk-points') === null && await page.$('.sk-tree') === null, 'pas de points de compétence ni d\'arbre : rien ne s\'achète');
+    check((await page.$$('.deck-frame .deck-slot.is-filled')).length === 4, 'le deck de 4 sorts est rempli');
+    await page.click('.spec-card[data-spec-id="bastion"]');
+    await sleep(300);
+    check(await page.$('.tier-block[data-level="8"].needs-choice') !== null, 'niveau 8 : le choix du palier est mis en évidence');
+    await page.click('.talent-card[data-skill="sacrieur_peau_de_pierre"]');
+    await sleep(300);
+    check((await savedSkills()).includes('sacrieur_peau_de_pierre'), 'le talent choisi est sauvegardé');
     await page.screenshot({ path: `${out}/81-fiche-comp-${phone ? 'tel' : 'bureau'}.png` });
-
-    // Apprendre Tourbillon (2 points)
-    await page.click('.node[data-skill="berserker_tourbillon"]');
-    await sleep(150);
-    check(!(await page.$eval('.sk-panel .sd2-foot .btn', (b) => b.disabled)), '« Apprendre » est actif pour Tourbillon');
-    await page.click('.sk-panel .sd2-foot .btn');
-    await sleep(250);
-    check(await page.$eval('.sk-points-num', (e) => e.textContent) === '3', 'il reste 3 points après avoir appris Tourbillon');
-    check(await page.$('.node[data-skill="berserker_tourbillon"].is-known') !== null, 'Tourbillon est maintenant connu');
-    check((await savedSkills()).includes('berserker_tourbillon'), 'la compétence est bien sauvegardée');
-    check(await page.$('.node[data-skill="berserker_frenesie"].is-ready') !== null, 'Frénésie devient apprenable (Tourbillon est connu, il reste 3 points)');
-
-    // Réinitialiser
-    await page.click('.sk-head .btn');
-    await page.waitForSelector('.confirm-layer');
-    await page.click('.confirm-layer .btn-primary');
-    await sleep(250);
-    check(await page.$eval('.sk-points-num', (e) => e.textContent) === '8', 'après « Réinitialiser », les 8 points sont rendus');
-    check((await savedSkills()).every((id) => id.includes('entaille') || id.includes('sang_chaud') || id.includes('provocation')), 'seules les compétences de départ restent');
 
     // ---------- Autres onglets
     await page.click('.sheet-modal .tab[data-tab="ach"]');
@@ -152,15 +131,14 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
     await page.waitForSelector('.sheet-modal');
     await page.click('.sheet-modal .tab[data-tab="skills"]');
     await sleep(200);
-    check(await page.$eval('.sk-points-num', (e) => e.textContent) === '1', 'Pip (niveau 1) a 1 point de compétence');
-    check(await page.$('.node.is-ready') !== null, 'une compétence de palier 1 est apprenable');
+    check(await page.$('.sec-rewards .talent-card[data-skill="pretre_cantique"][data-state="locked"]') !== null, 'Pip (Prêtre) voit le Cantique de hâte, verrouillé par un succès');
+    check(/Main tendue/.test(await page.$eval('.sec-rewards', (e) => e.textContent)), 'la carte dit quel succès le débloque');
+    await page.evaluate(async () => { const { app } = await import('/src/ui/state.js'); const { redraw } = await import('/src/ui/controller.js'); const ch = app.profile.characters.find((c) => c.name === 'Pip'); ch.achievements.main_tendue = true; ch.level = 4; redraw(); });
+    await sleep(200);
+    if (!(await page.$('.sec-rewards .btn-primary'))) { await page.click('.sheet-modal .tab[data-tab="info"]'); await sleep(100); await page.click('.sheet-modal .tab[data-tab="skills"]'); await sleep(200); }
+    check(await page.$('.sec-rewards .btn-primary') !== null, 'une fois le succès gagné, « Apprendre » apparaît');
 
     check((await overflow()) === 0, 'aucun débordement horizontal de la page');
-    if (phone) {
-      check(await page.$('.sk-tree .sk-panel') !== null, 'sur téléphone, le détail s\'ouvre dans l\'arbre (sous la rangée choisie)');
-      const treeOverflow = await page.$eval('.tab-body', (e) => e.scrollWidth - e.clientWidth);
-      check(treeOverflow <= 1, `l'arbre ne déborde pas de l'écran (${treeOverflow}px)`);
-    }
     await page.screenshot({ path: `${out}/82-fiche-niveau1-${phone ? 'tel' : 'bureau'}.png` });
     await ctx.close();
   }

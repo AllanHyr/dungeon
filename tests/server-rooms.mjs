@@ -16,7 +16,7 @@ const test = R.test;
 
 let counter = 0;
 /** Des joueurs tout neufs, chacun avec UN héros (la classe change d'un joueur à l'autre). */
-async function players(base, count, classes = ['berserker', 'veilleur', 'duelliste', 'druide']) {
+async function players(base, count, classes = ['sacrieur', 'pretre', 'assassin', 'guerrier']) {
   const out = [];
   for (let i = 0; i < count; i++) {
     const n = ++counter;
@@ -83,7 +83,7 @@ const main = async () => {
     const room = r.json.room;
     assert(/^[A-HJ-NP-Z2-9]{5}$/.test(room.code), `code : ${room.code}`);
     eq([room.status, room.hostId, room.members.length], ['lobby', alice.id, 1]);
-    assert(room.members[0].ready && room.members[0].hero.id === alice.hero.id && room.members[0].hero.classId === 'berserker', JSON.stringify(room.members[0]));
+    assert(room.members[0].ready && room.members[0].hero.id === alice.hero.id && room.members[0].hero.classId === 'sacrieur', JSON.stringify(room.members[0]));
     eq(room.setup, { tranche: 1, dungeon: 'caves_humides', mode: 'tranche', stasisLevel: 1, turnSeconds: 60 });
     eq((await alice.b.get('/api/profile')).json.room.code, room.code, 'le salon apparaît dans le profil');
     const open = (await alice.b.get('/api/rooms')).json.rooms.find((x) => x.code === room.code);
@@ -124,7 +124,7 @@ const main = async () => {
   });
   await test('UN héros par compte : celui d\'un autre est refusé, on ne peut pas en amener plusieurs', async () => {
     const [host, bob, other] = await players(base, 3);
-    const spare = await create(bob.b, 'Réserve', 'duelliste');
+    const spare = await create(bob.b, 'Réserve', 'assassin');
     const code = (await host.b.post('/api/room/create', { charId: host.hero.id })).json.room.code;
     eq((await bob.b.post('/api/room/join', { code, charId: host.hero.id })).status, 404, 'le héros de l\'hôte');
     eq((await bob.b.post('/api/room/join', { code, charId: 'inconnu' })).status, 404);

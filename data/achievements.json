@@ -30,10 +30,10 @@
       "id": "main_tendue",
       "name": "Main tendue",
       "icon": "cross",
-      "classes": ["veilleur"],
+      "classes": ["pretre"],
       "desc": "Terminer le donjon de la tranche 1 en groupe (au moins 2 personnages).",
       "condition": { "type": "dungeonCleared", "tranche": 1, "minPartySize": 2 },
-      "rewards": [ { "type": "skill", "skillId": "veilleur_hate" } ]
+      "rewards": [ { "type": "skill", "skillId": "pretre_cantique" } ]
     },
     {
       "id": "equipe_pour_la_gloire",

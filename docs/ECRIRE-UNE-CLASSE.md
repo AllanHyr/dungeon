@@ -3,8 +3,9 @@
 Tout se passe dans **`data/classes.json`**. Tu n'as jamais besoin de toucher au code : une classe est une liste de
 compétences, et chaque compétence est une petite recette en JSON que le moteur sait exécuter.
 
-> Les valeurs des 4 classes fournies (Berserker, Veilleur, Druide, Duelliste) sont des **exemples provisoires**.
-> Copie-les, casse-les, recommence : c'est fait pour ça.
+> Les exemples de ce guide viennent souvent des **quatre premières classes** (Berserker, Veilleur, Druide, Duelliste) : elles sont **retirées du jeu**
+> mais gardées dans `tests/fixtures/classes-de-test.json` (les tests s'en servent). Les classes jouables (Sacrieur, Assassin, Templier, Prêtre, Guerrier)
+> sont des exemples complets. Copie-les, casse-les, recommence : c'est fait pour ça.
 
 ---
 

@@ -24,8 +24,8 @@ function sim(label, setup, classes, level, gear, mode = 'smart') {
 }
 
 const A = ['berserker', 'veilleur', 'duelliste'];
-const B = ['berserker', 'druide', 'duelliste'];
-const C = ['berserker', 'veilleur', 'druide'];
+const B = ['berserker', 'druide_ancien', 'duelliste'];
+const C = ['berserker', 'veilleur', 'druide_ancien'];
 console.log(`--- ${N} parties par ligne ---`);
 for (const [tr, lvl] of [[1, 1], [4, 4], [8, 8]]) {
   sim(`T${tr} Tranche, ${A.join('+')}, sans équip.`, { tranche: tr, mode: 'tranche' }, A, lvl, 'none');
@@ -37,10 +37,10 @@ for (const [tr, lvl] of [[1, 1], [4, 4], [8, 8]]) {
   sim(`T${tr} Stasis 3, ${A.join('+')}, bon équip.`, { tranche: tr, mode: 'stasis', stasisLevel: 3 }, A, lvl, 'good');
   sim(`T${tr} Tranche, ${A.join('+')}, attaque de base seule`, { tranche: tr, mode: 'tranche' }, A, lvl, 'none', 'basic');
 }
-sim('T1 Tranche, 4 héros niv 1', { tranche: 1, mode: 'tranche' }, ['berserker', 'veilleur', 'druide', 'duelliste'], 1, 'none');
+sim('T1 Tranche, 4 héros niv 1', { tranche: 1, mode: 'tranche' }, ['berserker', 'veilleur', 'druide_ancien', 'duelliste'], 1, 'none');
 sim('T1 Tranche, 2 héros berserker+veilleur', { tranche: 1, mode: 'tranche' }, ['berserker', 'veilleur'], 1, 'none');
-sim('T1 Tranche, 2 héros duelliste+druide', { tranche: 1, mode: 'tranche' }, ['duelliste', 'druide'], 1, 'none');
-for (const c of ['berserker', 'veilleur', 'druide', 'duelliste']) sim(`T1 Tranche, solo ${c} niv 1`, { tranche: 1, mode: 'tranche' }, [c], 1, 'none');
+sim('T1 Tranche, 2 héros duelliste+druide', { tranche: 1, mode: 'tranche' }, ['duelliste', 'druide_ancien'], 1, 'none');
+for (const c of ['berserker', 'veilleur', 'druide_ancien', 'duelliste']) sim(`T1 Tranche, solo ${c} niv 1`, { tranche: 1, mode: 'tranche' }, [c], 1, 'none');
 sim('T8 Tranche, 3 héros niv 1 (suicide)', { tranche: 8, mode: 'tranche' }, A, 1, 'none');
 sim('T4 Tranche, 3 héros niv 2', { tranche: 4, mode: 'tranche' }, A, 2, 'none');
 sim('T1 Basic, 3 héros niv 12 (sur-niveau)', { tranche: 1, mode: 'basic' }, A, 12, 'good');

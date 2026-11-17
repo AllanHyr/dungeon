@@ -27,7 +27,7 @@ async function signUp(name) {
   const b = new Browser(base);
   const r = await b.post('/api/register', { name, password: 'secret123', invite });
   if (r.status !== 200) throw new Error(`inscription de ${name} impossible : ${r.status} ${r.text.slice(0, 160)}`);
-  const hero = (await b.post('/api/character', { type: 'CHAR_CREATE', name: name.toUpperCase().slice(0, 8), classId: 'berserker' })).json.character;
+  const hero = (await b.post('/api/character', { type: 'CHAR_CREATE', name: name.toUpperCase().slice(0, 8), classId: 'sacrieur' })).json.character;
   if (!hero) throw new Error('création du héros impossible');
   return { b, hero };
 }

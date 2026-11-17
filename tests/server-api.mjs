@@ -121,9 +121,9 @@ const main = async () => {
     eq((await anon.req('POST', '/api/login', 'a=1', { 'Content-Type': 'application/x-www-form-urlencoded' })).status, 415);
     eq((await anon.req('POST', '/api/login', { name: 'x'.repeat(100000) })).status, 413);
     eq((await anon.req('POST', '/api/login', [1, 2])).status, 400);
-    const evil = await alice.req('POST', '/api/character', { type: 'CHAR_CREATE', name: 'Pirate', classId: 'berserker' }, { Origin: 'https://evil.example' });
+    const evil = await alice.req('POST', '/api/character', { type: 'CHAR_CREATE', name: 'Pirate', classId: 'sacrieur' }, { Origin: 'https://evil.example' });
     eq(evil.status, 403);
-    const own = await alice.req('POST', '/api/character', { type: 'CHAR_CREATE', name: 'Légitime', classId: 'berserker' }, { Origin: base });
+    const own = await alice.req('POST', '/api/character', { type: 'CHAR_CREATE', name: 'Légitime', classId: 'sacrieur' }, { Origin: base });
     assert(own.status === 200 && own.json.ok, own.text);
     app.db.prepare('DELETE FROM characters').run();
     eq((await anon.get('/api/inconnue')).status, 404);
@@ -142,10 +142,10 @@ const main = async () => {
     bob = await newUser(base, 'Bob');
     aliceId = await userIdOf(alice);
     bobId = await userIdOf(bob);
-    const a1 = await create(alice, '  Thorne  ', 'berserker');
+    const a1 = await create(alice, '  Thorne  ', 'sacrieur');
     assert(a1.id.startsWith('c-') && a1.name === 'Thorne' && a1.level === 1, JSON.stringify(a1));
-    await create(alice, 'Maeve', 'veilleur');
-    await create(bob, 'Kael', 'duelliste');
+    await create(alice, 'Maeve', 'pretre');
+    await create(bob, 'Kael', 'assassin');
     eq((await alice.get('/api/profile')).json.characters.map((c) => c.name), ['Thorne', 'Maeve']);
     eq((await bob.get('/api/profile')).json.characters.map((c) => c.name), ['Kael']);
     const bad = await alice.post('/api/character', { type: 'CHAR_CREATE', name: 'X', classId: 'magicien' });
@@ -162,8 +162,8 @@ const main = async () => {
       assert(r.status === 400 || r.json.ok === false, `${JSON.stringify(body)} → ${r.status} ${r.text}`);
     }
     // un champ « level » ajouté à une création est simplement ignoré : le personnage est de niveau 1
-    eq((await alice.post('/api/character', { type: 'CHAR_CREATE', name: 'Dieu', classId: 'berserker', inventory: [{ uid: 'z', id: 'couronne_dechue' }] })).status, 400, 'rien d\'imbriqué n\'est accepté');
-    const dieu = await alice.post('/api/character', { type: 'CHAR_CREATE', name: 'Dieu', classId: 'berserker', level: 20, xp: 99999 });
+    eq((await alice.post('/api/character', { type: 'CHAR_CREATE', name: 'Dieu', classId: 'sacrieur', inventory: [{ uid: 'z', id: 'couronne_dechue' }] })).status, 400, 'rien d\'imbriqué n\'est accepté');
+    const dieu = await alice.post('/api/character', { type: 'CHAR_CREATE', name: 'Dieu', classId: 'sacrieur', level: 20, xp: 99999 });
     assert(dieu.json.ok && dieu.json.character.level === 1 && dieu.json.character.xp === 0 && dieu.json.character.inventory.length === 0, dieu.text.slice(0, 200));
     assert((await alice.post('/api/character', { type: 'CHAR_DELETE', charId: dieu.json.character.id })).json.ok);
     const chars = (await alice.get('/api/profile')).json.characters;
@@ -190,15 +190,19 @@ const main = async () => {
     const saved = (await alice.get('/api/profile')).json.characters.find((c) => c.id === thorne.id);
     eq([saved.equipment.mainHand, saved.equipment.ring1.id], [null, 'anneau_sang']);
   });
-  await test('compétences : les points se dépensent comme dans le jeu, impossible d\'en avoir plus', async () => {
+  await test('compétences : le serveur applique les règles du jeu (niveau, spécialisation, autre classe, succès)', async () => {
     const maeve = (await alice.get('/api/profile')).json.characters.find((c) => c.name === 'Maeve');
     const learn = (skillId) => alice.post('/api/character', { type: 'CHAR_LEARN', charId: maeve.id, skillId });
-    assert((await learn('veilleur_bouclier')).json.ok, 'le premier point');
-    const second = await learn('veilleur_benediction');
-    assert(!second.json.ok && /point/.test(second.json.error), second.text);
-    assert(!(await learn('berserker_colere')).json.ok, 'compétence d\'une autre classe');
-    assert((await alice.post('/api/character', { type: 'CHAR_RESET_SKILLS', charId: maeve.id })).json.ok);
-    assert((await learn('veilleur_benediction')).json.ok, 'les points ont été rendus');
+    assert(!(await learn('pretre_hymne')).json.ok, 'un talent du palier 8 : refusé au niveau 1, sans spécialisation');
+    assert(!(await learn('sacrieur_peau_de_pierre')).json.ok, 'compétence d\'une autre classe');
+    assert(!(await learn('pretre_cantique')).json.ok, 'verrouillée tant que le succès manque');
+    seed(app, aliceId, maeve.id, (ch) => { ch.level = 8; });
+    assert((await alice.post('/api/character', { type: 'CHAR_SET_SPEC', charId: maeve.id, spec: 'sacre' })).json.ok, 'choisir une spécialisation');
+    const r = await learn('pretre_hymne');
+    assert(r.json.ok && r.json.character.skills.includes('pretre_hymne'), r.text);
+    const swap = await learn('pretre_gardien_ames');
+    assert(swap.json.ok && !swap.json.character.skills.includes('pretre_hymne'), 'un autre choix du même palier remplace le précédent');
+    assert(!(await learn('guerrier_massacre')).json.ok, 'talent d\'une autre classe');
   });
   await test('le coffre s\'ouvre ; supprimer un personnage ; la limite de personnages', async () => {
     const kael = (await bob.get('/api/profile')).json.characters[0];
@@ -209,8 +213,8 @@ const main = async () => {
     assert(del.json.ok && del.json.deletedId === kael.id, del.text);
     eq((await bob.get('/api/profile')).json.characters.length, 0);
     app.game.config.maxCharacters = 2;
-    await create(bob, 'Un', 'berserker'); await create(bob, 'Deux', 'berserker');
-    const third = await bob.post('/api/character', { type: 'CHAR_CREATE', name: 'Trois', classId: 'berserker' });
+    await create(bob, 'Un', 'sacrieur'); await create(bob, 'Deux', 'sacrieur');
+    const third = await bob.post('/api/character', { type: 'CHAR_CREATE', name: 'Trois', classId: 'sacrieur' });
     assert(!third.json.ok && /maximum/.test(third.json.error), third.text);
     app.game.config.maxCharacters = 30;
   });
@@ -221,7 +225,7 @@ const main = async () => {
     const chars = (await alice.get('/api/profile')).json.characters;
     thorneId = chars.find((c) => c.name === 'Thorne').id;
     maeveId = chars.find((c) => c.name === 'Maeve').id;
-    seed(app, aliceId, thorneId, (ch) => { ch.level = 4; ch.skills.push('berserker_colere'); });
+    seed(app, aliceId, thorneId, (ch) => { ch.level = 4; ch.skills.push('sacrieur_carapace'); });
     const r = await alice.post('/api/run/start', { kind: 'farm', charId: thorneId });
     assert(r.status === 200 && r.json.run.farm && r.json.run.players.length === 1 && r.json.info.farm === true, r.text.slice(0, 200));
     assert(r.json.run.pending.kind === 'combat' || r.json.run.pending.kind === 'farm', JSON.stringify(r.json.run.pending));
@@ -405,7 +409,7 @@ const main = async () => {
   try {
     await test('stats et users : l\'état du serveur', async () => {
       const zoe = await newUser(s6.base, 'Zoé', 'ancien123');
-      await create(zoe, 'Thorne', 'berserker');
+      await create(zoe, 'Thorne', 'sacrieur');
       const st = await admin('stats');
       assert(st.code === 0 && /Comptes\s+1\b/.test(st.text) && /Personnages\s+1\b/.test(st.text) && /Sessions ouvertes 1\b/.test(st.text), st.text);
       const us = await admin('users');
@@ -437,7 +441,7 @@ const main = async () => {
     });
     await test('delete : demande confirmation, puis supprime le compte, ses personnages et sa partie', async () => {
       const vic = await newUser(s6.base, 'Vic');
-      const ch = await create(vic, 'Maeve', 'veilleur');
+      const ch = await create(vic, 'Maeve', 'pretre');
       eq((await vic.post('/api/run/start', { kind: 'farm', charId: ch.id })).status, 200);
       eq(s6.app.store.stats(), { users: 2, characters: 2, runs: 1 });
       const no = await admin('delete', 'vic');

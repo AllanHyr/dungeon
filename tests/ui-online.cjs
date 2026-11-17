@@ -64,7 +64,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   const profile = await apiGet(page, 'api/profile');
   check(profile.characters.length === 3, `les 3 héros sont enregistrés sur le serveur (${profile.characters.map((c) => c.name).join(', ')})`);
   const aliceId = profile.user.id;
-  const thorne = profile.characters.find((c) => c.classId === 'berserker');
+  const thorne = profile.characters.find((c) => c.classId === 'sacrieur');
   // On « offre » du matériel et des niveaux directement dans la base : l'API, elle, ne le permettrait pas.
   seed(aliceId, thorne.id, (ch) => { ch.level = 4; ch.inventory.push({ uid: 'w1', id: 'dague_os' }, { uid: 'h1', id: 'gilet_cuir' }); });
   await page.reload();
@@ -79,11 +79,10 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   const saved = (await apiGet(page, 'api/profile')).characters.find((c) => c.id === thorne.id);
   check(saved.equipment.mainHand?.id === 'dague_os' && !saved.inventory.some((i) => i.uid === 'w1'), 'et le serveur l\'a enregistré (le sac a un objet de moins)');
   await page.click('.sheet-modal .tab[data-tab="skills"]');
-  await page.waitForSelector('.node.is-ready');
-  await page.click('.node[data-skill="berserker_colere"]');
-  await page.click('.sk-panel .sd2-foot .btn');
-  await page.waitForSelector('.node[data-skill="berserker_colere"].is-known');
-  check((await apiGet(page, 'api/profile')).characters.find((c) => c.id === thorne.id).skills.includes('berserker_colere'), 'apprendre une compétence : enregistré sur le serveur');
+  await page.waitForSelector('.spec-card[data-spec-id="bastion"]');
+  await page.click('.spec-card[data-spec-id="bastion"]');
+  await page.waitForSelector('.spec-card[data-spec-id="bastion"].is-selected');
+  check((await apiGet(page, 'api/profile')).characters.find((c) => c.id === thorne.id).spec === 'bastion', 'choisir une spécialisation : enregistré sur le serveur');
   await page.screenshot({ path: `${out}/101-fiche-en-ligne.png` });
   await page.keyboard.press('Escape');
 
@@ -180,7 +179,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await phone.waitForSelector('.menu');
   const names = await phone.$$eval('.char-card:not(.new-card) .char-name', (els) => els.map((e) => e.textContent));
   check(names.length === 3, `sur un deuxième appareil : les mêmes personnages (${names.join(', ')})`);
-  check(await phone.evaluate(async () => { const { app } = await import('/src/ui/state.js'); return app.profile.characters.find((c) => c.skills.includes('berserker_colere'))?.equipment.mainHand?.id === 'dague_os'; }), 'avec leur équipement et leurs compétences');
+  check(await phone.evaluate(async () => { const { app } = await import('/src/ui/state.js'); return app.profile.characters.find((c) => c.spec === 'bastion')?.equipment.mainHand?.id === 'dague_os'; }), 'avec leur équipement et leur spécialisation');
   check((await phone.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) === 0, 'accueil sur téléphone : pas de débordement');
   await phone.screenshot({ path: `${out}/104-accueil-tel.png` });
 

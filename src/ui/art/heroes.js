@@ -492,4 +492,5 @@ function guerrier(u) {
   return wrap(u, { defs, inner, bg: ['#4a2418', '#0a0706', '#ff9a6a'], at: [30, 36], halo: 0.34 });
 }
 
-export const HEROES = { berserker, veilleur, druide, duelliste, sacrieur, assassin, templier, pretre, guerrier };
+// (les quatre premières classes, retirées du jeu, restent dessinées : les tests s'en servent encore ; l'ancien Druide s'appelle druide_ancien)
+export const HEROES = { berserker, veilleur, druide, druide_ancien: druide, duelliste, sacrieur, assassin, templier, pretre, guerrier };

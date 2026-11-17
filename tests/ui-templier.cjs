@@ -100,11 +100,11 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
     // ---------- Combat : puissance sacrée, Aura sacrée, aura visible sur l'allié
     await page.evaluate(async () => {
       const { startTraining } = await import('/src/ui/controller.js');
-      startTraining([{ classId: 'templier', level: 6, spec: 'gardien' }, { classId: 'veilleur', level: 6 }], { dummy: 'mannequin', count: 1, atkScale: 1 });
+      startTraining([{ classId: 'templier', level: 6, spec: 'gardien' }, { classId: 'pretre', level: 6 }], { dummy: 'mannequin', count: 1, atkScale: 1 });
     });
     await page.waitForSelector('.hotbar .hb-class');
     await sleep(400);
-    // (le Templier joue en premier ou après le Veilleur : on passe le tour du Veilleur si besoin)
+    // (le Templier joue en premier ou après le Veilleur : on passe le tour du Prêtre si besoin)
     for (let i = 0; i < 4 && !/Templier/i.test(await page.$eval('.dock-name', (e) => e.textContent)); i++) {
       await page.click('.end-turn');
       await sleep(900);
@@ -184,8 +184,8 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
     check(await page.$eval('.dock .mode-chip', (e) => e.textContent.includes('Aura de dévotion')), 'après le choix : Aura de dévotion, directement');
     check((await pa()) === pa1, 'la 1re utilisation ne coûte aucun PA');
     check(await page.$('.sd-modes') === null, 'le choix se referme');
-    const ally = '.fighter.player:has(.f-name:has-text("Veilleur"))';
-    check(await page.$(`${ally} .fx-chip:has-text("Aura de dévotion")`) !== null, 'le Veilleur porte une pastille « Aura de dévotion » sur sa carte');
+    const ally = '.fighter.player:has(.f-name:has-text("Prêtre"))';
+    check(await page.$(`${ally} .fx-chip:has-text("Aura de dévotion")`) !== null, 'le Prêtre porte une pastille « Aura de dévotion » sur sa carte');
     // La 2e fois coûte 1 PA
     check((await page.$eval('.hb-class .slot-pa', (e) => e.textContent)) === '1', 'la deuxième utilisation affiche 1 PA');
     // (il ne reste qu'1 PA : on en redonne pour que le tour ne se termine pas tout seul quand le dernier est dépensé)
@@ -197,7 +197,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
     await tapOrClick('.sd-modes .mode-opt[data-mode="vengeance"]');
     await sleep(500);
     check(await page.$eval('.dock .mode-chip', (e) => e.textContent.includes('Aura de vengeance')) && (await pa()) === pa2 - 1, 'Aura de vengeance, pour 1 PA');
-    check(await page.$(`${ally} .fx-chip:has-text("Aura de vengeance")`) !== null, 'et le Veilleur la porte aussitôt');
+    check(await page.$(`${ally} .fx-chip:has-text("Aura de vengeance")`) !== null, 'et le Prêtre la porte aussitôt');
     await page.click(ally);
     await sleep(250);
     const panel = await page.$eval('.fx-panel', (e) => e.textContent.replace(/\s+/g, ' '));

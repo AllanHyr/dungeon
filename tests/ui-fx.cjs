@@ -21,7 +21,7 @@ async function openTraining(page, settingsFx) {
     const { app } = await import('/src/ui/state.js');
     app.profile.settings.fx = fx;
     const { startTraining } = await import('/src/ui/controller.js');
-    startTraining([{ classId: 'berserker', level: 5 }], { dummy: 'mannequin_agressif', count: 2, atkScale: 1 });
+    startTraining([{ classId: 'sacrieur', level: 5 }], { dummy: 'mannequin_agressif', count: 2, atkScale: 1 });
   }, settingsFx);
   await page.waitForSelector('.stage');
   await page.waitForTimeout(500);

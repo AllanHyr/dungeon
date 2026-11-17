@@ -85,7 +85,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
     // ---------- Combat : rage, posture, blessure profonde
     await page.evaluate(async () => {
       const { startTraining } = await import('/src/ui/controller.js');
-      startTraining([{ classId: 'guerrier', level: 6, spec: 'armes' }, { classId: 'veilleur', level: 6 }], { dummy: 'mannequin', count: 1, atkScale: 1 });
+      startTraining([{ classId: 'guerrier', level: 6, spec: 'armes' }, { classId: 'pretre', level: 6 }], { dummy: 'mannequin', count: 1, atkScale: 1 });
     });
     await page.waitForSelector('.hotbar .hb-class');
     await sleep(400);

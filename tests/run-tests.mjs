@@ -68,8 +68,9 @@ function takeTurnOf(state, id) {
 }
 
 console.log('\n● Contenu (données JSON)');
-test('le contenu se charge : 9 classes, 3 tranches jouables', () => {
-  eq(Object.keys(content.classes).sort(), ['assassin', 'berserker', 'druide', 'duelliste', 'guerrier', 'pretre', 'sacrieur', 'templier', 'veilleur']);
+test('le contenu se charge : 5 classes jouables (+ 4 classes de test), 3 tranches jouables', () => {
+  eq(Object.keys(loadContent({ legacy: false }).classes).sort(), ['assassin', 'guerrier', 'pretre', 'sacrieur', 'templier']);
+  eq(Object.keys(content.classes).sort(), ['assassin', 'berserker', 'druide_ancien', 'duelliste', 'guerrier', 'pretre', 'sacrieur', 'templier', 'veilleur']);
   eq(availableTranches(content).map((t) => t.id), [1, 4, 8]);
 });
 test('une faute dans un JSON donne une erreur claire (monstre inconnu)', () => {
@@ -414,7 +415,7 @@ console.log('\n● Actions sur les personnages (les mêmes règles en local et s
   });
   test("un personnage engagé dans une partie n'est pas modifiable ; un personnage inconnu non plus ; les succès sont renvoyés", () => {
     const chars = [];
-    const ch = act(chars, { type: 'CHAR_CREATE', name: 'Pip', classId: 'druide' }).character;
+    const ch = act(chars, { type: 'CHAR_CREATE', name: 'Pip', classId: 'druide_ancien' }).character;
     const locked = new Set([ch.id]);
     for (const type of CHARACTER_ACTIONS.filter((t) => t !== 'CHAR_CREATE')) {
       const r = act(chars, { type, charId: ch.id, uid: 'x', slot: 'head', skillId: 'druide_floraison' }, { locked });
@@ -572,7 +573,7 @@ test('la frise alterne les camps (joueur, monstre, joueur...)', () => {
   for (let i = 1; i < sides.length; i++) assert(sides[i] !== sides[i - 1], 'les camps doivent alterner : ' + sides.join(''));
 });
 test("avec plus de joueurs que de monstres, les derniers jouent à la suite", () => {
-  const s = training(['berserker', 'veilleur', 'druide', 'duelliste'].map((classId) => ({ classId, level: 1 })), { count: 1 });
+  const s = training(['berserker', 'veilleur', 'druide_ancien', 'duelliste'].map((classId) => ({ classId, level: 1 })), { count: 1 });
   eq(s.combat.timeline.length, 5);
   eq(new Set(s.combat.timeline).size, 5);
 });
@@ -617,7 +618,7 @@ test("la Provocation attire les coups des monstres sur le Berserker", () => {
   assert(tank > 0 && others === 0, `tank ${tank}, autres ${others}`);
 });
 test('un ennemi étourdi (Racines) saute son tour', () => {
-  const s = training([{ classId: 'druide', level: 1 }, { classId: 'duelliste', level: 1 }], { dummy: 'mannequin_agressif', count: 1 });
+  const s = training([{ classId: 'druide_ancien', level: 1 }, { classId: 'duelliste', level: 1 }], { dummy: 'mannequin_agressif', count: 1 });
   takeTurnOf(s, 'p1');
   s.players[0].skills.push('druide_racines');
   assert(cast(s, 'p1', 'druide_racines', 'm1').ok, 'racines');
@@ -791,7 +792,7 @@ test('le Berserker frappe plus fort quand il est blessé et régénère à chaqu
   assert(p.hp > hp0, 'régénération au début du tour');
 });
 test('un soin sur la durée (Rosée) soigne à chaque tour de sa cible, pendant 4 tours', () => {
-  const s = training([{ classId: 'druide', level: 1 }, { classId: 'duelliste', level: 1 }]);
+  const s = training([{ classId: 'druide_ancien', level: 1 }, { classId: 'duelliste', level: 1 }]);
   const duel = s.players[1];
   duel.hp = 5;
   takeTurnOf(s, 'p1');
@@ -914,7 +915,7 @@ test('le plateau finit toujours par un boss et respecte les contraintes', () => 
   for (let seed = 0; seed < 100; seed++) {
     for (const tr of [1, 4, 8]) {
       const size = 1 + (seed % 4);
-      const s = createRun(content, { tranche: tr, mode: 'tranche' }, makeParty(content, ['berserker', 'veilleur', 'druide', 'duelliste'].slice(0, size), 1, 'none'), seed);
+      const s = createRun(content, { tranche: tr, mode: 'tranche' }, makeParty(content, ['berserker', 'veilleur', 'druide_ancien', 'duelliste'].slice(0, size), 1, 'none'), seed);
       const b = s.dungeon.board;
       assert(b.length === content.tranches[tr].boardLength && b[b.length - 1].type === 'boss');
       assert(b.filter((t) => t.type === 'boss').length === 1);
@@ -983,9 +984,9 @@ test('skillRequirements : la liste des conditions (niveau, prérequis, points, s
   const ok = skillRequirements(content, ch, 'berserker_tourbillon');
   assert(ok.every((r) => r.ok), JSON.stringify(ok));
   assert(canLearnSkill(content, ch, 'berserker_tourbillon').ok);
-  // un succès fait partie des conditions (Cantique de hâte du Veilleur)
-  const heal = createCharacter(content, { id: 'y', name: 'V', classId: 'veilleur' });
-  const hate = skillRequirements(content, heal, 'veilleur_hate');
+  // un succès fait partie des conditions (Cantique de hâte du Prêtre)
+  const heal = createCharacter(content, { id: 'y', name: 'V', classId: 'pretre' });
+  const hate = skillRequirements(content, heal, 'pretre_cantique');
   assert(hate.some((r) => r.kind === 'achievement' && !r.ok), JSON.stringify(hate));
   // compétence d'une autre classe ou inconnue : liste vide
   eq(skillRequirements(content, ch, 'veilleur_soin'), []);
@@ -1216,7 +1217,7 @@ test('une session de farm sauvegardée en JSON en plein milieu se reprend exacte
 });
 test('des centaines de sessions de farm robotisées ne cassent rien (cohérence, fin garantie)', () => {
   for (let i = 0; i < 60; i++) {
-    const cls = ['berserker', 'veilleur', 'druide', 'duelliste'][i % 4];
+    const cls = ['berserker', 'veilleur', 'druide_ancien', 'duelliste'][i % 4];
     const { state } = playFarm(content, farmHero(cls, 1 + (i % 5), i + 1), 100 + i * 31, undefined, { stopBelow: 0.3 + (i % 3) * 0.2 });
     assert(state.phase === 'ended' && state.result.farm);
     assert(state.result.items.every((it) => ['common', 'uncommon', 'rare'].includes(content.items[it.id].rarity)), 'raretés restreintes');
@@ -1262,14 +1263,14 @@ test("le niveau d'équipement est la somme des niveaux des objets portés, et 36
   const p = achievementProgress(content, farmHero('duelliste', 4), content.achievements.equipe_pour_la_gloire);
   eq([p.current, p.target, p.done], [0, 36, false]);
 });
-test("finir le donjon de la tranche 1 EN GROUPE débloque une compétence pour le Veilleur seulement", () => {
+test("finir le donjon de la tranche 1 EN GROUPE débloque une compétence pour le Prêtre seulement", () => {
   const mk = (id, classId) => { const c = createCharacter(content, { id, name: id, classId }); c.level = 4; return c; };
-  const heal = mk('h1', 'veilleur');
-  const tank = mk('t1', 'berserker');
-  const pre = canLearnSkill(content, heal, 'veilleur_hate');
+  const heal = mk('h1', 'pretre');
+  const tank = mk('t1', 'sacrieur');
+  const pre = canLearnSkill(content, heal, 'pretre_cantique');
   assert(!pre.ok, 'au départ la compétence est verrouillée');
   eq(pre.reason.includes('Succès requis'), true, pre.reason);
-  assert(!content.achievementList.find((a) => a.id === 'main_tendue').classes.includes('berserker'));
+  assert(!content.achievementList.find((a) => a.id === 'main_tendue').classes.includes('sacrieur'));
   // Un donjon gagné en SOLO ne suffit pas...
   const solo = createRun(content, { tranche: 1, mode: 'tranche' }, [heal], 1);
   solo.phase = 'ended';
@@ -1284,35 +1285,33 @@ test("finir le donjon de la tranche 1 EN GROUPE débloque une compétence pour l
   applyRunResult(content, [heal], team);
   eq(heal.stats.clears['1'], { total: 2, group: 1 });
   assert(checkAchievements(content, heal).some((a) => a.id === 'main_tendue'));
-  assert(learnSkill(content, heal, 'veilleur_benediction').ok, 'prérequis');
-  assert(canLearnSkill(content, heal, 'veilleur_hate').ok, 'compétence débloquée');
-  assert(learnSkill(content, heal, 'veilleur_hate').ok);
+  assert(canLearnSkill(content, heal, 'pretre_cantique').ok, 'compétence débloquée');
+  assert(learnSkill(content, heal, 'pretre_cantique').ok);
   // le succès ne concerne pas les autres classes
   assert(!checkAchievements(content, tank).some((a) => a.id === 'main_tendue'));
   tank.stats.clears['1'] = { total: 5, group: 5 };
-  assert(!checkAchievements(content, tank).some((a) => a.id === 'main_tendue'), 'le Berserker ne reçoit pas ce succès');
+  assert(!checkAchievements(content, tank).some((a) => a.id === 'main_tendue'), 'le Sacrieur ne reçoit pas ce succès');
 });
 test("la réinitialisation des compétences ne reverrouille pas un succès déjà gagné", () => {
-  const ch = createCharacter(content, { id: 'v', name: 'V', classId: 'veilleur' });
+  const ch = createCharacter(content, { id: 'v', name: 'V', classId: 'pretre' });
   ch.level = 4;
-  assert(!canLearnSkill(content, ch, 'veilleur_hate').ok, 'verrouillée au départ');
+  assert(!canLearnSkill(content, ch, 'pretre_cantique').ok, 'verrouillée au départ');
   ch.achievements.main_tendue = true;
-  assert(learnSkill(content, ch, 'veilleur_benediction').ok);
-  assert(learnSkill(content, ch, 'veilleur_hate').ok);
+  assert(learnSkill(content, ch, 'pretre_cantique').ok);
   resetSkills(content, ch);
-  assert(!ch.skills.includes('veilleur_hate'), 'oubliée');
-  assert(learnSkill(content, ch, 'veilleur_benediction').ok && canLearnSkill(content, ch, 'veilleur_hate').ok, 'on peut la réapprendre : le succès reste acquis');
+  assert(!ch.skills.includes('pretre_cantique'), 'oubliée');
+  assert(canLearnSkill(content, ch, 'pretre_cantique').ok, 'on peut la réapprendre : le succès reste acquis');
 });
 test("l'Atelier de classes connaît TOUTES les compétences, même verrouillées par un succès", () => {
-  const s = training([{ classId: 'veilleur', level: 4 }]);
-  assert(s.players[0].skills.includes('veilleur_hate'));
+  const s = training([{ classId: 'pretre', level: 4 }]);
+  assert(s.players[0].skills.includes('pretre_cantique'));
 });
 test('une faute dans achievements.json est expliquée (condition inconnue, double déblocage, mauvaise classe)', () => {
   const run = (mutate) => { const raw = loadRaw(); mutate(raw); try { buildContent(raw); return ''; } catch (e) { return e.message; } };
   let msg = run((raw) => { raw.achievements.achievements[0].condition.type = 'tuerUnDragon'; });
   assert(msg.includes('tuerUnDragon') && msg.includes('farmBestWave'), msg);
-  msg = run((raw) => { raw.achievements.achievements.push({ id: 'doublon', name: 'Doublon', condition: { type: 'reachLevel', atLeast: 2 }, rewards: [{ type: 'skill', skillId: 'veilleur_hate' }] }); });
-  assert(msg.includes('veilleur_hate') && msg.includes('deux succès'), msg);
+  msg = run((raw) => { raw.achievements.achievements.push({ id: 'doublon', name: 'Doublon', condition: { type: 'reachLevel', atLeast: 2 }, rewards: [{ type: 'skill', skillId: 'pretre_cantique' }] }); });
+  assert(msg.includes('pretre_cantique') && msg.includes('deux succès'), msg);
   msg = run((raw) => { raw.achievements.achievements[3].rewards[0].skillId = 'duelliste_estoc'; });
   assert(msg.includes('duelliste_estoc') && msg.includes('classes'), msg);
   msg = run((raw) => { raw.achievements.achievements[4].rewards[0].feature = 'volerEnPlusDuVent'; });
@@ -1370,10 +1369,16 @@ test("les données invalides sont réparées et les ANCIENNES classes converties
   const p = sanitizeProfile(content, dirty);
   eq(p.characters.length, 1);
   const c = p.characters[0];
-  eq(c.classId, 'berserker', "l'ancien « tank » devient Berserker");
+  eq(c.classId, 'sacrieur', "l'ancien « tank » devient Sacrieur");
   eq(c.level, 20);
   eq(c.xp, 0);
-  eq(c.skills.sort(), ['berserker_entaille', 'berserker_provocation', 'berserker_sang_chaud'], 'compétences réinitialisées (points rendus)');
+  eq(c.skills.sort(), createCharacter(content, { id: 'n', name: 'N', classId: 'sacrieur' }).skills.sort(), 'compétences réinitialisées (seulement celles de départ)');
+  // Les classes RETIRÉES du jeu deviennent leur remplaçante (avec le contenu du jeu seul, sans les classes de test)
+  const real = loadContent({ legacy: false });
+  const conv = (classId) => sanitizeProfile(real, { characters: [{ id: 'a', name: 'A', classId, level: 6, skills: ['berserker_colere', 'veilleur_soin'] }] }).characters[0];
+  eq(['berserker', 'veilleur', 'duelliste'].map((k) => conv(k).classId), ['sacrieur', 'pretre', 'assassin']);
+  eq(conv('veilleur').level, 6, 'le niveau est gardé');
+  assert(conv('veilleur').skills.every((id) => real.skills[id]?.classId === 'pretre'), 'les compétences de l\'ancienne classe disparaissent');
   eq(c.inventory.length, 1);
   eq(c.equipment.chest.id, 'gilet_cuir', "l'ancienne armure va au torse");
   eq(c.equipment.mainHand.id, 'hallebarde_fer_noir', "l'ancienne arme va en main droite");
@@ -1413,7 +1418,7 @@ function playAfk(seed, classIds) {
 test('l\'autopilote mène une run complète à sa fin, sans jamais proposer une action refusée', () => {
   const outcomes = {};
   for (let seed = 1; seed <= 40; seed++) {
-    const { state, steps } = playAfk(seed, seed % 2 ? ['berserker', 'veilleur', 'duelliste'] : ['druide', 'duelliste']);
+    const { state, steps } = playAfk(seed, seed % 2 ? ['berserker', 'veilleur', 'duelliste'] : ['druide_ancien', 'duelliste']);
     assert(state.phase === 'ended' && state.result, `la run ${seed} ne finit pas (${steps} étapes)`);
     outcomes[state.result.outcome] = (outcomes[state.result.outcome] || 0) + 1;
   }
@@ -1618,7 +1623,7 @@ test("sur 40 parties-éclair du robot, les PV de la dernière étape de chaque c
   let steps = 0;
   let mismatches = 0;
   for (let seed = 1; seed <= 40; seed++) {
-    const party = makeParty(content, seed % 2 ? ['berserker', 'veilleur', 'duelliste'] : ['druide', 'duelliste'], 2 + (seed % 4), 'good', seed);
+    const party = makeParty(content, seed % 2 ? ['berserker', 'veilleur', 'duelliste'] : ['druide_ancien', 'duelliste'], 2 + (seed % 4), 'good', seed);
     const state = createRun(content, { tranche: seed % 3 ? 1 : 4, mode: 'tranche' }, party, seed);
     eachAction(state, 400, ({ before, res }) => {
       const beats = planBeats(res.events, before, state, content);
@@ -3138,7 +3143,7 @@ console.log('\n● Donjons à thème : plusieurs donjons par tranche, mécanique
 
   test('escorte de boss : autant de gardes que le groupe le permet (aucun en solo) ; `minMonsters` garantit un combat à plusieurs même en solo', () => {
     const boss = (dungeon, tranche, size) => {
-      const s = createRun(content, { tranche, dungeon, mode: 'tranche' }, makeParty(content, ['berserker', 'veilleur', 'duelliste', 'druide'].slice(0, size), tranche, 'none', 1), 5);
+      const s = createRun(content, { tranche, dungeon, mode: 'tranche' }, makeParty(content, ['berserker', 'veilleur', 'duelliste', 'druide_ancien'].slice(0, size), tranche, 'none', 1), 5);
       return spawnMonsters(s, true).map((m) => m.defId);
     };
     eq(boss('repaire_coupe_jarrets', 4, 1), ['capitaine_balafre'], 'en solo : le boss seul');

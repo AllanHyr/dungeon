@@ -172,6 +172,7 @@ const PRESETS = {
   pretre_mort: { delivery: 'smite', hit: 'blast', element: 'shadow', weight: 3 },
   pretre_mort_ombre: { delivery: 'smite', hit: 'blast', element: 'shadow', weight: 3, cross: true },
   pretre_renouveau: { delivery: 'ally', support: 'heal', element: 'nature', weight: 1 },
+  pretre_cantique: { delivery: 'ally', support: 'haste', element: 'holy', weight: 2 },
   pretre_cri: { delivery: 'wave', hit: 'sonic', support: 'debuff', element: 'shadow', weight: 2 },
   pretre_penitence: { delivery: 'projectile', shot: 'beam', hit: 'blast', element: 'holy', weight: 3 },
   pretre_hymne: { delivery: 'allies', support: 'heal', element: 'holy', weight: 3 },

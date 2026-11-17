@@ -7,10 +7,10 @@ const out = process.argv[3] || '/tmp/shots';
 const profile = {
   version: 1, nextCharNumber: 4, settings: { sound: false }, lastTeam: ['c1', 'c2'], lastSetup: { tranche: 4, mode: 'basic', stasisLevel: 1 },
   characters: [
-    { id: 'c1', name: 'Thorne', classId: 'berserker', level: 8, xp: 0, skills: [],
+    { id: 'c1', name: 'Thorne', classId: 'sacrieur', level: 8, xp: 0, skills: [],
       inventory: [{ uid: 'i1', id: 'couronne_dechue' }, { uid: 'i2', id: 'sceau_veilleur' }, { uid: 'i3', id: 'anneau_sang' }, { uid: 'i4', id: 'anneau_rubis' }, { uid: 'i5', id: 'potion_mineure' }, { uid: 'i6', id: 'dague_os' }],
       equipment: { weapon: { uid: 'e1', id: 'hallebarde_fer_noir' } }, stats: { runs: 0, wins: 0, deaths: 0 } },
-    { id: 'c2', name: 'Maeve', classId: 'veilleur', level: 8, xp: 0, skills: [], inventory: [], equipment: {}, stats: { runs: 0, wins: 0, deaths: 0 } }
+    { id: 'c2', name: 'Maeve', classId: 'pretre', level: 8, xp: 0, skills: [], inventory: [], equipment: {}, stats: { runs: 0, wins: 0, deaths: 0 } }
   ]
 };
 
@@ -38,7 +38,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
     await page.waitForSelector('.menu');
     await page.click('text=Lancer la run');
     await page.waitForSelector('.run');
-    await page.click('.unit.player >> nth=0 >> text=Sac');
+    await page.click('.unit.player >> nth=0 >> button:has-text("Sac (")');
     await page.waitForSelector('.modal .equip-layout');
     await sleep(200);
 

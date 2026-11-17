@@ -13,7 +13,7 @@ const out = process.argv[3] || '/tmp/shots';
 const failures = [];
 const check = (cond, message) => { if (!cond) { failures.push(message); console.log('  ❌', message); } else console.log('  ✅', message); };
 
-/** Lance un entraînement et pose des effets à la main sur le héros (Sacrieur), son allié (Veilleur) et les deux mannequins. */
+/** Lance un entraînement et pose des effets à la main sur le héros (Sacrieur), son allié (Prêtre) et les deux mannequins. */
 async function setup(page, fx = 'reduced') {
   await page.goto(url);
   await page.waitForSelector('.menu');
@@ -21,7 +21,7 @@ async function setup(page, fx = 'reduced') {
     const { app } = await import('/src/ui/state.js');
     app.profile.settings.fx = style;
     const { startTraining, redraw } = await import('/src/ui/controller.js');
-    startTraining([{ classId: 'sacrieur', level: 6, spec: 'bastion' }, { classId: 'veilleur', level: 6 }], { dummy: 'mannequin_agressif', count: 2, atkScale: 1 });
+    startTraining([{ classId: 'sacrieur', level: 6, spec: 'bastion' }, { classId: 'pretre', level: 6 }], { dummy: 'mannequin_agressif', count: 2, atkScale: 1 });
     await new Promise((r) => setTimeout(r, 400));
     const [a, v] = app.run.players;
     a.statuses.push({ id: 'mod', stat: 'damage', pct: 0.15, turns: 2 }, { id: 'mod', stat: 'taken', pct: -0.15, turns: 2 }, { id: 'taunt', turns: 2 }, { id: 'redirect', turns: 1, expires: 'turnStart' });
@@ -77,8 +77,8 @@ const moreOf = (page, unitId) => page.$eval(`.fighter[data-unit="${unitId}"]`, (
     check(sac.every((c) => c.turns && /^\d+$/.test(c.turns)), 'chaque pastille porte sa durée (un petit badge)');
     check(sac.every((c) => c.label.length > 12), 'chaque pastille a une infobulle qui explique l\'effet');
     const vig = await chipsOf(page, vigId);
-    check(vig[0]?.tone === 'debuff', `Veilleur : les malus passent en premier (« ${vig[0]?.text} »)`);
-    check(vig.filter((c) => c.tone === 'debuff').length >= 2, 'Veilleur : poison et étourdissement visibles tout de suite');
+    check(vig[0]?.tone === 'debuff', `Prêtre : les malus passent en premier (« ${vig[0]?.text} »)`);
+    check(vig.filter((c) => c.tone === 'debuff').length >= 2, 'Prêtre : poison et étourdissement visibles tout de suite');
     const mm1 = await chipsOf(page, m1);
     check(mm1.length === 2 && mm1.every((c) => c.tone === 'debuff'), `un mannequin empoisonné et étourdi : deux pastilles de malus (${mm1.map((c) => c.text).join(', ')})`);
     check(await moreOf(page, m1) === '', 'pas de « +N » quand tout tient');

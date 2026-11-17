@@ -5,7 +5,7 @@ import { makeParty, playRun } from './bot.mjs';
 
 const content = loadContent();
 const tranche = Number(process.argv[2]) || 1;
-const classes = (process.argv[3] || 'berserker,veilleur,duelliste').split(',');
+const classes = (process.argv[3] || 'sacrieur,pretre,assassin').split(',');
 const seed = Number(process.argv[4]) || 12345;
 console.log('Contenu OK :', Object.keys(content.items).length, 'objets,', Object.keys(content.skills).length, 'compétences,', Object.keys(content.monsters).length, 'monstres');
 const party = makeParty(content, classes, tranche, 'none', 3);

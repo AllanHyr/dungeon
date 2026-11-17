@@ -18,7 +18,7 @@ import { equipmentView, afterEquipRender } from '../gear.js';
 import { play } from '../sound.js';
 import {
   skillRequirements, skillPointsToSpend, skillPointsSpent, availableTranches, achievementsFor, achievementProgress,
-  rewardTexts, titlesOf, chestInfo, gearLevel, deckSize, specLevel, specsOf, deckEligible, choiceMate, knownSkills, activeSets
+  rewardTexts, titlesOf, chestInfo, gearLevel, deckSize, specLevel, specsOf, deckEligible, choiceMate, knownSkills, activeSets, canLearnSkill
 } from '../../core/index.js';
 import { EQUIP_SLOTS } from '../../core/content.js';
 import { exportCode } from '../../storage/profile.js';
@@ -626,12 +626,38 @@ function treeSection(content, ch, num, api, state, tranche, locked) {
     h('div', { class: 'sk-layout' }, h('div', { class: 'sk-tree' }, head, flow), narrow ? null : panel));
 }
 
+/**
+ * Les sorts qu'un SUCCÈS débloque (champ `unlockedBy`, ajouté par achievements.json), pour une classe qui n'a pas d'arbre à points :
+ * une carte par sort (verrouillé, à apprendre, appris), et un bouton « Apprendre » quand le succès est gagné.
+ */
+function rewardsSection(content, ch, num, act, locked, rewards) {
+  return h('section', { class: 'sk-sec sec-rewards' },
+    secHead(num, 'Sorts de succès', 'Certains succès débloquent un sort de plus : apprends-le ici, puis équipe-le dans ta barre.'),
+    h('div', { class: 'talent-grid' }, rewards.map((sk) => {
+      const known = ch.skills.includes(sk.id);
+      const can = known ? { ok: false } : canLearnSkill(content, ch, sk.id);
+      const st = known ? 'known' : can.ok ? 'ready' : 'locked';
+      const ach = content.achievements[sk.unlockedBy];
+      return h('div', { class: `talent-card kind-${skillKind(sk)} is-reward is-${st}`, dataset: { skill: sk.id, kind: 'reward', state: st } },
+        h('div', { class: 'tc-head' },
+          h('span', { class: `tc-icon ${sk.type === 'active' ? 'is-active' : 'is-passive'}` }, icon(skillIconName(content, sk), 'fluid')),
+          h('div', { class: 'tc-id' }, h('b', { class: 'tc-name' }, sk.name), h('span', { class: 'tc-tags' }, miniTags(sk)))),
+        h('p', { class: 'tc-desc' }, sk.desc),
+        h('span', { class: 'tc-foot' },
+          known ? [icon('check', 13), ' Appris']
+            : can.ok ? h('button', { type: 'button', class: 'btn btn-small btn-primary', disabled: !!locked, onClick: () => act({ type: 'CHAR_LEARN', charId: ch.id, skillId: sk.id }) }, 'Apprendre')
+              : [icon('lock', 13), ` ${ach ? `Succès « ${ach.name} » requis` : can.reason}`]));
+    })));
+}
+
 function skillsTab(ch, api, state, tranche, locked) {
   const content = app.content;
   const cls = content.classes[ch.classId];
   const hasSpecs = specsOf(content, ch.classId).length > 0;
   // Y a-t-il quelque chose à acheter avec des points ? (sinon pas d'arbre, pas de compteur : tout est de départ, automatique ou à choisir)
-  const buyable = cls.skills.some((s) => !s.innate && !s.auto && !s.replaces && !s.spec && (s.cost > 0 || !s.choiceGroup));
+  const buyable = cls.skills.some((s) => !s.innate && !s.auto && !s.replaces && !s.spec && !(s.unlockedBy && !s.cost) && (s.cost > 0 || !s.choiceGroup));
+  // Sans arbre à points, les sorts qu'un succès débloque ont leur propre petite section
+  const rewards = buyable ? [] : cls.skills.filter((s) => s.unlockedBy && !s.innate && !s.auto && !s.spec);
   const hasLearned = ch.skills.some((id) => !content.skills[id]?.innate && content.skills[id]?.spec); // un talent de spécialisation choisi ?
   const act = async (action) => {
     state.swap = null;
@@ -649,6 +675,7 @@ function skillsTab(ch, api, state, tranche, locked) {
     sections.push(talentsSection(content, ch, ++n, act, locked, hasLearned && !buyable));
   }
   sections.push(deckSection(content, ch, ++n, act, locked, state, api));
+  if (rewards.length) sections.push(rewardsSection(content, ch, ++n, act, locked, rewards));
   if (buyable) sections.push(treeSection(content, ch, ++n, api, state, tranche, locked));
 
   return h('div', { class: 'sk-page' },

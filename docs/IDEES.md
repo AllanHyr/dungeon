@@ -15,7 +15,7 @@
 | **Passifs de base** de la classe : toujours actifs, sans choix (`innate: true`) | 🟢 |
 | **4 sorts équipés au maximum** + **1 sort de classe** (voir §2) : il faut choisir | 🟡 code (barre équipée, choix hors combat, validation serveur) |
 | **Écran de présentation de chaque classe** à la création (idée, rôle, ressource, spés, sort de classe) | 🟡 code (UI) |
-| ✅ **Les 6 nouvelles classes remplacent les 4 anciennes** (on les peaufine). Les `aliases` de `classes.json` convertissent les anciennes sauvegardes de personnage ; les compétences apprises devront être migrées. | 🟡 |
+| ✅ **Fait** : les 4 anciennes classes sont **retirées du jeu** (Berserker → Sacrieur, Veilleur → Prêtre, Duelliste → Assassin par les `aliases` ; elles restent dans `tests/fixtures/classes-de-test.json` pour les tests). **Les 6 nouvelles classes remplacent les 4 anciennes** (on les peaufine). Les `aliases` de `classes.json` convertissent les anciennes sauvegardes de personnage ; les compétences apprises devront être migrées. | 🟡 |
 | ✅ **Spé tardive** : tous les personnages d'une classe partent avec les mêmes sorts ; la spécialisation arrive plus tard et **ajoute** des passifs ou des sorts actifs (pas de verrouillage de branches à la création). | 🟡 champ `spec` sur le personnage + `spec` requise sur certaines compétences |
 | ✅ **Spé : on peut en changer entre deux parties** (gratuit, pour essayer un autre gameplay). Voir §1 bis pour la progression. | 🟡 |
 | ✅ **Changer ses sorts équipés** : à l'accueil (gratuit) et **en donjon** à un feu de camp, au marchand, ou via un PNJ rare (voir §4). | |

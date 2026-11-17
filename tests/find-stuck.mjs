@@ -7,7 +7,7 @@ const content = loadContent();
 const CLASSES = Object.keys(content.classes);
 const configs = [];
 for (const tranche of [1, 4, 8]) {
-  for (const classes of [[...CLASSES], ['berserker'], ['druide'], ['veilleur'], ['veilleur', 'druide'], ['duelliste', 'berserker']]) {
+  for (const classes of [[...CLASSES], ['berserker'], ['druide_ancien'], ['veilleur'], ['veilleur', 'druide_ancien'], ['duelliste', 'berserker']]) {
     for (const mode of [{ mode: 'tranche' }, { mode: 'stasis', stasisLevel: 1 }, { mode: 'stasis', stasisLevel: 3 }]) configs.push({ tranche, classes, mode });
   }
 }

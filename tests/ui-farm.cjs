@@ -7,10 +7,10 @@ const out = process.argv[3] || '/tmp/shots';
 const profile = {
   version: 1, nextCharNumber: 3, settings: { sound: false }, lastTeam: ['c1'], lastSetup: { tranche: 1, mode: 'tranche', stasisLevel: 1 },
   characters: [
-    { id: 'c1', name: 'Thorne', classId: 'berserker', level: 2, xp: 30, skills: ['berserker_colere'], inventory: [{ uid: 'p1', id: 'potion_mineure' }],
+    { id: 'c1', name: 'Thorne', classId: 'sacrieur', level: 2, xp: 30, skills: [], inventory: [{ uid: 'p1', id: 'potion_mineure' }],
       chest: [{ uid: 'k1', id: 'piece_percee' }, { uid: 'k2', id: 'dague_os' }, { uid: 'k3', id: 'epee_veilleur' }],
       equipment: { weapon: { uid: 'e1', id: 'gourdin_cabosse' }, armor: null, trinket: null }, stats: { runs: 2, wins: 1, deaths: 0 } },
-    { id: 'c2', name: 'Maeve', classId: 'veilleur', level: 4, xp: 10, skills: [], inventory: [], equipment: { weapon: null, armor: null, trinket: null }, stats: { runs: 0, wins: 0, deaths: 0 } }
+    { id: 'c2', name: 'Maeve', classId: 'pretre', level: 4, xp: 10, skills: [], inventory: [], equipment: { weapon: null, armor: null, trinket: null }, stats: { runs: 0, wins: 0, deaths: 0 } }
   ]
 };
 

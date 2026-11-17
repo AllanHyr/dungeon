@@ -23,7 +23,7 @@ import { openSoundLab } from './sound-lab.js';
 import { dungeonPicker, dungeonBrief, comingSoonNote, selectedDungeon } from './dungeons.js';
 import {
   availableTranches, chestInfo, canStartFarm, gearLevel, hasFeature, achievementForFeature,
-  achievementProgress, skillPointsToSpend
+  achievementProgress, skillPointsToSpend, pendingChoices
 } from '../../core/index.js';
 
 const SAMPLE_NAMES = ['Aldric', 'Maeve', 'Borin', 'Lysa', 'Thorne', 'Elwen', 'Kael', 'Nyra', 'Gundar', 'Selene'];
@@ -155,7 +155,7 @@ function welcomePanel() {
         h('div', { class: 'small' }, cls.description))));
   const samples = async () => {
     const chars = app.profile.characters;
-    for (const [i, classId] of ['berserker', 'veilleur', 'duelliste'].entries()) {
+    for (const [i, classId] of ['sacrieur', 'pretre', 'assassin'].entries()) {
       const res = await characterAction({ type: 'CHAR_CREATE', name: SAMPLE_NAMES[(chars.length + i + 4) % SAMPLE_NAMES.length], classId });
       if (!res.ok) break;
       ui.team.push(res.character.id);
@@ -231,6 +231,8 @@ function heroCard(ch, view, locks) {
 
   // Les petites étiquettes d'un héros : des points de compétence à dépenser, un coffre à ouvrir, une partie en cours...
   const free = skillPointsToSpend(content, ch);
+  const todo = pendingChoices(content, ch);
+  const todoText = todo.spec ? 'Spécialisation à choisir' : todo.talents ? `${todo.talents} talent${plural(todo.talents, '', 's')} à choisir` : '';
   const chest = chestInfo(content, ch);
   const worn = Object.values(ch.equipment || {}).filter(Boolean).length;
   const tags = [
@@ -239,7 +241,12 @@ function heroCard(ch, view, locks) {
           class: 'hero-tag hero-tag-skill', type: 'button', title: `${free} point${plural(free, '', 's')} de compétence à dépenser : ouvre l'arbre de compétences`,
           onClick: (e) => { e.stopPropagation(); openSheet(ch.id, 'skills'); }
         }, icon('star', 14), `${free} point${plural(free, '', 's')}`)
-      : null,
+      : todoText
+        ? h('button', {
+            class: 'hero-tag hero-tag-skill hero-tag-choice', type: 'button', title: `${todoText} : ouvre ses compétences`,
+            onClick: (e) => { e.stopPropagation(); openSheet(ch.id, 'skills'); }
+          }, icon('star', 14), todoText)
+        : null,
     farm || chest.count > 0
       ? h('button', {
           class: `hero-tag chest-btn ${chest.count ? 'has-items' : ''}`, type: 'button', title: 'Ouvrir le coffre',

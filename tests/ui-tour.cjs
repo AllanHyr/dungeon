@@ -8,13 +8,13 @@ const out = process.argv[3] || '/tmp/shots';
 const profile = {
   version: 1, nextCharNumber: 5, settings: { sound: false }, lastTeam: ['c1', 'c2', 'c4'], lastSetup: { tranche: 4, mode: 'tranche', stasisLevel: 1 },
   characters: [
-    { id: 'c1', name: 'Thorne', classId: 'berserker', level: 8, xp: 300, skills: ['berserker_colere', 'berserker_saignee', 'berserker_peau_epaisse', 'berserker_rempart'],
+    { id: 'c1', name: 'Thorne', classId: 'sacrieur', level: 8, xp: 300, skills: [],
       inventory: [{ uid: 'i1', id: 'potion_mineure' }, { uid: 'i2', id: 'lame_cryptique' }, { uid: 'i3', id: 'couronne_dechue' }, { uid: 'i4', id: 'sceau_veilleur' }],
       equipment: { weapon: { uid: 'e1', id: 'hallebarde_fer_noir' }, armor: { uid: 'e2', id: 'harnois_sombre' }, trinket: null }, stats: { runs: 9, wins: 6, deaths: 2 } },
-    { id: 'c2', name: 'Maeve', classId: 'veilleur', level: 5, xp: 40, skills: ['veilleur_bouclier', 'veilleur_benediction', 'veilleur_resurrection'],
+    { id: 'c2', name: 'Maeve', classId: 'pretre', level: 5, xp: 40, skills: [],
       inventory: [{ uid: 'i5', id: 'potion_moyenne' }], equipment: { weapon: { uid: 'e3', id: 'baton_if' }, armor: null, trinket: { uid: 'e4', id: 'fiole_etoile' } }, stats: { runs: 4, wins: 3, deaths: 0 } },
-    { id: 'c3', name: 'Kael', classId: 'duelliste', level: 3, xp: 10, skills: ['duelliste_coup_de_grace', 'duelliste_embuscade'], inventory: [], equipment: { weapon: { uid: 'e5', id: 'croc_roi_rat' }, armor: null, trinket: null }, stats: { runs: 2, wins: 1, deaths: 1 } },
-    { id: 'c4', name: 'Pip', classId: 'druide', level: 1, xp: 0, skills: [], inventory: [], equipment: { weapon: null, armor: null, trinket: null }, stats: { runs: 0, wins: 0, deaths: 0 } }
+    { id: 'c3', name: 'Kael', classId: 'assassin', level: 3, xp: 10, skills: [], inventory: [], equipment: { weapon: { uid: 'e5', id: 'croc_roi_rat' }, armor: null, trinket: null }, stats: { runs: 2, wins: 1, deaths: 1 } },
+    { id: 'c4', name: 'Pip', classId: 'guerrier', level: 1, xp: 0, skills: [], inventory: [], equipment: { weapon: null, armor: null, trinket: null }, stats: { runs: 0, wins: 0, deaths: 0 } }
   ]
 };
 
@@ -96,7 +96,7 @@ const profile = {
     await page.click('.loot-card .btn-primary');
     await sleep(300);
   }
-  await page.click('.unit.player >> nth=0 >> text=Sac');
+  await page.click('.unit.player >> nth=0 >> button:has-text("Sac (")');
   await page.waitForSelector('.modal');
   await shot('34-inventaire-run');
   await page.keyboard.press('Escape');
@@ -200,7 +200,7 @@ const profile = {
   await m.evaluate(async () => {
     const { app } = await import('/src/ui/state.js');
     const { startTraining } = await import('/src/ui/controller.js');
-    startTraining([{ classId: 'veilleur', level: 5 }, { classId: 'berserker', level: 5 }], { dummy: 'mannequin_agressif', count: 2, atkScale: 1 });
+    startTraining([{ classId: 'pretre', level: 5 }, { classId: 'sacrieur', level: 5 }], { dummy: 'mannequin_agressif', count: 2, atkScale: 1 });
   });
   await m.waitForSelector('.stage');
   await m.screenshot({ path: `${out}/52-mobile-combat.png`, fullPage: true });

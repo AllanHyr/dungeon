@@ -229,6 +229,21 @@ export const deckSize = (content) => content.rules.deckSize ?? 4;
 export const specLevel = (content) => content.rules.specLevel ?? 4;
 
 /**
+ * Ce qu'il reste à CHOISIR à un personnage : `spec` (true si sa spécialisation est ouverte mais pas choisie) et `talents`
+ * (le nombre de « un parmi N » de sa spécialisation, au niveau atteint, où il n'a encore rien pris). L'accueil le signale.
+ */
+export function pendingChoices(content, character) {
+  const cls = content.classes[character.classId];
+  const spec = !!cls?.specs && Object.keys(cls.specs).length > 0 && !character.spec && character.level >= specLevel(content);
+  const groups = new Map();
+  if (character.spec) {
+    for (const s of cls.skills) if (s.choiceGroup && s.spec === character.spec && s.level <= character.level) (groups.get(s.choiceGroup) || groups.set(s.choiceGroup, []).get(s.choiceGroup)).push(s.id);
+  }
+  const talents = [...groups.values()].filter((ids) => !ids.some((id) => character.skills.includes(id))).length;
+  return { spec, talents };
+}
+
+/**
  * Les compétences AUTOMATIQUES (champ `auto`) que la spécialisation du personnage lui donne, une fois le niveau atteint : on ne les apprend pas,
  * elles sont là dès qu'on choisit la spécialisation. Renvoie leurs identifiants.
  */

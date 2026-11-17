@@ -10,15 +10,21 @@ import { buildContent, DATA_FILES } from '../src/core/content.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-/** Les JSON bruts (utile pour les tests qui veulent les modifier avant buildContent). */
-export function loadRaw() {
+/**
+ * Les JSON bruts (utile pour les tests qui veulent les modifier avant buildContent), PLUS les classes de test
+ * (`tests/fixtures/classes-de-test.json` : les quatre premières classes, retirées du jeu, qui exercent encore le moteur
+ * et servent de référence d'équilibrage). `{ legacy: false }` : les JSON du jeu seuls.
+ */
+export function loadRaw({ legacy = true } = {}) {
   const raw = {};
   for (const f of DATA_FILES) raw[f] = JSON.parse(readFileSync(join(here, '..', 'data', `${f}.json`), 'utf8'));
+  if (legacy) Object.assign(raw.classes.classes, JSON.parse(readFileSync(join(here, 'fixtures', 'classes-de-test.json'), 'utf8')).classes);
   return raw;
 }
 
-export function loadContent() {
-  const raw = loadRaw();
+/** Le contenu (avec les classes de test, sauf `{ legacy: false }` : voir loadRaw). */
+export function loadContent({ legacy = true } = {}) {
+  const raw = loadRaw({ legacy });
   for (const part of (process.env.TUNE || '').split(',').filter(Boolean)) {
     const [tranche, atk, hp] = part.split(':').map(Number);
     for (const m of raw.monsters.monsters) {

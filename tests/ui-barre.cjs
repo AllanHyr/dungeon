@@ -26,13 +26,13 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
 
     await page.goto(url);
     await page.waitForSelector('.menu');
-    // Atelier : un Duelliste niveau 5, spécialisation « poison ». On lui donne ensuite un deck de 2 sorts (comme un vrai personnage).
+    // Atelier : une Assassin niveau 5, spécialisation « venin ». On lui donne ensuite un deck de 2 sorts (comme un vrai personnage).
     await page.evaluate(async () => {
       const { startTraining, redraw } = await import('/src/ui/controller.js');
       const { app } = await import('/src/ui/state.js');
-      startTraining([{ classId: 'duelliste', level: 5, spec: 'poison' }], { dummy: 'mannequin', count: 1, atkScale: 1 });
+      startTraining([{ classId: 'assassin', level: 5, spec: 'venin' }], { dummy: 'mannequin', count: 1, atkScale: 1 });
       await new Promise((r) => setTimeout(r, 300));
-      app.run.players[0].deck = ['duelliste_estoc', 'duelliste_danse'];
+      app.run.players[0].deck = ['assassin_estoc', 'assassin_tourbillon'];
       redraw();
     });
     await page.waitForSelector('.hotbar .hb-deck');
@@ -43,18 +43,18 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
     const klass = await names('.hb-class .slot-label');
     const deck = await names('.hb-deck .slot .slot-label');
     check(basic.length === 1 && basic[0] === "Attaque à l'arme", `le corps à corps basique est seul de son côté (${basic.join(', ')})`);
-    check(klass.length === 1 && klass[0] === 'Fente', `le sort de classe est seul de son côté (${klass.join(', ')})`);
-    check(deck.join('|') === 'Estoc venimeux|Danse des lames|Libre|Libre', `le deck est un encadré de 4 : 2 sorts (l'Estoc a évolué avec la spé) et 2 emplacements libres (${deck.join(', ')})`);
+    check(klass.length === 1 && klass[0] === 'Marque venimeuse', `le sort de classe est seul de son côté (${klass.join(', ')})`);
+    check(deck.join('|') === 'Estoc venimeux|Tourbillon de lames|Libre|Libre', `le deck est un encadré de 4 : 2 sorts (l'Estoc a évolué avec la spé) et 2 emplacements libres (${deck.join(', ')})`);
     check((await page.$$('.hb-deck .slot-btn')).length === 2 && (await page.$$('.hb-deck .empty-slot')).length === 2, 'les emplacements libres ne sont pas des boutons');
     const all = await names('.hotbar .slot .slot-label');
-    check(!all.includes('Garde') && !all.includes('Lame empoisonnée') && !all.includes('Coup de grâce'), 'rien d\'autre dans la barre : ni Garde, ni les sorts appris mais hors deck');
+    check(!all.includes('Garde') && !all.includes('Lame de vipère') && !all.includes('Coup de grâce empoisonné'), 'rien d\'autre dans la barre : ni Garde, ni les sorts appris mais hors deck');
     check((await names('.hb-util .slot-label')).join('|') === 'Rang arrière', 'les actions (rang) sont à part');
 
     const keys = await page.$$eval('.hotbar .slot-key', (els) => els.map((e) => e.textContent));
     check(keys.slice(0, 4).join(' ') === '1 2 3 4' || keys.slice(0, 4).join(' ') === '& é " \'', `les touches se suivent de gauche à droite (${keys.join(' ')})`);
     // les cases sont rangées dans l'ordre : basique, classe, deck 1, deck 2
     const order = await page.$$eval('.hotbar .slot-btn', (els) => els.map((e) => e.closest('.slot').querySelector('.slot-label').textContent));
-    check(order.slice(0, 4).join('|') === "Attaque à l'arme|Fente|Estoc venimeux|Danse des lames", `ordre des cases : ${order.join(' > ')}`);
+    check(order.slice(0, 4).join('|') === "Attaque à l'arme|Marque venimeuse|Estoc venimeux|Tourbillon de lames", `ordre des cases : ${order.join(' > ')}`);
 
     // Un sort du deck se lance (Estoc venimeux : on choisit une cible, puis on la clique)
     if (!phone) {

@@ -32,13 +32,13 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await page.goto(url);
   await page.waitForSelector('.menu');
   check(!!(await page.$('.welcome')), 'sans héros, la page ne propose qu\'une chose : « Bienvenue »');
-  check((await page.$$('.welcome .class-card')).length === 9, 'les 9 classes sont présentées, avec leur rôle et leur description');
+  check((await page.$$('.welcome .class-card')).length === 5, 'les 5 classes sont présentées, avec leur rôle et leur description');
   check(!(await page.$('.view-switch')) && !(await page.$('.home-grid')) && !(await page.$('.launch-bar')), 'ni onglets, ni choix de donjon, ni bouton de lancement tant qu\'il n\'y a pas de héros');
   await page.screenshot({ path: `${out}/120-accueil-bienvenue.png` });
 
-  await page.click('.welcome .class-card:has-text("Duelliste")');
+  await page.click('.welcome .class-card:has-text("Assassin")');
   await page.waitForSelector('.modal #new-char-name');
-  check((await page.textContent('.modal .class-card.selected')).includes('Duelliste'), 'cliquer une classe ouvre la création avec CETTE classe déjà choisie');
+  check((await page.textContent('.modal .class-card.selected')).includes('Assassin'), 'cliquer une classe ouvre la création avec CETTE classe déjà choisie');
   await page.fill('#new-char-name', 'Zéphyr');
   await page.click('text=Créer le personnage');
   await page.waitForSelector('.home-grid');
@@ -47,7 +47,11 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   check((await page.textContent('.launch-who')).trim() === 'Zéphyr' && !(await page.$eval('.launch-bar .btn-primary', (b) => b.disabled)), 'la barre du bas dit qui part, et le bouton est prêt');
 
   console.log('\n● Ce qu\'il y a à faire pour un héros');
-  check((await tagText(page, '.hero-tag-skill')).some((t) => /1 point/.test(t)), 'un héros qui a des points de compétence à dépenser le montre');
+  check((await page.$$('.hero-tag-skill')).length === 0, 'un héros niveau 1 n\'a rien à choisir : pas d\'étiquette');
+  // Niveau 4 : sa spécialisation s'ouvre, l'accueil le signale
+  await page.evaluate(async () => { const { app } = await import('/src/ui/state.js'); const { redraw } = await import('/src/ui/controller.js'); app.profile.characters[0].level = 4; redraw(); });
+  await page.waitForSelector('.hero-tag-skill');
+  check((await tagText(page, '.hero-tag-skill')).some((t) => /Spécialisation à choisir/.test(t)), 'un héros dont la spécialisation est ouverte le montre (« Spécialisation à choisir »)');
   await page.click('.hero-tag-skill');
   await page.waitForSelector('.sheet-modal');
   check(!!(await page.$('.sheet-modal .tab.on[data-tab="skills"]')), 'cliquer dessus ouvre sa fiche directement sur les compétences');
@@ -55,10 +59,10 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   check((await page.$$('.chest-btn')).length === 0, 'pas de coffre affiché tant qu\'il est vide (il apparaît dans l\'onglet farm, ou dès qu\'il contient quelque chose)');
 
   console.log('\n● L\'équipe et le verdict de chaque donjon');
-  for (const [classId, name] of [['berserker', 'Thorne'], ['veilleur', 'Kael']]) {
+  for (const [classId, name] of [['sacrieur', 'Thorne'], ['pretre', 'Kael']]) {
     await page.click('.new-card');
     await page.waitForSelector('#new-char-name');
-    await page.click(`.modal .class-card:has-text("${classId === 'berserker' ? 'Berserker' : 'Veilleur'}")`);
+    await page.click(`.modal .class-card:has-text("${classId === 'sacrieur' ? 'Sacrieur' : 'Prêtre'}")`);
     await page.fill('#new-char-name', name);
     await page.click('text=Créer le personnage');
     await page.waitForFunction((n) => document.querySelectorAll('.hero-card').length === n, name === 'Thorne' ? 2 : 3);
@@ -93,7 +97,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await page.click('.hero-card:has-text("Zéphyr")');
   check((await tagText(page, '.hero-card .pick-mark')).join(',') === '3,1,2', 'le recocher le met en dernier');
   await inGame(page, async (state, ctrl) => {
-    for (const [name, classId] of [['Quatre', 'druide'], ['Cinq', 'druide']]) await ctrl.characterAction({ type: 'CHAR_CREATE', name, classId });
+    for (const [name, classId] of [['Quatre', 'guerrier'], ['Cinq', 'guerrier']]) await ctrl.characterAction({ type: 'CHAR_CREATE', name, classId });
     ctrl.redraw();
   });
   await page.click('.hero-card:has-text("Quatre")');
@@ -138,7 +142,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await tablet.goto(url);
   await tablet.waitForSelector('.menu');
   await inGame(tablet, async (state, ctrl) => {
-    for (const [name, classId] of [['Aldric', 'berserker'], ['Lysa', 'veilleur'], ['Borin', 'duelliste']]) await ctrl.characterAction({ type: 'CHAR_CREATE', name, classId });
+    for (const [name, classId] of [['Aldric', 'sacrieur'], ['Lysa', 'pretre'], ['Borin', 'assassin']]) await ctrl.characterAction({ type: 'CHAR_CREATE', name, classId });
     state.app.ui.team = state.app.profile.characters.map((c) => c.id);
     ctrl.redraw();
   });

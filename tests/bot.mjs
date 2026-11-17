@@ -67,7 +67,13 @@ function betweenWavesHeal(state, me) {
 }
 
 /** Le mode (ou l'aura) que le robot veut avoir : celui de sa spécialisation. */
-function wantedMode(me) {
+function wantedMode(me, state = null) {
+  if (me.classId === 'pretre') {
+    // Le Prêtre : l'Ombre reste en ombre ; les autres passent en ombre quand personne n'a besoin de soins, et reviennent à la lumière sinon.
+    if (me.spec === 'ombre') return 'ombre';
+    const hurt = state ? state.players.filter((a) => a.alive && hpRatio(state, a) < (me.spec === 'discipline' ? 0.5 : 0.75)).length : 1;
+    return hurt ? 'lumiere' : 'ombre';
+  }
   if (me.classId === 'templier') return { lumiere: 'devotion', vindicte: 'vengeance' }[me.spec] || 'protection';
   return me.spec === 'ecorche' ? 'degats' : 'reduction';
 }
@@ -116,7 +122,7 @@ function scoreSkill(state, me, s) {
       score += needy * (e.power ?? 0.8) * 9 + (needy ? urgent * (e.power ?? 0.8) * 10 : 0);
     } else if (e.type === 'resurrect') score += dead.length ? 40 : 0;
     else if (e.type === 'pa') score += hpRatio(state, me) > 0.6 ? 6 : 0; // gagner des PA contre des PV : seulement s'il en a de reste
-    else if (e.type === 'mode') score += me.mode !== wantedMode(me) ? 12 : 0; // le robot choisit le mode (l'aura) de sa spécialisation
+    else if (e.type === 'mode') score += me.mode !== wantedMode(me, state) ? 12 : 0; // le robot choisit le mode (l'aura) de sa spécialisation
     else if (e.type === 'resource' && e.amount > 0 && me.classId === 'templier') score += 2 * e.amount; // de la puissance sacrée : de quoi lancer un consommateur
     else if (e.type === 'redirect') score += allies.some((a) => a.id !== me.id && hpRatio(state, a) < 0.8) ? 8 : 0; // Sacrifice : quand un allié est en danger
     else if (e.type === 'mod' && (e.pct ?? e.flat) > 0 && e.to !== 'self') score += 4;
@@ -125,8 +131,10 @@ function scoreSkill(state, me, s) {
     else if (e.type === 'taunt') score += 2;
     else if (e.type === 'mark') { const mk = markedEnemies(state, me); score += mk.length < (e.max ?? 1) && foes.some((f) => !mk.includes(f)) ? 12 : 0; } // désigner une proie quand on n'en a pas (ou pas assez)
     else if (e.type === 'dot' && e.stack) score += e.power * e.turns * 4 * (e.stacks || 1); // un venin qui se cumule vaut cher
-    else if (e.type === 'poison' || e.type === 'dot') score += 3;
+    else if (e.type === 'dot') { const t = aim[0]; const fresh = !t || !t.statuses.some((st) => st.id === 'dot' && st.key === (e.key || sk.id)); score += fresh ? e.power * e.turns * 6 * (e.drain && hurt.length ? 1.4 : 1) : 1; } // une douleur sur la durée : vaut presque des dégâts directs, si la cible ne l'a pas déjà
+    else if (e.type === 'poison') score += 3;
     else if (e.type === 'cleanse') score += 1;
+    else if (e.type === 'expiation') score += (sk.target === 'allies' ? allies.filter((a) => !a.statuses.some((st) => st.id === 'expiation' && st.casterId === me.id)).length : allies.some((a) => !a.statuses.some((st) => st.id === 'expiation' && st.casterId === me.id)) ? 1 : 0) * 5; // l'Expiation : ses coups soigneront ces alliés
   }
   if (sk.effects.some((e) => e.type === 'guard')) score = hpRatio(state, me) < 0.4 ? 3 : 0; // la garde : seulement quand on va mal
   if (sk.id === 'berserker_saignee' && hpRatio(state, me) < 0.4) score = 0; // on évite de se saigner trop bas
@@ -175,7 +183,7 @@ export function combatAction(state, actorId, rand, mode = 'smart') {
     }
   }
   if (!best) return { type: 'COMBAT_ACT', playerId: actorId, act: 'endTurn' };
-  return { type: 'COMBAT_ACT', playerId: actorId, act: 'skill', skillId: best.skillId, targetId: pickTarget(state, me, best, rand), ...(best.modePick ? { modeId: wantedMode(me) } : {}) };
+  return { type: 'COMBAT_ACT', playerId: actorId, act: 'skill', skillId: best.skillId, targetId: pickTarget(state, me, best, rand), ...(best.modePick ? { modeId: wantedMode(me, state) } : {}) };
 }
 
 // ============================================================

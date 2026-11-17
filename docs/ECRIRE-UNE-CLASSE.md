@@ -315,6 +315,22 @@ Le Templier s'en sert en grand : des sorts à 3 PA donnent +1, à 5 PA +2, et le
 
 ---
 
+## 3 sexies. Expiation, soin en trop et drain (le Prêtre)
+
+Le **Prêtre** (`data/classes.json`) n'a pas de ressource : sa **forme** est un mode de classe (§3 ter, `lumiere` / `ombre`) que son sort de classe bascule
+(`"set": "toggle"`, `freeFirst` et `"cooldown": 2` : gratuit la 1re fois, ensuite 1 PA, et jamais deux fois de suite). Trois petites briques en plus, réutilisables :
+
+* **L'Expiation** : l'effet `{ "type": "expiation", "turns": 3 }` pose sur un allié un statut lié au lanceur. La cible d'effet **`"to": "expiation"`** désigne alors
+  **les alliés qui portent l'Expiation de ce lanceur**. La passive de la Discipline s'écrit :
+  `{ "on": "dealDamage", "effect": { "type": "heal", "pctOfDamage": 0.6, "to": "expiation" } }` (« ses dégâts soignent les alliés sous Expiation »).
+  Deux Prêtres ont chacun leur Expiation. L'allié la voit sur sa carte (pastille « Expiation ») et dans son panneau d'effets.
+* **Le soin en trop devient un bouclier** : la stat **`overhealShield`** (`{ "stat": "overhealShield", "pct": 0.6 }`) transforme 60 % du soin **au-delà des PV max**
+  en bouclier de 2 tours. Elle vaut pour tous les soins directs du héros (`heal`), pas pour les soins sur la durée.
+* **Un poison qui soigne** : un `dot` peut avoir **`"drain": 0.4`** : à chaque tour, 40 % des dégâts qu'il inflige soignent **l'allié le plus blessé** de celui qui l'a posé
+  (le Toucher vampirique). La description du statut le dit au joueur.
+
+---
+
 ## 4. Les effets (`effects`)
 
 Un effet est un petit objet `{ "type": ..., ... }`. Une compétence en a autant qu'on veut, appliqués dans l'ordre.
@@ -325,7 +341,7 @@ Un effet est un petit objet `{ "type": ..., ... }`. Une compétence en a autant 
 | `heal` | `power` (× la stat `heal`) **ou** `pctMaxHp` **ou** `pctOfDamage` (part des dégâts qui viennent d'être infligés, pour un « soigneur qui frappe ») | soigne |
 | `shield` | `power` ou `pctMaxHp` ; `turns` (durée, 2 par défaut) | pose un **bouclier** (voir §8) |
 | `hot` | `power`, `turns` | soin **sur la durée** : soigne `heal × power` au début de chaque tour de la cible |
-| `dot` | `power`, `turns`, `label` | saignement : dégâts à chaque tour |
+| `dot` | `power`, `turns`, `label` ; `stack`, `key`, `name` (§3 quater) ; `drain` (§3 sexies) | saignement : dégâts à chaque tour |
 | `poison` | `pct` (de ses PV max), `turns` | poison (ne tue jamais) |
 | `mod` | `stat`, `pct` ou `flat`, `turns` | bonus ou malus temporaire (ex. `{"stat":"damage","pct":0.4,"turns":2}`) |
 | `taunt` | `turns` | les ennemis doivent viser cette unité |
@@ -340,6 +356,7 @@ Un effet est un petit objet `{ "type": ..., ... }`. Une compétence en a autant 
 | `mode` | `set`: `"toggle"` (mode suivant de la liste), `"pick"` (le joueur choisit dans un petit menu d'icônes) ou l'identifiant d'un mode | change le **mode de classe** (voir §3 ter et §3 quinquies) |
 | `redirect` | `turns` (1 = jusqu'au début de son prochain tour ; 2 et plus = plus longtemps) | « Sacrifice » : le lanceur **encaisse à la place de ses alliés** les coups directs des monstres (pas le poison) |
 | `mark` | `pct` (+x % de dégâts du lanceur), `max` (nombre de marques, 1 par défaut) | « Marque » de l'Assassin : désigne une proie (voir §3 quater) |
+| `expiation` | `turns` | « Expiation » du Prêtre : un allié que les passifs du lanceur soignent avec `"to": "expiation"` (voir §3 sexies) |
 
 **Ce que le joueur voit des bonus et malus** (rien à écrire de ton côté, tout vient de `src/ui/status.js`) : sur chaque carte de combattant, des pastilles
 avec la durée restante (les malus d'abord, trois au plus puis « +N ») ; dans le bandeau d'action, le panneau « Tes effets » (Bonus / Malus, une phrase par effet) ;
@@ -354,7 +371,7 @@ Deux paramètres facultatifs qui font dépendre un effet des **PV manquants** :
 ### À qui s'applique un effet : `to`
 
 Par défaut un effet vise la **cible de la compétence**. `"to"` change ça, effet par effet :
-`target`, `self`, `allies` (= `allAllies`), `enemies` (= `allEnemies`), `lowestAlly`, `randomEnemy`, et dans un déclencheur : `source` / `attacker` (celui qui t'a frappé).
+`target`, `self`, `allies` (= `allAllies`), `enemies` (= `allEnemies`), `lowestAlly`, `lowestEnemy`, `randomEnemy`, `expiation` (les alliés sous son Expiation), et dans un déclencheur : `source` / `attacker` (celui qui t'a frappé).
 
 Exemple : *« frappe un ennemi, gagne 1 Élan et un bouclier »*
 
@@ -390,7 +407,7 @@ Une passive n'a pas de `pa` ni de `target` : elle agit toute seule, tant qu'elle
 ```
 
 Stats modifiables : `hp` `atk` `def` `heal` `save` `luck` `ini` `pa` (valeurs de base) et les **multiplicateurs**
-`damage` (dégâts infligés), `taken` (dégâts reçus), `healPower` (soins et boucliers), `critShift`, `fumbleShift`.
+`damage` (dégâts infligés), `taken` (dégâts reçus), `healPower` (soins et boucliers), `dot` (ses poisons et saignements), `overhealShield` (part du soin en trop changée en bouclier), `critShift`, `fumbleShift`.
 
 * `pct` : pourcentage (0,25 = +25 %) · `flat` : valeur ajoutée.
 * `pctPer` / `flatPer` : proportionnel à une quantité variable : `missingHpPct` (0 à 100), `hpPct`, `alliesAlive`, `enemiesAlive`, `resource:<id>` (ex. `"resource:elan"`).

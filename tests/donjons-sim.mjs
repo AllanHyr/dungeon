@@ -15,12 +15,15 @@ const B = {
   'templier:gardien': { spec: 'gardien', learn: ['templier_serment_fer'], deck: ['templier_frappe', 'templier_main_protection', 'templier_verdict', 'templier_rempart'], low: ['templier_frappe', 'templier_main_protection', 'templier_verdict', 'templier_benediction'] },
   'templier:lumiere': { spec: 'lumiere', learn: ['templier_source_vie'], deck: ['templier_frappe', 'templier_benediction', 'templier_imposition', 'templier_eclat'] },
   'assassin:executeur': { spec: 'executeur', learn: ['assassin_boucherie'], deck: ['assassin_boucherie', 'assassin_estoc', 'assassin_dos', 'assassin_coup_de_grace'], low: ['assassin_garrot', 'assassin_estoc', 'assassin_dos', 'assassin_coup_de_grace'] },
+  'pretre:sacre': { spec: 'sacre', learn: ['pretre_hymne'], deck: ['pretre_chatiment', 'pretre_soin', 'pretre_soin_superieur', 'pretre_hymne'], low: ['pretre_chatiment', 'pretre_soin', 'pretre_soin_superieur', 'pretre_bouclier'] },
+  'pretre:ombre': { spec: 'ombre', learn: ['pretre_eruption'], deck: ['pretre_douleur', 'pretre_toucher_vampirique', 'pretre_mort', 'pretre_eruption'], low: ['pretre_chatiment', 'pretre_douleur', 'pretre_toucher_vampirique', 'pretre_mort'] },
   'assassin:venin': { spec: 'venin', learn: ['assassin_predateur_toxique'], deck: ['assassin_nuage', 'assassin_estoc', 'assassin_lame_venimeuse', 'assassin_coup_de_grace'] }
 };
 const TEAMS = {
   'anciennes': ['berserker', 'veilleur', 'duelliste'],
   'tank+soin+dps': ['sacrieur:bastion', 'templier:lumiere', 'assassin:executeur'],
   'avec venin': ['templier:gardien', 'veilleur', 'assassin:venin'],
+  'avec prêtres': ['templier:gardien', 'pretre:sacre', 'pretre:ombre'],
   '3 tanks': ['templier:gardien', 'templier:gardien', 'sacrieur:bastion'],
   'duo': ['sacrieur:bastion', 'assassin:executeur'],
   'solo tank': ['sacrieur:bastion']

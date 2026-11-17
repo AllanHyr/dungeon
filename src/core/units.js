@@ -214,15 +214,27 @@ export function tickStatusEffects(state, unit) {
       const dmg = Math.max(1, Math.round(st.pct * unitStats(state, unit).hpMax));
       applyDamage(state, unit, dmg, caster, { nonLethal: true, ignoreGuard: true, describe: (real) => `${unit.name} souffre du poison (-${real} PV).`, kind: 'bad' });
     } else if (st.id === 'dot') {
-      applyDamage(state, unit, Math.max(1, st.amount * (st.stacks || 1)), caster, {
+      const real = applyDamage(state, unit, Math.max(1, st.amount * (st.stacks || 1)), caster, {
         nonLethal: !!st.nonLethal, ignoreGuard: true,
         describe: (real) => `${unit.name} ${st.label || 'saigne'} (-${real} PV).`, kind: 'bad'
       });
+      // `drain` (Toucher vampirique du Prêtre) : une part de ces dégâts soigne l'allié le plus blessé du lanceur.
+      if (st.drain && caster?.alive && real > 0) drainHeal(state, caster, real * st.drain);
     } else if (st.id === 'hot') {
       const real = healUnit(state, caster, unit, st.amount);
       if (real > 0) log(state, `${unit.name} récupère ${real} PV (soin sur la durée).`, 'good');
     }
   }
+}
+
+/** Soigne l'allié le plus blessé (en proportion) de `caster`, lui compris. */
+function drainHeal(state, caster, amount) {
+  const side = caster.kind === 'player' ? state.players : state.combat?.monsters || [];
+  let best = null;
+  for (const u of side) if (u.alive && (!best || u.hp / unitStats(state, u).hpMax < best.hp / unitStats(state, best).hpMax)) best = u;
+  if (!best) return;
+  const got = healUnit(state, caster, best, amount);
+  if (got > 0) log(state, `   ${best.name} récupère ${got} PV (drain de ${caster.name}).`, 'good');
 }
 
 /** Hors combat : un tour d'exploration = un tick de poison / saignement, puis la durée baisse. */

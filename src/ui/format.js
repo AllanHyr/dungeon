@@ -87,7 +87,7 @@ export function skillKind(sk) {
   const fx = (sk.effects || []).map((e) => e.type);
   const has = (t) => fx.includes(t);
   if (has('damage') || has('stun') || has('poison') || has('dot')) return 'attack';
-  if (has('heal') || has('hot') || has('cleanse') || has('resurrect')) return 'heal';
+  if (has('heal') || has('hot') || has('cleanse') || has('resurrect') || has('expiation')) return 'heal';
   if (has('shield') || has('guard') || has('taunt') || has('move')) return 'defense';
   if (has('mod') || has('pa') || has('resource')) return 'buff';
   return 'attack';
@@ -129,6 +129,7 @@ export function skillBlurb(sk, content = null) {
       case 'move': parts.push('change de rang'); break;
       case 'resource': parts.push(`${e.amount > 0 ? '+' : ''}${e.amount} ${resourceName(content, sk, e.id).toLowerCase()}`); break;
       case 'mark': parts.push('marque la cible'); break;
+      case 'expiation': parts.push(`expiation ${e.turns} t.`); break;
       case 'mode': parts.push(e.set === 'pick' ? 'choix du mode' : 'change de mode'); break;
       case 'redirect': parts.push('encaisse pour ses alliés'); break;
       case 'pa': parts.push(`+${e.amount} PA`); break;

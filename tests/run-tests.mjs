@@ -68,8 +68,8 @@ function takeTurnOf(state, id) {
 }
 
 console.log('\n● Contenu (données JSON)');
-test('le contenu se charge : 7 classes, 3 tranches jouables', () => {
-  eq(Object.keys(content.classes).sort(), ['assassin', 'berserker', 'druide', 'duelliste', 'sacrieur', 'templier', 'veilleur']);
+test('le contenu se charge : 8 classes, 3 tranches jouables', () => {
+  eq(Object.keys(content.classes).sort(), ['assassin', 'berserker', 'druide', 'duelliste', 'pretre', 'sacrieur', 'templier', 'veilleur']);
   eq(availableTranches(content).map((t) => t.id), [1, 4, 8]);
 });
 test('une faute dans un JSON donne une erreur claire (monstre inconnu)', () => {
@@ -3435,6 +3435,113 @@ console.log('\n● Donjons à thème : plusieurs donjons par tranche, mécanique
     assert(msg.includes('roundAtMost'), msg);
     msg = tryBuild((r) => { r.monsters.skills.relever_les_morts.effects[0].hpPct = 3; });
     assert(msg.includes('hpPct'), msg);
+  });
+}
+
+console.log('\n● Prêtre : forme d\'ombre, Expiation, soin en trop en bouclier, drain');
+{
+  /** Une salle d'entraînement avec un Prêtre (niveau 8) et un Templier allié, face à deux mannequins. */
+  const pr = (spec = null, level = 8) => { const t = training([{ classId: 'pretre', level, spec }, { classId: 'templier', level: 8 }], { count: 2 }); takeTurnOf(t, 'p1'); return t; };
+  const run = (t, p, id, target) => { const sk = content.skills[id]; const tg = Array.isArray(target) ? target : [target]; for (const e of sk.effects) applyEffect(t, p, e, tg, { outcome: 'hit', skill: sk }); };
+  const noDice = (id, fn) => { const sk = content.skills[id]; const old = sk.dice; sk.dice = { fumble: 0, crit: 21 }; try { return fn(); } finally { if (old === undefined) delete sk.dice; else sk.dice = old; } };
+
+  test('le Prêtre : soigneur au rang arrière, Forme d\'ombre en sort de classe, deck de départ Châtiment / Soin / Douleur / Bouclier', () => {
+    const ch = createCharacter(content, { id: 'p', name: 'P', classId: 'pretre' });
+    const cls = content.classes.pretre;
+    eq([cls.role, cls.startRow, cls.classSkill, cls.modes.default], ['healer', 'back', 'pretre_forme', 'lumiere']);
+    fillDeck(content, ch);
+    eq(ch.deck, ['pretre_chatiment', 'pretre_soin', 'pretre_douleur', 'pretre_bouclier']);
+    eq(Object.keys(cls.specs), ['sacre', 'discipline', 'ombre']);
+    for (const spec of Object.keys(cls.specs)) eq(cls.skills.filter((x) => x.spec === spec && x.level === 8).length, 3, `${spec} : 3 choix au palier 8`);
+    const t = pr();
+    eq(t.players[0].mode, 'lumiere', 'chaque combat commence en forme de lumière');
+  });
+
+  test('Forme d\'ombre : +35 % de dégâts, soins −50 % ; 1re fois gratuite, puis 1 PA ; relance de 2 tours', () => {
+    const t = pr();
+    const p = t.players[0];
+    const lum = computeStats(t, p);
+    eq(skillPaCost(p, content.skills.pretre_forme), 0, '1re fois gratuite');
+    assert(cast(t, p.id, 'pretre_forme').ok);
+    eq(p.mode, 'ombre');
+    const omb = computeStats(t, p);
+    assert(Math.abs(omb.damage - lum.damage - 0.35) < 1e-9, `dégâts : ${lum.damage} → ${omb.damage}`);
+    assert(Math.abs(omb.healPower - (lum.healPower - 0.6)) < 1e-9, `soins : ${lum.healPower} → ${omb.healPower} (lumière +10 %, ombre −50 %)`);
+    eq(skillPaCost(p, content.skills.pretre_forme), 1, 'ensuite 1 PA');
+    const again = cast(t, p.id, 'pretre_forme');
+    assert(!again.ok, 'pas deux fois dans le même tour (relance)');
+    eq(p.mode, 'ombre');
+  });
+
+  test('Discipline : le Bouclier pose l\'Expiation ; les dégâts du Prêtre soignent les alliés qui la portent (60 %, 40 % en ombre), pas les autres', () => {
+    const t = pr('discipline');
+    const [p, ally] = t.players;
+    const [m] = t.combat.monsters;
+    run(t, p, 'pretre_bouclier_discipline', ally);
+    const st = ally.statuses.find((x) => x.id === 'expiation');
+    assert(st && st.casterId === p.id && st.turns === 3, 'Expiation de 3 tours posée par le Prêtre');
+    eq(statusInfo(st).name, 'Expiation'); eq(statusInfo(st).tone, 'buff');
+    const max = computeStats(t, ally).hpMax;
+    ally.hp = Math.round(max * 0.3); p.hp = Math.round(computeStats(t, p).hpMax * 0.5);
+    const a0 = ally.hp, p0 = p.hp;
+    const dmg = dealDamage(t, p, m, 20);
+    eq(ally.hp - a0, Math.round(dmg * 0.6), 'l\'allié sous Expiation regagne 60 % des dégâts');
+    eq(p.hp, p0, 'le Prêtre, sans Expiation, rien');
+    p.mode = 'ombre';
+    const a1 = ally.hp;
+    const dmg2 = dealDamage(t, p, m, 20);
+    eq(ally.hp - a1, Math.round(dmg2 * 0.4), 'en forme d\'ombre : 40 %');
+    // Un autre Prêtre ne profite pas de cette Expiation (elle est liée à son lanceur)
+    eq(skillBlurb(content.skills.pretre_bouclier_discipline), 'bouclier ×1.5, expiation 3 t. · un allié');
+  });
+
+  test('Sacré (Égide divine) : 60 % du soin EN TROP devient un bouclier ; sans la spé, le surplus est perdu', () => {
+    for (const [spec, expect] of [['sacre', true], [null, false]]) {
+      const t = pr(spec);
+      const [p, ally] = t.players;
+      const max = computeStats(t, ally).hpMax;
+      ally.hp = max - 2; ally.shields = [];
+      run(t, p, 'pretre_soin', ally);
+      eq(ally.hp, max);
+      const sh = (ally.shields || []).reduce((a, x) => a + x.amount, 0);
+      if (expect) {
+        const heal = computeStats(t, p);
+        const amount = Math.round(heal.heal * 1.4 * heal.healPower);
+        eq(sh, Math.round((amount - 2) * 0.6), 'bouclier = 60 % du surplus');
+      } else eq(sh, 0, 'sans Égide : rien');
+    }
+  });
+
+  test('Ombre : le Toucher vampirique ronge la cible et soigne l\'allié le plus blessé de 40 % des dégâts ; Éruption ne frappe que les ennemis rongés', () => {
+    const t = pr('ombre');
+    const [p, ally] = t.players;
+    const [m1, m2] = t.combat.monsters;
+    run(t, p, 'pretre_toucher_vampirique', m1);
+    const st = m1.statuses.find((x) => x.id === 'dot');
+    eq([st.name, st.drain], ['Toucher vampirique', 0.4]);
+    assert(/soignent/.test(statusInfo(st).desc), statusInfo(st).desc);
+    ally.hp = Math.round(computeStats(t, ally).hpMax * 0.3);
+    const a0 = ally.hp, h0 = m1.hp;
+    tickStatusEffects(t, m1);
+    const lost = h0 - m1.hp;
+    assert(lost > 0, 'la cible perd des PV');
+    eq(ally.hp - a0, Math.round(lost * 0.4), 'l\'allié le plus blessé regagne 40 %');
+    // Éruption du Vide : seul l'ennemi rongé est touché
+    p.skills.push('pretre_eruption');
+    const b1 = m1.hp, b2 = m2.hp;
+    run(t, p, 'pretre_eruption', [m1, m2]);
+    assert(m1.hp < b1, 'l\'ennemi rongé subit l\'explosion');
+    eq(m2.hp, b2, 'l\'autre, non');
+  });
+
+  test('Mot de l\'ombre : Mort frappe bien plus fort une cible sous 30 % de PV', () => {
+    const t = pr();
+    const p = t.players[0];
+    const [m] = t.combat.monsters;
+    const hit = () => { const b = m.hp; run(t, p, 'pretre_mort', m); const d = b - m.hp; m.hp = b; return d; };
+    m.hp = m.hpMax; const full = hit();
+    m.hp = Math.round(m.hpMax * 0.25); const low = hit();
+    assert(low > 2 * full, `blessée : ${low} contre ${full}`);
   });
 }
 

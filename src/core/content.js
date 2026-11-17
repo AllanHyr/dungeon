@@ -37,11 +37,11 @@ export const ITEM_TYPES = {
 export const RANDOM_TILE_TYPES = ['combat', 'treasure', 'trap', 'xp_fountain', 'life_fountain', 'low_blow', 'merchant'];
 
 // ---- Vocabulaire du format des compétences (tout ce que le moteur comprend) ----
-export const EFFECT_TYPES = ['damage', 'heal', 'shield', 'hot', 'dot', 'poison', 'mod', 'taunt', 'stun', 'guard', 'move', 'resource', 'pa', 'resurrect', 'cleanse', 'survive', 'mode', 'redirect', 'mark', 'reanimate', 'breakShield', 'summon'];
-export const EFFECT_TARGETS = ['target', 'self', 'allies', 'allAllies', 'enemies', 'allEnemies', 'lowestAlly', 'source', 'attacker', 'randomEnemy', 'lowestEnemy'];
+export const EFFECT_TYPES = ['damage', 'heal', 'shield', 'hot', 'dot', 'poison', 'mod', 'taunt', 'stun', 'guard', 'move', 'resource', 'pa', 'resurrect', 'cleanse', 'survive', 'mode', 'redirect', 'mark', 'reanimate', 'breakShield', 'summon', 'expiation'];
+export const EFFECT_TARGETS = ['target', 'self', 'allies', 'allAllies', 'enemies', 'allEnemies', 'lowestAlly', 'source', 'attacker', 'randomEnemy', 'lowestEnemy', 'expiation'];
 export const TRIGGER_EVENTS = ['combatStart', 'turnStart', 'turnEnd', 'dealDamage', 'takeDamage', 'kill', 'crit', 'fumble', 'wouldDie', 'modeChange', 'spend'];
 export const SKILL_TARGETS = ['enemy', 'enemies', 'ally', 'allies', 'self', 'deadAlly', 'lowestAlly'];
-export const MODIFIER_STATS = ['hp', 'atk', 'def', 'heal', 'save', 'luck', 'ini', 'pa', 'damage', 'dot', 'taken', 'healPower', 'critShift', 'fumbleShift'];
+export const MODIFIER_STATS = ['hp', 'atk', 'def', 'heal', 'save', 'luck', 'ini', 'pa', 'damage', 'dot', 'taken', 'healPower', 'critShift', 'fumbleShift', 'overhealShield'];
 export const SCALINGS = ['missingHpPct', 'hpPct', 'alliesAlive', 'enemiesAlive'];
 export const CONDITIONS = ['hpPctBelow', 'hpPctAbove', 'row', 'resourceAtLeast', 'targetHpPctBelow', 'targetMarked', 'targetStatus', 'alliesAliveAtLeast', 'mode', 'spec', 'roundAtMost', 'notAfflicted'];
 const CLASS_STATS = ['hp', 'atk', 'def', 'heal', 'save', 'luck', 'ini'];
@@ -125,7 +125,9 @@ function checkEffect(e, where) {
       need(e.power !== undefined, "'power'"); need(e.turns > 0, "'turns'");
       need(e.stack === undefined || typeof e.stack === 'boolean', "'stack' : true ou false (chaque pose ajoute un cumul)");
       need(e.maxStacks === undefined || e.maxStacks >= 1, "'maxStacks' : au moins 1");
+      need(e.drain === undefined || (typeof e.drain === 'number' && e.drain > 0 && e.drain <= 1), "'drain' entre 0 et 1 (part des dégâts de chaque tour rendue en soin à l'allié le plus blessé du lanceur)");
       break;
+    case 'expiation': need(e.turns > 0, "'turns' (durée de l'Expiation)"); break;
     case 'mark': need(e.pct === undefined || e.pct >= 0, "'pct' positif (0,2 = +20 % de dégâts du lanceur sur la cible)"); need(e.max === undefined || e.max >= 1, "'max' : au moins 1 (nombre de marques en même temps)"); break;
     case 'poison': need(e.pct !== undefined, "'pct'"); need(e.turns > 0, "'turns'"); break;
     case 'mod': need(MODIFIER_STATS.includes(e.stat), "un 'stat' valide"); need(e.pct !== undefined || e.flat !== undefined, "'pct' ou 'flat'"); need(e.turns > 0, "'turns'"); break;

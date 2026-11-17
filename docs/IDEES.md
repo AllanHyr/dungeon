@@ -139,9 +139,22 @@ Dans `data/classes.json` (id `assassin`). Les anciennes classes sont gardées po
   ⚠ Il est **trop fort avec une spé en équipe** et **fragile en solo** (comme le Duelliste) : à régler à la main selon le ressenti. Les leviers, par ordre d'effet : le bonus des sorts sur cible marquée, le coût/relance du Garrot (étourdir une proie solo est très fort), la puissance des venins (cumul × 4), les PA rendus du Traqueur.
 - ❓ **Questions** : le Garrot (étourdissement) est-il trop fort contre les monstres seuls ? La Marque doit-elle aussi améliorer le venin ? Faut-il une 2e passive de base ? L'**archer** : spé de l'assassin, ou classe à part ? (voir « Manques »)
 
-### Prêtre *(base : Veilleur actuel)*
-- **Spés** : *Sacré* (beaucoup de soin, très peu de dégâts) · *Discipline* (dégâts qui soignent, comme le Veilleur actuel) · *Ombre* (dégâts).
-- **Sort de classe : Forme de dégâts** : soins fortement réduits contre gros bonus de dégâts. Coût **0-1 PA**, mais **2 tours de relance** pour punir le mauvais timing. 🟡 (relance = `cooldown`, déjà là ; un statut de forme qui change les stats)
+### Prêtre ✅ *(écrit — premier jet, valeurs à régler en jouant)*
+Dans `data/classes.json` (id `pretre`). Soigneur au rang arrière (PV 38, attaque 5,2, défense 2,6, **soin 6**), sans ressource : c'est sa **forme** qui change tout.
+
+- **Sort de classe : Forme d'ombre** (mode de classe `lumiere` / `ombre`, `"set": "toggle"`) : **1re utilisation gratuite, ensuite 1 PA, relance 2 tours** (un mauvais moment se paie : on ne revient pas tout de suite). Chaque combat commence en **lumière**.
+- **Passif de base : Dualité** : *lumière* = soins et boucliers +10 % ; *ombre* = **dégâts +35 %**, mais **soins et boucliers −50 %**.
+- **Sorts de base** : *Châtiment* (L1, à distance), *Soin rapide* (L1), *Mot de l'ombre : Douleur* (L1, 2 PA, petite blessure + douleur 3 tours), *Mot de pouvoir : Bouclier* (L1), *Prière de soins* (L3, zone, relance 2), *Mot de l'ombre : Mort* (L4, énorme sous 30 % de PV), *Rénovation* (L5, soin sur la durée), *Cri psychique* (L6, les ennemis font −20 % pendant 2 tours).
+- **Spécialisations** (palier 4 automatique ; palier 8 = 1 choix parmi 3, modifiable ; aperçus 12 et ultime 20) :
+  | | Idée | Palier 4 (automatique) | Palier 8 (1 parmi 3) | Ultime 20 *(annoncé)* |
+  | --- | --- | --- | --- | --- |
+  | **Sacré** (Soin) | Le grand soigneur, rien de gâché | Égide divine (soins +15 %, **60 % du soin en trop devient un bouclier**), Soin supérieur, Soin éclatant (purifie), Prière de guérison, Châtiment sacré (soigne en frappant) | Esprit de rédemption (survit 1×, soigne l'équipe) · Hymne divin (30 % PV + bouclier à toute l'équipe) · Gardien des âmes (−60 % de dégâts + soin sur 2 tours) | Salut |
+  | **Discipline** (Hybride) | Frapper pour soigner | Expiation (+15 % de dégâts ; **ses dégâts soignent les alliés sous Expiation : 60 %, 40 % en ombre**), Pénitence (et l'Expiation sur l'allié le plus blessé), Mot de pouvoir : Expiation, Rayonnement, Châtiment de discipline | Évangélisme (Expiation à toute l'équipe) · Barrière de puissance · Schisme (+20 % sur les cibles rongées) | Rayonnement absolu |
+  | **Ombre** (Dégâts) | Des mots qui rongent | Ténèbres intérieures (douleurs +25 % en ombre), Toucher vampirique (douleur dont **40 % soigne l'allié le plus blessé**), Douleur ombreuse, Pointe mentale, Mot de l'ombre : Ruine | Éruption du Vide (frappe chaque ennemi rongé) · Ombres dévorantes (douleurs +35 %) · Folie (+1 PA en achevant, en ombre) | Forme du Vide |
+- **Nouveau dans le moteur** : effet `expiation` et cible d'effet `"to": "expiation"`, stat `overhealShield` (soin en trop → bouclier), `drain` sur un `dot`. Détails : `docs/ECRIRE-UNE-CLASSE.md` §3 sexies.
+- **Équilibrage (robots, équipe Berserker + soigneur + Duelliste, Profondeurs niv. 8, victoires ; `node tests/pretre-sim.mjs 60`)** : Veilleur (référence) ~75-78 % · Prêtre sans spé ~80-83 % · Sacré ~86-88 % · Discipline ~70-78 % (selon le deck). L'**Ombre** se juge comme **dps** (équipe Berserker + Veilleur + dps) : Duelliste ~75 %, Prêtre Ombre ~90 %. **Seul** (Crypte niv. 6) : Veilleur ~73 %, Ombre ~63 %, les autres 5-20 % (un soigneur pur seul n'a pas de quoi tuer : comme le Templier Lumière).
+  Les robots basculent de forme simplement (l'Ombre reste en ombre ; Sacré et Discipline passent en ombre quand personne n'a besoin de soins) : un joueur fera mieux.
+- ❓ **Questions** : la relance de 2 tours est-elle trop punitive (ou pas assez) ? L'Expiation doit-elle aussi profiter au Prêtre lui-même ? Un Sacré seul est-il trop faible ?
 
 ### Guerrier
 - **Ressource : Rage** : gagnée en frappant et en encaissant (déclencheur `takeDamage`), dépensée sur les gros sorts. 🟢
@@ -204,7 +217,7 @@ Dans `data/classes.json` (id `assassin`). Les anciennes classes sont gardées po
    - Les spécialisations du Duelliste sont des **exemples** (palier 4 seulement) : elles seront remplacées par les vraies classes.
    - ✅ Fait depuis : le **palier 8** des spés (un choix parmi trois), les **cumuls de venin** (`dot` `stack`), la **marque**, les **auras de groupe**, le choix d'un mode par menu (`pick`).
    - ❌ Pas encore fait : l'**écran de présentation de classe à la création**, le **palier 12** et le **niveau 20** des spés (aujourd'hui des aperçus), le statut **anti-soin**, le **feu de camp** (changer de sorts en donjon).
-3. Avec les classes : statuts « de classe ». ✅ mode (Sacrieur), marque (Assassin, dont les sorts atteignent tous les rangs), aura (Templier). Restent : posture (Guerrier), forme (Druide, Prêtre).
+3. Avec les classes : statuts « de classe ». ✅ mode (Sacrieur), marque (Assassin, dont les sorts atteignent tous les rangs), aura (Templier), forme (Prêtre : lumière / ombre). Restent : posture (Guerrier), forme (Druide).
 4. (Plus tard) **Créatures invoquées**, puis le Nécromancien (école du Mage).
 
 ## Plafond de niveau 8 — ✅ fait

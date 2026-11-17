@@ -9,7 +9,7 @@ import { auraSources } from '../core/stats.js';
 
 const STAT_FR = {
   hp: 'PV', atk: 'Attaque', def: 'Défense', heal: 'Soin', save: 'Sauvegarde', luck: 'Chance', ini: 'Initiative', pa: 'PA',
-  damage: 'Dégâts', dot: 'Poisons et saignements', taken: 'Dégâts reçus', healPower: 'Soins', critShift: 'Seuil de critique', fumbleShift: "Seuil d'échec"
+  damage: 'Dégâts', dot: 'Poisons et saignements', taken: 'Dégâts reçus', healPower: 'Soins', critShift: 'Seuil de critique', fumbleShift: "Seuil d'échec", overhealShield: 'Soin en trop en bouclier'
 };
 /** Le nom d'une statistique (« Attaque », « Dégâts reçus »...). */
 export const statLabel = (k) => STAT_FR[k] || k;
@@ -53,8 +53,12 @@ export function statusInfo(st) {
       const desc = n > 1
         ? `Perd ${per * n} PV au début de chaque tour (${per} PV × ${n} cumuls). Chaque nouvelle dose ajoute un cumul, jusqu'à ${st.maxStacks ?? 5}.`
         : `Perd ${per} PV au début de chaque tour.${st.stack ? ` Chaque nouvelle dose ajoute un cumul (jusqu'à ${st.maxStacks ?? 5}).` : ''}`;
-      return { ...base, name, short: name, icon: 'poison', tone: 'debuff', desc };
+      const drain = st.drain ? ` ${Math.round(st.drain * 100)} % de ces dégâts soignent l'allié le plus blessé de celui qui l'a posé.` : '';
+      return { ...base, name, short: name, icon: 'poison', tone: 'debuff', desc: desc + drain };
     }
+    case 'expiation':
+      return { ...base, name: 'Expiation', short: 'Expiation', icon: 'sun', tone: 'buff',
+        desc: 'Quand le Prêtre qui l’a posée inflige des dégâts, une part de ces dégâts soigne cet allié.' };
     case 'mark': {
       const pct = Math.round((st.pct || 0) * 100);
       return { ...base, name: 'Marqué', short: `Marqué +${pct} %`, icon: 'target', tone: 'debuff', turns: null,

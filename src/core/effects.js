@@ -144,6 +144,8 @@ function effectUnits(state, caster, e, targets, ctx) {
       const en = enemiesOf(state, caster);
       return en.length ? [en[Math.floor(nextFloat(state) * en.length)]] : [];
     }
+    case 'expiation': // les alliés qui portent l'EXPIATION de ce lanceur (Prêtre, spé Discipline : ses dégâts les soignent)
+      return alliesOf(state, caster).filter((u) => u.statuses.some((st) => st.id === 'expiation' && st.casterId === caster.id));
     default: return [];
   }
 }
@@ -290,6 +292,12 @@ export function applyEffect(state, caster, e, targets, ctx) {
         else amount = Math.max(cs.heal > 0 ? 1 : 0, cs.heal * e.power * cs.healPower * (crit ? critMult : 1));
         const real = healUnit(state, caster, u, amount);
         if (real > 0 || !ctx.fromTrigger) say(`   ${u.name} récupère ${real} PV.`, 'good');
+        // Stat `overhealShield` (Prêtre, spé Sacré) : une part du soin EN TROP (au-delà des PV max) devient un bouclier de 2 tours.
+        const over = Math.round(amount) - real;
+        if (cs.overhealShield > 0 && over >= 1) {
+          const added = addShield(state, u, over * cs.overhealShield, 2, caster);
+          if (added > 0) say(`   Le soin en trop devient un bouclier de ${added} pour ${u.name}.`, 'good');
+        }
       }
       break;
     }
@@ -326,7 +334,7 @@ export function applyEffect(state, caster, e, targets, ctx) {
         const amount = calcDamage(cs.atk * e.power * cs.damage * cs.dot, unitStats(state, u).def);
         const st = giveStatus(state, caster, u, {
           id: 'dot', key: e.key || ctx.skill?.id || 'dot', label: e.label || 'saigne', name: e.name, amount, turns: e.turns, nonLethal: !!e.nonLethal,
-          stack: !!e.stack, maxStacks: e.maxStacks, stacks: e.stacks
+          stack: !!e.stack, maxStacks: e.maxStacks, stacks: e.stacks, drain: e.drain
         });
         say(`   ${u.name} ${e.label || 'saigne'} (${amount * (st.stacks || 1)} PV par tour pendant ${e.turns} tours${st.stacks > 1 ? `, ${st.stacks} cumuls` : ''}).`, 'combat');
       }
@@ -346,6 +354,16 @@ export function applyEffect(state, caster, e, targets, ctx) {
       for (const u of units) {
         if (!u.alive) continue;
         giveStatus(state, caster, u, { id: 'mod', key: ctx.skill?.id || 'mod', stat: e.stat, pct: e.pct, flat: e.flat, turns: e.turns });
+      }
+      break;
+    }
+
+    case 'expiation': {
+      // « Expiation » (Prêtre, spé Discipline) : un statut posé sur un allié. Les passifs du Prêtre le soignent quand il frappe (cible d'effet `"to": "expiation"`).
+      for (const u of units) {
+        if (!u.alive) continue;
+        giveStatus(state, caster, u, { id: 'expiation', key: `expiation:${caster.id}`, turns: e.turns });
+        say(`   ${u.name} est sous l'Expiation de ${caster.name}.`, 'good');
       }
       break;
     }

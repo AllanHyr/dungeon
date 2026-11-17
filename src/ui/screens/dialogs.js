@@ -7,7 +7,7 @@ import { icon } from '../icons.js';
 import { app, persistProfile, toast, openModal, closeModal } from '../state.js';
 import { redraw, startTraining, lockedCharIds, characterAction, logout } from '../controller.js';
 import { portrait, previewStats, statsLine } from '../components.js';
-import { itemCard } from '../format.js';
+import { itemCard, skillIconName } from '../format.js';
 import { firstKeys } from '../keys.js';
 import { openSheet } from './sheet.js';
 import { chestInfo, levelCap, specsOf } from '../../core/index.js';
@@ -16,25 +16,76 @@ import { play } from '../sound.js';
 
 // ---------------- Nouveau personnage ----------------
 
+const ROLE_FR = { tank: 'Tank', healer: 'Soigneur', damage: 'Dégâts' };
+const ROLE_WORDS = ['Tank', 'Soin', 'Hybride', 'Dégâts'];
+
+/** Les rôles qu'une classe peut tenir, d'après ses spécialisations (« Tank · Soin · Dégâts ») ; sinon son rôle principal. */
+function rolesOf(content, cls) {
+  const tags = [...new Set(specsOf(content, cls.id).map((s) => s.tag).filter((t) => ROLE_WORDS.includes(t)))];
+  return tags.length ? tags.sort((x, y) => ROLE_WORDS.indexOf(x) - ROLE_WORDS.indexOf(y)) : [ROLE_FR[cls.role]];
+}
+
+/**
+ * La PRÉSENTATION d'une classe (à la création) : son idée, ses rôles possibles, son sort de classe, sa ressource ou ses modes
+ * (formes, postures, auras), son passif de base, ses sorts de départ et ses trois spécialisations (avec leur ultime annoncé).
+ * Tout est lu dans classes.json : une nouvelle classe a sa présentation sans rien écrire de plus.
+ */
+export function classShowcase(content, cls) {
+  const skills = cls.skills;
+  const cs = content.skills[cls.classSkill];
+  const specs = specsOf(content, cls.id);
+  const roles = rolesOf(content, cls);
+  const passives = skills.filter((s) => s.innate && s.type === 'passive');
+  const spells = skills.filter((s) => s.innate && s.type === 'active' && s.id !== cls.classSkill);
+  const modes = cls.modes ? Object.entries(cls.modes.list) : [];
+  const noun = cls.modes?.noun || (modes.some(([, m]) => m.aura) ? 'aura' : 'mode');
+  const plural = `${noun}s`;
+  const ult = (spec) => (spec.upcoming || []).find((u) => u.level >= 20);
+  const block = (title, ...body) => h('section', { class: 'cs-block' }, h('h4', null, title), ...body);
+  return h('div', { class: 'class-showcase', dataset: { classId: cls.id } },
+    h('div', { class: 'cs-head' },
+      portrait(cls.id, 84),
+      h('div', { class: 'cs-id' },
+        h('h3', { class: 'cs-name' }, cls.name),
+        h('div', { class: 'cs-roles' }, roles.map((r) => h('span', { class: 'role-tag cs-role' }, r))),
+        h('p', { class: 'cs-desc' }, cls.description),
+        h('p', { class: 'muted small cs-stats' }, `PV ${cls.baseStats.hp} · Attaque ${cls.baseStats.atk} · Défense ${cls.baseStats.def}${cls.baseStats.heal ? ` · Soin ${cls.baseStats.heal}` : ''} · commence au rang ${cls.startRow === 'front' ? 'avant' : 'arrière'}`))),
+    h('div', { class: 'cs-grid' },
+      cs ? block('Sort de classe', h('div', { class: 'cs-skill' }, h('span', { class: 'cs-ico' }, icon(skillIconName(content, cs), 18)), h('div', null, h('b', null, cs.name), h('p', null, cs.desc)))) : null,
+      cls.resource ? block('Ressource', h('p', null, h('b', null, cls.resource.name), ` : jusqu'à ${cls.resource.max}, ${cls.resource.start ? `${cls.resource.start} au début du combat` : 'vide au début de chaque combat'}.`)) : null,
+      modes.length ? block(`Ses ${plural}`, h('ul', { class: 'cs-modes' }, modes.map(([id, m]) => h('li', { dataset: { mode: id } }, icon(m.icon || 'star', 15), h('span', null, h('b', null, m.name), m.desc ? ` — ${m.desc}` : ''))))) : null,
+      passives.length ? block('Toujours actif', passives.map((p) => h('div', { class: 'cs-skill' }, h('span', { class: 'cs-ico is-passive' }, icon(skillIconName(content, p), 18)), h('div', null, h('b', null, p.name), h('p', null, p.desc))))) : null,
+      spells.length ? block('Sorts de départ', h('ul', { class: 'cs-spells' }, spells.map((sp) => h('li', { title: sp.desc }, icon(skillIconName(content, sp), 15), h('span', null, sp.name), sp.level > 1 ? h('small', { class: 'muted' }, ` niv. ${sp.level}`) : null)))) : null),
+    specs.length
+      ? block(`Spécialisations (niveau ${content.rules.specLevel ?? 4})`,
+          h('div', { class: 'cs-specs' }, specs.map((sp) => h('div', { class: 'cs-spec', dataset: { spec: sp.id } },
+            h('div', { class: 'cs-spec-head' }, h('b', null, sp.name), sp.tag ? h('span', { class: 'role-tag' }, sp.tag) : null),
+            h('p', null, sp.desc),
+            ult(sp) ? h('p', { class: 'cs-ult' }, icon('star', 12), ` Ultime : ${ult(sp).name}`) : null))))
+      : null);
+}
+
 /** @param classId  la classe déjà choisie à l'ouverture (l'accueil la propose en grand quand on n'a encore aucun héros) */
 export function openCreateModal(classId = null) {
   const content = app.content;
   const state = { name: '', classId: content.classes[classId] ? classId : Object.keys(content.classes)[0] };
   openModal({
     title: 'Nouveau personnage',
+    wide: true,
+    className: 'create-modal',
     render: (api) => {
-      const classCards = Object.values(content.classes).map((cls) =>
+      const cls = content.classes[state.classId];
+      const classCards = Object.values(content.classes).map((c) =>
         h('button', {
-          class: `class-card ${state.classId === cls.id ? 'selected' : ''}`,
-          onClick: () => { state.classId = cls.id; api.refresh(); }
+          type: 'button', class: `class-card compact ${state.classId === c.id ? 'selected' : ''}`, dataset: { classId: c.id }, 'aria-pressed': String(state.classId === c.id),
+          onClick: () => { state.name = document.getElementById('new-char-name')?.value ?? state.name; state.classId = c.id; api.refresh(); }
         },
-          portrait(cls.id, 52),
+          portrait(c.id, 40),
           h('div', { class: 'class-info' },
-            h('div', { class: 'class-name' }, cls.name, h('span', { class: `role-tag role-${cls.role}` }, { tank: 'Tank', healer: 'Soigneur', damage: 'Dégâts' }[cls.role])),
-            h('div', { class: 'small' }, cls.description),
-            h('div', { class: 'muted small' }, `PV ${cls.baseStats.hp} · Att ${cls.baseStats.atk} · Déf ${cls.baseStats.def}${cls.baseStats.heal ? ` · Soin ${cls.baseStats.heal}` : ''} · Rang ${cls.startRow === 'front' ? 'avant' : 'arrière'}`))));
+            h('div', { class: 'class-name' }, c.name),
+            h('div', { class: 'muted small' }, rolesOf(content, c).join(' · ')))));
       const input = h('input', {
-        type: 'text', maxlength: 20, placeholder: 'Nom du personnage', class: 'input', value: state.name, id: 'new-char-name',
+        type: 'text', maxlength: 20, placeholder: `Nom (sinon : ${cls.name})`, class: 'input', value: state.name, id: 'new-char-name',
         onInput: (e) => (state.name = e.target.value),
         onKeydown: (e) => e.key === 'Enter' && create()
       });
@@ -50,14 +101,16 @@ export function openCreateModal(classId = null) {
         toast(`${ch.name} rejoint l'aventure !`, 'good');
         redraw();
       };
-      setTimeout(() => document.getElementById('new-char-name')?.focus(), 30);
+      setTimeout(() => document.getElementById('new-char-name')?.focus({ preventScroll: true }), 30);
       return [
-        h('label', { class: 'field' }, h('span', null, 'Nom'), input),
-        h('p', { class: 'muted small' }, 'Aucun prérequis : tout le monde peut choisir n\'importe quelle classe. Les classes sont provisoires.'),
-        h('div', { class: 'class-list' }, classCards),
-        h('div', { class: 'row end gap' },
-          h('button', { class: 'btn', onClick: () => closeModal() }, 'Annuler'),
-          h('button', { class: 'btn btn-primary', onClick: create }, 'Créer le personnage'))
+        h('label', { class: 'field create-name' }, h('span', null, 'Nom'), input),
+        h('div', { class: 'create-layout' },
+          h('div', { class: 'class-list', role: 'group', 'aria-label': 'Classes' }, classCards),
+          classShowcase(content, cls)),
+        h('div', { class: 'create-foot' },
+          h('div', { class: 'row end gap' },
+            h('button', { class: 'btn', onClick: () => closeModal() }, 'Annuler'),
+            h('button', { class: 'btn btn-primary', onClick: create }, 'Créer le personnage')))
       ];
     }
   });

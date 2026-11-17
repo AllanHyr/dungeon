@@ -39,6 +39,17 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await page.click('.welcome .class-card:has-text("Assassin")');
   await page.waitForSelector('.modal #new-char-name');
   check((await page.textContent('.modal .class-card.selected')).includes('Assassin'), 'cliquer une classe ouvre la création avec CETTE classe déjà choisie');
+  // La présentation de la classe choisie : sort de classe, sorts de départ, trois spécialisations avec leur ultime
+  const show = await page.$eval('.class-showcase', (e) => ({ id: e.dataset.classId, text: e.textContent, specs: e.querySelectorAll('.cs-spec').length, spells: e.querySelectorAll('.cs-spells li').length, roles: [...e.querySelectorAll('.cs-role')].map((r) => r.textContent) }));
+  check(show.id === 'assassin' && /Marque mortelle/.test(show.text) && show.specs === 3 && show.spells >= 4 && /Ultime/.test(show.text), `la présentation de l'Assassin : sort de classe, ${show.spells} sorts de départ, ${show.specs} spécialisations et leur ultime`);
+  check(show.roles.join() === 'Dégâts', `ses rôles : ${show.roles.join(', ')}`);
+  await page.click('.modal .class-card:has-text("Druide")');
+  await page.waitForSelector('.class-showcase[data-class-id="druide"]');
+  const dru = await page.$eval('.class-showcase', (e) => ({ modes: e.querySelectorAll('.cs-modes li').length, text: e.textContent, roles: [...e.querySelectorAll('.cs-role')].map((r) => r.textContent) }));
+  check(dru.modes === 4 && /Ses formes/i.test(dru.text) && dru.roles.join() === 'Tank,Soin,Dégâts', `le Druide présente ses 4 formes et ses rôles (${dru.roles.join(', ')})`);
+  check((await page.$eval('#new-char-name', (i) => i.placeholder)).includes('Druide'), 'le nom par défaut suit la classe choisie');
+  await page.click('.modal .class-card:has-text("Assassin")');
+  await page.waitForSelector('.class-showcase[data-class-id="assassin"]');
   await page.fill('#new-char-name', 'Zéphyr');
   await page.click('text=Créer le personnage');
   await page.waitForSelector('.home-grid');

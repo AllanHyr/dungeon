@@ -1822,3 +1822,42 @@ html.fx-playing .run { pointer-events: none; } /* (le temps d'une animation : un
   /* (pas de transitions du tout — même très courtes : une valeur qui « glisse » 0,01 ms fausse les mesures de mise en page faites juste après un changement, comme l'ajustement du champ de bataille) */
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
 }
+
+/* ---------- Création de personnage : la liste des classes et la présentation de la classe choisie ---------- */
+.create-modal .create-layout { display: grid; grid-template-columns: minmax(180px, 230px) 1fr; gap: 16px; align-items: start; }
+.create-modal .class-list { margin: 0; gap: 6px; }
+.class-card.compact { padding: 7px 9px; gap: 10px; }
+.class-card.compact .class-name { font-size: 1rem; }
+.class-showcase { border: 1px solid var(--line-2); border-radius: 12px; background: var(--ink-2); padding: 14px 16px; display: grid; gap: 12px; }
+.cs-head { display: flex; gap: 14px; align-items: flex-start; }
+.cs-name { margin: 0; font-family: var(--serif); font-size: 1.5rem; letter-spacing: 0.04em; }
+.cs-roles { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 6px; }
+.cs-roles .role-tag { margin-left: 0; color: var(--brass-4); border-color: var(--brass); }
+.cs-desc { margin: 0 0 4px; }
+.cs-stats { margin: 0; }
+.cs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 14px; }
+.cs-block h4 { margin: 0 0 6px; font-family: var(--serif); font-size: 0.82rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brass-3); }
+.cs-block p { margin: 2px 0 0; font-size: 0.92rem; line-height: 1.4; }
+.cs-skill { display: flex; gap: 10px; align-items: flex-start; }
+.cs-skill + .cs-skill { margin-top: 8px; }
+.cs-ico { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--brass); background: var(--ink-3); color: var(--brass-4); }
+.cs-ico.is-passive { border-radius: 50%; }
+.cs-modes, .cs-spells { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; font-size: 0.9rem; line-height: 1.35; }
+.cs-modes li, .cs-spells li { display: flex; gap: 7px; align-items: flex-start; }
+.cs-modes li svg, .cs-spells li svg { flex: none; margin-top: 2px; color: var(--brass-3); }
+.cs-specs { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 8px; }
+.cs-spec { border: 1px solid var(--line-2); border-radius: 10px; padding: 9px 11px; background: var(--ink-3); }
+.cs-spec-head { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.cs-spec-head .role-tag { margin-left: 0; }
+.cs-spec p { font-size: 0.88rem; }
+.cs-ult { color: var(--brass-4); }
+.create-foot { display: flex; justify-content: flex-end; margin-top: 14px; }
+.create-name { max-width: 420px; }
+@media (max-width: 760px) {
+  .create-modal .create-layout { grid-template-columns: 1fr; }
+  .create-modal .class-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cs-head { flex-direction: column; align-items: center; text-align: center; }
+  .cs-roles { justify-content: center; }
+  .create-foot .row { width: 100%; }
+  .create-foot .row .btn { flex: 1; }
+}

@@ -14,7 +14,7 @@
 | **3 spécialisations par classe** (façon WoW) : une spé verrouille ses branches | 🟡 code (aujourd'hui les branches ne sont que visuelles) |
 | **Passifs de base** de la classe : toujours actifs, sans choix (`innate: true`) | 🟢 |
 | **4 sorts équipés au maximum** + **1 sort de classe** (voir §2) : il faut choisir | 🟡 code (barre équipée, choix hors combat, validation serveur) |
-| **Écran de présentation de chaque classe** à la création (idée, rôle, ressource, spés, sort de classe) | 🟡 code (UI) |
+| **Écran de présentation de chaque classe** à la création (idée, rôle, ressource, spés, sort de classe) | ✅ fait : la fenêtre « Nouveau personnage » présente la classe choisie |
 | ✅ **Fait** : les 4 anciennes classes sont **retirées du jeu** (Berserker → Sacrieur, Veilleur → Prêtre, Duelliste → Assassin par les `aliases` ; elles restent dans `tests/fixtures/classes-de-test.json` pour les tests). **Les 6 nouvelles classes remplacent les 4 anciennes** (on les peaufine). Les `aliases` de `classes.json` convertissent les anciennes sauvegardes de personnage ; les compétences apprises devront être migrées. | 🟡 |
 | ✅ **Spé tardive** : tous les personnages d'une classe partent avec les mêmes sorts ; la spécialisation arrive plus tard et **ajoute** des passifs ou des sorts actifs (pas de verrouillage de branches à la création). | 🟡 champ `spec` sur le personnage + `spec` requise sur certaines compétences |
 | ✅ **Spé : on peut en changer entre deux parties** (gratuit, pour essayer un autre gameplay). Voir §1 bis pour la progression. | 🟡 |
@@ -236,7 +236,8 @@ Dans `data/classes.json` (id `druide` : une ancienne sauvegarde de Druide reste 
    - Les classes actuelles ont des `classSkill` **provisoires** (Provocation, Soin, Rosée, Fente) ; leurs anciennes attaques de base sont des sorts du deck équipés au départ.
    - Les spécialisations du Duelliste sont des **exemples** (palier 4 seulement) : elles seront remplacées par les vraies classes.
    - ✅ Fait depuis : le **palier 8** des spés (un choix parmi trois), les **cumuls de venin** (`dot` `stack`), la **marque**, les **auras de groupe**, le choix d'un mode par menu (`pick`).
-   - ❌ Pas encore fait : l'**écran de présentation de classe à la création**, le **palier 12** et le **niveau 20** des spés (aujourd'hui des aperçus), le statut **anti-soin**, le **feu de camp** (changer de sorts en donjon).
+   - ✅ Fait depuis : l'**écran de présentation de classe à la création** (rôles, sort de classe, ressource ou formes / postures / auras, passif, sorts de départ, 3 spécialisations et leur ultime : tout est lu dans classes.json), le statut **anti-soin** (blessure profonde du Guerrier : stat `healTaken`).
+   - ❌ Pas encore fait : le **palier 12** et le **niveau 20** des spés (aujourd'hui des aperçus), le **feu de camp** (changer de sorts en donjon).
 3. Avec les classes : statuts « de classe ». ✅ mode (Sacrieur), marque (Assassin, dont les sorts atteignent tous les rangs), aura (Templier), forme (Prêtre : lumière / ombre). posture (Guerrier), forme (Druide : sorts réservés à une forme).
 4. (Plus tard) **Créatures invoquées**, puis le Nécromancien (école du Mage).
 

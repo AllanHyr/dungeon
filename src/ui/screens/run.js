@@ -984,16 +984,19 @@ function actionDock(run, actor, view) {
   const fill = (s, mode) => {
     if (modePick) {
       const cancel = () => { app.ui.modePick = null; redraw(); };
+      // Le nom de ce qu'on choisit : `modes.noun` dans la classe (« posture »), sinon « aura » si les modes en donnent une, sinon « mode ».
+      const modes = app.content.classes[actor.classId]?.modes;
+      const noun = modes?.noun || (Object.values(modes?.list || {}).some((m) => m.aura) ? 'aura' : 'mode');
       mount(detailEl, h('div', { class: 'sd-modes' },
         h('div', { class: 'sd-modes-head' },
-          h('b', null, `${modePick.label} : choisis une aura`),
+          h('b', null, `${modePick.label} : choisis ${noun === 'mode' ? 'un' : 'une'} ${noun}`),
           h('span', { class: 'muted small' }, `${modePick.pa === 0 ? 'Gratuit cette fois' : `${modePick.pa} PA`} · Échap pour annuler`),
           h('button', { type: 'button', class: 'btn btn-small', onClick: cancel }, 'Annuler')),
-        h('div', { class: 'sd-modes-list', role: 'group', 'aria-label': 'Auras' }, modePick.options.map((o) => h('button', {
+        h('div', { class: 'sd-modes-list', role: 'group', 'aria-label': `${noun[0].toUpperCase()}${noun.slice(1)}s` }, modePick.options.map((o) => h('button', {
           type: 'button', class: `mode-opt ${o.current ? 'is-current' : ''}`, disabled: o.current, dataset: { mode: o.id },
           title: `${o.name} : ${o.desc}`, 'aria-label': `${o.name}${o.current ? ' (actuelle)' : ''} : ${o.desc}`,
           onClick: () => chooseMode(actor, modePick.skillId, o.id)
-        }, icon(o.icon, 26), h('span', { class: 'mo-text' }, h('b', null, o.name), h('span', { class: 'mo-desc' }, o.current ? 'Aura actuelle' : o.desc)))))));
+        }, icon(o.icon, 26), h('span', { class: 'mo-text' }, h('b', null, o.name), h('span', { class: 'mo-desc' }, o.current ? `${noun[0].toUpperCase()}${noun.slice(1)} ${noun === 'mode' ? 'actuel' : 'actuelle'}` : o.desc)))))));
       detailEl.dataset.state = 'target';
       return;
     }

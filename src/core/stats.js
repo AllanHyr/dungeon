@@ -240,6 +240,7 @@ export function computeStats(state, unit) {
   out.dot = Math.max(0.1, 1 + sum('dot', ctx).pct); // dégâts des poisons et saignements qu'il pose
   out.taken = Math.max(0.1, 1 + sum('taken', ctx).pct);
   out.healPower = Math.max(0.1, 1 + sum('healPower', ctx).pct);
+  out.healTaken = Math.max(0, 1 + sum('healTaken', ctx).pct); // soins REÇUS (une blessure profonde : −50 % = deux fois moins soigné)
   out.overhealShield = Math.max(0, sum('overhealShield', ctx).pct); // part du soin EN TROP changée en bouclier (Prêtre, spé Sacré)
   out.critShift = Math.round(sum('critShift', ctx).flat);
   out.fumbleShift = Math.round(sum('fumbleShift', ctx).flat);

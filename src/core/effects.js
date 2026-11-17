@@ -293,7 +293,7 @@ export function applyEffect(state, caster, e, targets, ctx) {
         const real = healUnit(state, caster, u, amount);
         if (real > 0 || !ctx.fromTrigger) say(`   ${u.name} récupère ${real} PV.`, 'good');
         // Stat `overhealShield` (Prêtre, spé Sacré) : une part du soin EN TROP (au-delà des PV max) devient un bouclier de 2 tours.
-        const over = Math.round(amount) - real;
+        const over = Math.round(amount * unitStats(state, u).healTaken) - real;
         if (cs.overhealShield > 0 && over >= 1) {
           const added = addShield(state, u, over * cs.overhealShield, 2, caster);
           if (added > 0) say(`   Le soin en trop devient un bouclier de ${added} pour ${u.name}.`, 'good');

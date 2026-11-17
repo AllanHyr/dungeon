@@ -156,12 +156,22 @@ Dans `data/classes.json` (id `pretre`). Soigneur au rang arrière (PV 38, attaqu
   Les robots basculent de forme simplement (l'Ombre reste en ombre ; Sacré et Discipline passent en ombre quand personne n'a besoin de soins) : un joueur fera mieux.
 - ❓ **Questions** : la relance de 2 tours est-elle trop punitive (ou pas assez) ? L'Expiation doit-elle aussi profiter au Prêtre lui-même ? Un Sacré seul est-il trop faible ?
 
-### Guerrier
-- **Ressource : Rage** : gagnée en frappant et en encaissant (déclencheur `takeDamage`), dépensée sur les gros sorts. 🟢
-  - Pas de passif « plus de rage = plus de dégâts » en plus : on perdrait ses dégâts en dépensant sa rage. À retester plus tard.
-- **Sort de classe : Postures** (offensive / défensive), **1 PA pour changer**, la posture reste jusqu'à la fin du combat. 🟡 (statut permanent exclusif)
-- **Spés** : *Armes* · *Fureur* · *Protection*.
-- ⚠ À distinguer du Sacrieur : contrôle, provocation, armure, protection des rangs (plutôt que « vivre bas en PV »).
+### Guerrier ✅ *(écrit — premier jet, valeurs à régler en jouant)*
+Dans `data/classes.json` (id `guerrier`). Tank au rang avant (PV 56, attaque 6,2, défense 3,8). Il se distingue du Sacrieur par le **contrôle** (affaiblir, assommer), la **provocation**, l'**armure** et la **protection des alliés**.
+
+- **Ressource : Rage** (max 10, **0 au début de chaque combat**). Passif de base **Colère** : chaque coup encaissé donne **+1 rage** (+2 en posture défensive) ; la Frappe héroïque +2, le Cri de guerre +2… Les gros coups en dépensent : *Exécution* (4), *Enchaînement* (3, zone), *Coup de bouclier* (5, assomme). Pas de passif « plus de rage = plus de dégâts ».
+- **Sort de classe : Posture** (1 PA, **le joueur choisit** dans un petit menu, comme l'Aura sacrée ; `"noun": "posture"` dans `modes` nomme le menu) : **Combat** (dégâts +5 %, reçus −5 %, la posture de départ), **Offensive** (dégâts +20 %, reçus +10 %), **Défensive** (reçus −20 %, dégâts −15 %, plus de rage quand on le frappe). Elle reste jusqu'à la fin du combat.
+- **Sorts de base** : *Frappe héroïque* (L1), *Brise-genou* (L1, la cible fait −15 %), *Exécution* (L1, 4 rage, plus forte sur un blessé), *Cri de guerre* (L1, +10 % de dégâts à l'équipe), *Provocation* (L3), *Enchaînement* (L4), *Coup de bouclier* (L5, assomme), *Interception* (L6, encaisse pour ses alliés).
+- **Spécialisations** (palier 4 automatique ; palier 8 = 1 choix parmi 3 ; aperçus 12 et ultime 20) :
+  | | Idée | Palier 4 (automatique) | Palier 8 (1 parmi 3) | Ultime 20 *(annoncé)* |
+  | --- | --- | --- | --- | --- |
+  | **Armes** (Dégâts) | Précision, blessures, exécutions | Maître d'armes (+10 %, critique dès 19), **Frappe mortelle** (blessure profonde : **soins reçus −50 %**, régénération des monstres comprise), Frappe d'armes, Exécution d'armes | Brise-armure (−35 % de défense) · Tempête de lames (zone + blessure) · Sang-froid (critique : +3 rage, +1 PA) | Colosse |
+  | **Fureur** (Dégâts) | Deux coups par sort | Enragé (dépenser de la rage : +10 % pendant 2 tours ; +1 rage en frappant), **Déchaînement** (deux coups), Sanguinaire (vol de vie), Cri de rage | Massacre (+1 PA en achevant) · Tourbillon (deux coups sur tous) · Rage aveugle (posture offensive sans malus) | Carnage |
+  | **Protection** (Tank) | Le bouclier de l'équipe | Rempart d'acier (défense +15 %, **riposte**), Bloc du bouclier, Heurt du bouclier, Défi du protecteur (provocation + garde) | Mur de boucliers (bouclier d'équipe) · Inébranlable (survit 1×) · Vengeance (ripostes plus fortes) | Dernier bastion |
+- **Nouveau dans le moteur** : la stat **`healTaken`** (soins reçus ; un malus `mod` dessus = « blessure profonde », le statut anti-soin attendu depuis longtemps : utile contre les ogres et les cultistes qui se soignent), le nom du choix de mode `modes.noun`.
+- **Équilibrage (robots ; `node tests/guerrier-sim.mjs 60`)** : en **tank** (équipe tank + Veilleur + Duelliste, Profondeurs niv. 8) : Berserker ~77 % · Sacrieur Bastion ~68-73 % · Templier Gardien ~83-88 % · **Guerrier Protection ~87 %** · Guerrier sans spé ~45 %. En **dps** (Berserker + Veilleur + dps) : Duelliste ~75 % · Assassin Exécuteur ~93 % · **Armes ~98 %** · **Fureur ~100 %** (un 2e combattant robuste au rang avant aide beaucoup les robots). **Seul** : niv. 1 ~78 % (Berserker ~53 %), Crypte niv. 6 83-100 %.
+  ⚠ Comme les autres nouveaux tanks, il est **très solide seul** et aux petits niveaux ; Armes et Fureur sont **au-dessus** du Duelliste. Leviers : le malus du Brise-genou, la Posture de combat (+5/−5), Enragé, la puissance du Déchaînement, la défense du Rempart d'acier.
+- ❓ **Questions** : la posture doit-elle être gratuite la 1re fois (comme les autres sorts de classe) ? Trois postures ou deux ? Le Coup de bouclier (étourdir) à 5 rage est-il trop fort ?
 
 ### Druide
 - **Sort de classe : Changement de forme** : le **premier changement du combat est gratuit** (ou choisi avant d'entrer en combat, ❓), les suivants coûtent **1 PA**. 🟡
@@ -217,7 +227,7 @@ Dans `data/classes.json` (id `pretre`). Soigneur au rang arrière (PV 38, attaqu
    - Les spécialisations du Duelliste sont des **exemples** (palier 4 seulement) : elles seront remplacées par les vraies classes.
    - ✅ Fait depuis : le **palier 8** des spés (un choix parmi trois), les **cumuls de venin** (`dot` `stack`), la **marque**, les **auras de groupe**, le choix d'un mode par menu (`pick`).
    - ❌ Pas encore fait : l'**écran de présentation de classe à la création**, le **palier 12** et le **niveau 20** des spés (aujourd'hui des aperçus), le statut **anti-soin**, le **feu de camp** (changer de sorts en donjon).
-3. Avec les classes : statuts « de classe ». ✅ mode (Sacrieur), marque (Assassin, dont les sorts atteignent tous les rangs), aura (Templier), forme (Prêtre : lumière / ombre). Restent : posture (Guerrier), forme (Druide).
+3. Avec les classes : statuts « de classe ». ✅ mode (Sacrieur), marque (Assassin, dont les sorts atteignent tous les rangs), aura (Templier), forme (Prêtre : lumière / ombre). posture (Guerrier). Reste : forme (Druide).
 4. (Plus tard) **Créatures invoquées**, puis le Nécromancien (école du Mage).
 
 ## Plafond de niveau 8 — ✅ fait

@@ -68,8 +68,8 @@ function takeTurnOf(state, id) {
 }
 
 console.log('\n● Contenu (données JSON)');
-test('le contenu se charge : 8 classes, 3 tranches jouables', () => {
-  eq(Object.keys(content.classes).sort(), ['assassin', 'berserker', 'druide', 'duelliste', 'pretre', 'sacrieur', 'templier', 'veilleur']);
+test('le contenu se charge : 9 classes, 3 tranches jouables', () => {
+  eq(Object.keys(content.classes).sort(), ['assassin', 'berserker', 'druide', 'duelliste', 'guerrier', 'pretre', 'sacrieur', 'templier', 'veilleur']);
   eq(availableTranches(content).map((t) => t.id), [1, 4, 8]);
 });
 test('une faute dans un JSON donne une erreur claire (monstre inconnu)', () => {
@@ -3542,6 +3542,89 @@ console.log('\n● Prêtre : forme d\'ombre, Expiation, soin en trop en bouclier
     m.hp = m.hpMax; const full = hit();
     m.hp = Math.round(m.hpMax * 0.25); const low = hit();
     assert(low > 2 * full, `blessée : ${low} contre ${full}`);
+  });
+}
+
+console.log('\n● Guerrier : rage, postures, blessure profonde, riposte');
+{
+  const war = (spec = null, level = 8) => { const t = training([{ classId: 'guerrier', level, spec }, { classId: 'veilleur', level: 8 }], { count: 2 }); takeTurnOf(t, 'p1'); return t; };
+  const run = (t, p, id, target) => { const sk = content.skills[id]; const tg = Array.isArray(target) ? target : [target]; for (const e of sk.effects) applyEffect(t, p, e, tg, { outcome: 'hit', skill: sk }); };
+  const rage = (p) => p.resources.rage ?? 0;
+
+  test('le Guerrier : tank au rang avant, rage (max 10, à 0), Posture en sort de classe, deck Frappe / Brise-genou / Exécution / Cri', () => {
+    const cls = content.classes.guerrier;
+    eq([cls.role, cls.startRow, cls.classSkill, cls.resource.id, cls.resource.max, cls.resource.start, cls.modes.default], ['tank', 'front', 'guerrier_posture', 'rage', 10, 0, 'combat']);
+    const ch = createCharacter(content, { id: 'g', name: 'G', classId: 'guerrier' });
+    fillDeck(content, ch);
+    eq(ch.deck, ['guerrier_frappe', 'guerrier_brise_genou', 'guerrier_execution', 'guerrier_cri']);
+    for (const spec of ['armes', 'fureur', 'protection']) eq(cls.skills.filter((x) => x.spec === spec && x.level === 8).length, 3, `${spec} : 3 choix au palier 8`);
+    const t = war();
+    eq([rage(t.players[0]), t.players[0].resourceMax.rage, t.players[0].mode], [0, 10, 'combat']);
+  });
+
+  test('Colère : chaque coup encaissé donne +1 rage (+2 en posture défensive) ; la Frappe héroïque +2 ; l\'Exécution en dépense 4', () => {
+    const t = war();
+    const p = t.players[0];
+    const [m] = t.combat.monsters;
+    dealDamage(t, m, p, 3); dealDamage(t, m, p, 3);
+    eq(rage(p), 2, 'deux coups encaissés : +2');
+    p.mode = 'defensive';
+    dealDamage(t, m, p, 3);
+    eq(rage(p), 4, 'en défensive : +2 par coup');
+    run(t, p, 'guerrier_frappe', m);
+    eq(rage(p), 6);
+    p.resources.rage = 3;
+    assert(!checkUsable(t, p, content.skills.guerrier_execution).ok, 'Exécution refusée avec 3 rage');
+    p.resources.rage = 4;
+    assert(checkUsable(t, p, content.skills.guerrier_execution).ok);
+  });
+
+  test('Postures : Combat / Offensive / Défensive changent dégâts et dégâts reçus ; le joueur choisit (1 PA)', () => {
+    const t = war();
+    const p = t.players[0];
+    const st = (mode) => { p.mode = mode; const s = computeStats(t, p); return [Math.round(s.damage * 100), Math.round(s.taken * 100)]; };
+    eq(st('combat'), [105, 95]); eq(st('offensive'), [120, 110]); eq(st('defensive'), [85, 80]);
+    p.mode = 'combat';
+    eq(skillPaCost(p, content.skills.guerrier_posture), 1);
+    const opts = getCombatView(t, p.id).skills.find((x) => x.skillId === 'guerrier_posture').modePick;
+    eq(opts.map((o) => o.id), ['combat', 'offensive', 'defensive']);
+    assert(act(t, p.id, { act: 'skill', skillId: 'guerrier_posture', modeId: 'defensive' }).ok);
+    eq(p.mode, 'defensive');
+  });
+
+  test('Armes : la Frappe mortelle laisse une BLESSURE PROFONDE (soins reçus −50 %), même sur la régénération d\'un monstre', () => {
+    const t = war('armes');
+    const p = t.players[0];
+    const [m] = t.combat.monsters;
+    m.hp = Math.round(m.hpMax / 2);
+    const healOf = () => { const b = m.hp; applyEffect(t, m, { type: 'heal', pctMaxHp: 0.04, to: 'self' }, [], { outcome: 'hit' }); const d = m.hp - b; m.hp = b; return d; };
+    const before = healOf();
+    run(t, p, 'guerrier_frappe_mortelle', m);
+    const st = m.statuses.find((x) => x.id === 'mod' && x.stat === 'healTaken');
+    assert(st && st.pct === -0.5 && st.turns === 3, 'blessure profonde posée pour 3 tours');
+    eq(statusInfo(st).tone, 'debuff'); assert(/Soins reçus/.test(statusInfo(st).name), statusInfo(st).name);
+    eq(healOf(), Math.round(before / 2), `la régénération est réduite de moitié (${before} → ${healOf()})`);
+  });
+
+  test('Protection : il riposte quand un monstre le frappe (une fois par tour) ; Fureur : le Déchaînement frappe deux fois', () => {
+    const t = war('protection');
+    const p = t.players[0];
+    const [m] = t.combat.monsters;
+    const h0 = m.hp;
+    dealDamage(t, m, p, 3);
+    assert(m.hp < h0, 'riposte');
+    const h1 = m.hp;
+    dealDamage(t, m, p, 3);
+    eq(m.hp, h1, 'une seule riposte par tour');
+    const f = war('fureur');
+    const fp = f.players[0];
+    const [fm] = f.combat.monsters;
+    const b0 = fm.hp;
+    applyEffect(f, fp, { type: 'damage', power: 0.9 }, [fm], { outcome: 'hit' });
+    const one = b0 - fm.hp;
+    fm.hp = b0;
+    run(f, fp, 'guerrier_dechainement', fm);
+    eq(b0 - fm.hp, 2 * one, `deux coups de ${one}`);
   });
 }
 

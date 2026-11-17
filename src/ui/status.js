@@ -9,7 +9,7 @@ import { auraSources } from '../core/stats.js';
 
 const STAT_FR = {
   hp: 'PV', atk: 'Attaque', def: 'Défense', heal: 'Soin', save: 'Sauvegarde', luck: 'Chance', ini: 'Initiative', pa: 'PA',
-  damage: 'Dégâts', dot: 'Poisons et saignements', taken: 'Dégâts reçus', healPower: 'Soins', critShift: 'Seuil de critique', fumbleShift: "Seuil d'échec", overhealShield: 'Soin en trop en bouclier'
+  damage: 'Dégâts', dot: 'Poisons et saignements', taken: 'Dégâts reçus', healPower: 'Soins', critShift: 'Seuil de critique', fumbleShift: "Seuil d'échec", overhealShield: 'Soin en trop en bouclier', healTaken: 'Soins reçus'
 };
 /** Le nom d'une statistique (« Attaque », « Dégâts reçus »...). */
 export const statLabel = (k) => STAT_FR[k] || k;
@@ -18,7 +18,7 @@ export const statLabel = (k) => STAT_FR[k] || k;
 const LOWER_IS_BETTER = ['taken', 'critShift', 'fumbleShift'];
 
 /** L'icône d'un bonus ou malus selon la statistique touchée (la couleur dit si c'est bon ou mauvais). */
-const STAT_ICON = { dot: 'poison', damage: 'sword', atk: 'sword', taken: 'shield', def: 'armor', heal: 'cross', healPower: 'cross', ini: 'bolt', pa: 'flame', luck: 'star', hp: 'heart', critShift: 'target', fumbleShift: 'target', save: 'eye' };
+const STAT_ICON = { healTaken: 'cross', dot: 'poison', damage: 'sword', atk: 'sword', taken: 'shield', def: 'armor', heal: 'cross', healPower: 'cross', ini: 'bolt', pa: 'flame', luck: 'star', hp: 'heart', critShift: 'target', fumbleShift: 'target', save: 'eye' };
 /** Le nom d'une stat dans une pastille (court) : « Reçus −15 % » pour les dégâts reçus. */
 const SHORT_STAT = { taken: 'Reçus' };
 

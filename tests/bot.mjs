@@ -75,6 +75,7 @@ function wantedMode(me, state = null) {
     return hurt ? 'lumiere' : 'ombre';
   }
   if (me.classId === 'templier') return { lumiere: 'devotion', vindicte: 'vengeance' }[me.spec] || 'protection';
+  if (me.classId === 'guerrier') return { protection: 'defensive', fureur: 'offensive' }[me.spec] || 'combat'; // (Armes et sans spé : posture de combat)
   return me.spec === 'ecorche' ? 'degats' : 'reduction';
 }
 
@@ -123,7 +124,7 @@ function scoreSkill(state, me, s) {
     } else if (e.type === 'resurrect') score += dead.length ? 40 : 0;
     else if (e.type === 'pa') score += hpRatio(state, me) > 0.6 ? 6 : 0; // gagner des PA contre des PV : seulement s'il en a de reste
     else if (e.type === 'mode') score += me.mode !== wantedMode(me, state) ? 12 : 0; // le robot choisit le mode (l'aura) de sa spécialisation
-    else if (e.type === 'resource' && e.amount > 0 && me.classId === 'templier') score += 2 * e.amount; // de la puissance sacrée : de quoi lancer un consommateur
+    else if (e.type === 'resource' && e.amount > 0 && ['templier', 'guerrier'].includes(me.classId)) score += 2 * e.amount; // de la puissance sacrée, de la rage : de quoi lancer un consommateur
     else if (e.type === 'redirect') score += allies.some((a) => a.id !== me.id && hpRatio(state, a) < 0.8) ? 8 : 0; // Sacrifice : quand un allié est en danger
     else if (e.type === 'mod' && (e.pct ?? e.flat) > 0 && e.to !== 'self') score += 4;
     else if (e.type === 'mod' && (e.pct ?? e.flat) > 0) score += 3;

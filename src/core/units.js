@@ -153,8 +153,10 @@ export function applyDamage(state, target, amount, source = null, opts = {}) {
 /** Soigne une unité (jamais au-delà de ses PV max). Renvoie les PV réellement rendus. */
 export function healUnit(state, source, target, amount) {
   if (!target.alive) return 0;
-  const max = unitStats(state, target).hpMax;
-  const real = Math.max(0, Math.min(Math.round(amount), max - target.hp));
+  const ts = unitStats(state, target);
+  const max = ts.hpMax;
+  // Les soins REÇUS peuvent être réduits (stat `healTaken`, ex. la Frappe mortelle du Guerrier : « blessure profonde »).
+  const real = Math.max(0, Math.min(Math.round(amount * ts.healTaken), max - target.hp));
   target.hp += real;
   if (source && source.kind === 'player') source.stats.healingDone += real;
   emit(state, { type: 'heal', target: target.id, amount: real });

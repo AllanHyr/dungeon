@@ -35,7 +35,7 @@ const profile = {
     vignettes: document.querySelectorAll('.vig svg').length,
     svg: document.querySelectorAll('.portrait svg').length
   }));
-  check(g.heroes === 8, `8 portraits de classes (${g.heroes})`);
+  check(g.heroes === 9, `9 portraits de classes (${g.heroes})`);
   check(g.monsters >= 20, `${g.monsters} portraits de monstres`);
   check(g.scenes === 5, `5 décors (${g.scenes})`);
   check(g.vignettes === 8, `8 vignettes de cases (${g.vignettes})`);

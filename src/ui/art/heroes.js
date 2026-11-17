@@ -441,4 +441,55 @@ function pretre(u) {
   return wrap(u, { defs, inner, bg: ['#3a2e4e', '#08060c', '#e8d6ff'], at: [32, 36], halo: 0.34 });
 }
 
-export const HEROES = { berserker, veilleur, druide, duelliste, sacrieur, assassin, templier, pretre };
+/** Le Guerrier : casque à nasal sur un visage balafré, barbe brune, cotte de mailles, bouclier rond cerclé de fer à gauche, garde d'épée à droite, regard rouge de colère. */
+function guerrier(u) {
+  const defs = [
+    lin(`${u}skin`, [[0, '#efc8a6'], [0.55, '#bf8a64'], [1, '#6e452f']]),
+    lin(`${u}skinD`, [[0, '#a8775a'], [1, '#4f3022']], [0, 0, 0, 1]),
+    lin(`${u}steel`, [[0, '#f2f6fb'], [0.4, '#a5b2c0'], [1, '#34404e']]),
+    lin(`${u}steelD`, [[0, '#6f7f90'], [1, '#1b232d']], [0, 0, 0, 1]),
+    lin(`${u}mail`, [[0, '#9aa6b2'], [0.5, '#5b6672'], [1, '#22282f']], [0, 0, 0, 1]),
+    lin(`${u}wood`, [[0, '#9a3a2a'], [0.6, '#5e1d14'], [1, '#2a0b07']]),
+    lin(`${u}beard`, [[0, '#6b4429'], [1, '#2a170c']]),
+    lin(`${u}gold`, [[0, '#fff0b8'], [0.5, '#d9a441'], [1, '#7c5518']]),
+    glow(u, 'eye', '#ff6a3a', 0.9)
+  ].join('');
+  const inner = `
+<!-- garde d'épée derrière l'épaule droite -->
+<path d="M80 100 L84 22" stroke="#2a1d14" stroke-width="3.6" stroke-linecap="round"/>
+<path d="M76 26 L92 24" stroke="url(#${u}gold)" stroke-width="3" stroke-linecap="round"/>
+<circle cx="84.300" cy="17.500" r="3" fill="url(#${u}gold)"/>
+<!-- épaules en mailles et tabard -->
+<path d="M4 100 L9 83 C18 71 32 67 40 67 L60 67 C68 67 82 71 91 83 L96 100 Z" fill="url(#${u}mail)"/>
+<g stroke="#2a3038" stroke-width=".5" opacity=".55" fill="none">${[72, 77, 82, 87, 92, 97].map((y) => `<path d="M8 ${y} Q 50 ${y - 6} 92 ${y}"/>`).join('')}</g>
+<path d="M40 70 L60 70 L62 100 L38 100 Z" fill="#6b1b14"/>
+<path d="M50 74 L50 96 M43 84 L57 84" stroke="url(#${u}gold)" stroke-width="1.6" stroke-linecap="round"/>
+<!-- bouclier rond à gauche -->
+<circle cx="18" cy="84" r="17" fill="url(#${u}wood)" stroke="url(#${u}steelD)" stroke-width="3"/>
+<circle cx="18" cy="84" r="5" fill="url(#${u}steel)"/>
+<path d="M6 76 C9 71 14 68 20 67.500" fill="none" stroke="#ffffff" stroke-width=".9" stroke-linecap="round" opacity=".5"/>
+<!-- cou -->
+<path d="M42 55 L42 69 C46 73 54 73 58 69 L58 55 Z" fill="url(#${u}skinD)"/>
+<!-- visage -->
+<ellipse cx="50" cy="45" rx="14.600" ry="17" fill="url(#${u}skin)"/>
+<!-- barbe courte -->
+<path d="M35.500 47 C36 59 42 68 50 68.500 C58 68 64 59 64.500 47 C61 55 56 57.500 50 57.500 C44 57.500 39 55 35.500 47 Z" fill="url(#${u}beard)"/>
+<path d="M42 54.500 C46 52 54 52 58 54.500 C55 57.500 45 57.500 42 54.500 Z" fill="#2a170c"/>
+<!-- balafre -->
+<path d="M58.500 36 L54 52" stroke="#9c4a3a" stroke-width="1.300" stroke-linecap="round" opacity=".85"/>
+<!-- yeux -->
+<path d="M39.800 44 C41.400 41.800 45 41.600 47 43.400 C45 45.400 41.600 45.600 39.800 44 Z" fill="#fff1d6"/>
+<path d="M60.200 44 C58.600 41.800 55 41.600 53 43.400 C55 45.400 58.400 45.600 60.200 44 Z" fill="#fff1d6"/>
+<circle cx="43.400" cy="43.600" r="1.200" fill="#7a1a0a"/><circle cx="56.600" cy="43.600" r="1.200" fill="#7a1a0a"/>
+<circle cx="43.400" cy="43.600" r="3.600" fill="url(#${u}eye)" opacity=".55"/><circle cx="56.600" cy="43.600" r="3.600" fill="url(#${u}eye)" opacity=".55"/>
+<path d="M38.400 40.400 L47.200 42 M61.600 40.400 L52.800 42" stroke="#2a170c" stroke-width="1.700" stroke-linecap="round"/>
+<!-- casque à nasal -->
+<path d="M33.500 41 C33 22 41 13 50 13 C59 13 67 22 66.500 41 C61 36.500 56 35.500 50 35.500 C44 35.500 39 36.500 33.500 41 Z" fill="url(#${u}steel)"/>
+<path d="M33.500 41 C39 36.500 44 35.500 50 35.500 C56 35.500 61 36.500 66.500 41" fill="none" stroke="url(#${u}gold)" stroke-width="1.500"/>
+<path d="M48 35.500 L52 35.500 L51.400 50 L48.600 50 Z" fill="url(#${u}steel)"/>
+<path d="M50 14 L50 35" stroke="#2c3946" stroke-width="1.200" opacity=".6"/>
+<path d="M38 24 C40 19 44 16 48 15" fill="none" stroke="#ffffff" stroke-width="1" stroke-linecap="round" opacity=".7"/>`;
+  return wrap(u, { defs, inner, bg: ['#4a2418', '#0a0706', '#ff9a6a'], at: [30, 36], halo: 0.34 });
+}
+
+export const HEROES = { berserker, veilleur, druide, duelliste, sacrieur, assassin, templier, pretre, guerrier };

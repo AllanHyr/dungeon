@@ -298,6 +298,7 @@ La stat `dot` (`{ "stat": "dot", "pct": 0.25 }` dans une passive) augmente les d
 } }
 ```
 
+* `"noun": "posture"` (dans `modes`, facultatif) : le nom de ce qu'on choisit dans le menu (« Posture : choisis une posture ») ; sans lui, « aura » si les modes en donnent une, sinon « mode ». Le Guerrier s'en sert ;
 * le bonus s'applique à **tous les héros vivants de l'équipe, le porteur compris**, **en combat seulement**, tant que le porteur est vivant et garde ce mode ; jamais aux monstres ;
 * un sort change d'aura avec l'effet `{ "type": "mode", "set": "pick" }` : **le joueur choisit** l'aura. Un clic sur le sort ouvre, dans le panneau du sort, **une icône par mode** (l'actuel est grisé,
   « Aura actuelle ») ; son choix part dans l'action de combat (`modeId`), et le moteur refuse un mode inconnu, absent ou déjà actif. Le Templier le met en sort de classe avec `freeFirst`
@@ -407,7 +408,7 @@ Une passive n'a pas de `pa` ni de `target` : elle agit toute seule, tant qu'elle
 ```
 
 Stats modifiables : `hp` `atk` `def` `heal` `save` `luck` `ini` `pa` (valeurs de base) et les **multiplicateurs**
-`damage` (dégâts infligés), `taken` (dégâts reçus), `healPower` (soins et boucliers), `dot` (ses poisons et saignements), `overhealShield` (part du soin en trop changée en bouclier), `critShift`, `fumbleShift`.
+`damage` (dégâts infligés), `taken` (dégâts reçus), `healPower` (soins et boucliers), `dot` (ses poisons et saignements), `overhealShield` (part du soin en trop changée en bouclier), `healTaken` (soins **reçus** : un `mod` à −0,5 = « blessure profonde », la cible n'est plus soignée qu'à moitié, régénération comprise), `critShift`, `fumbleShift`.
 
 * `pct` : pourcentage (0,25 = +25 %) · `flat` : valeur ajoutée.
 * `pctPer` / `flatPer` : proportionnel à une quantité variable : `missingHpPct` (0 à 100), `hpPct`, `alliesAlive`, `enemiesAlive`, `resource:<id>` (ex. `"resource:elan"`).

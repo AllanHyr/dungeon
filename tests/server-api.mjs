@@ -204,11 +204,25 @@ const main = async () => {
     assert(swap.json.ok && !swap.json.character.skills.includes('pretre_hymne'), 'un autre choix du même palier remplace le précédent');
     assert(!(await learn('guerrier_massacre')).json.ok, 'talent d\'une autre classe');
   });
-  await test('le coffre s\'ouvre ; supprimer un personnage ; la limite de personnages', async () => {
+  await test('le coffre s\'ouvre ; la forge ; supprimer un personnage ; la limite de personnages', async () => {
     const kael = (await bob.get('/api/profile')).json.characters[0];
     seed(app, bobId, kael.id, (ch) => ch.chest.push({ uid: 'k1', id: 'dague_os' }));
     const r = await bob.post('/api/character', { type: 'CHAR_OPEN_CHEST', charId: kael.id });
     assert(r.json.ok && r.json.opened.length === 1 && r.json.character.inventory.some((i) => i.uid === 'k1'), r.text);
+    // La forge : le serveur applique les mêmes règles (cadenas, démantèlement, amélioration, forge)
+    const fa = (body) => bob.post('/api/character', { charId: kael.id, ...body });
+    assert((await fa({ type: 'CHAR_LOCK', uid: 'k1' })).json.ok, 'cadenas');
+    assert(!(await fa({ type: 'CHAR_SALVAGE', uid: 'k1' })).json.ok, 'un objet protégé ne se démantèle pas');
+    await fa({ type: 'CHAR_LOCK', uid: 'k1' });
+    const sv = await fa({ type: 'CHAR_SALVAGE', uid: 'k1' });
+    assert(sv.json.ok && sv.json.shards === 3 && sv.json.character.shards === 3, sv.text);
+    assert(!(await fa({ type: 'CHAR_CRAFT', itemId: 'dague_os' })).json.ok, 'forger : il faut avoir terminé le donjon');
+    seed(app, bobId, kael.id, (ch) => { ch.shards = 40; ch.stats.dungeons = { caves_humides: 1 }; });
+    const cr = await fa({ type: 'CHAR_CRAFT', itemId: 'dague_os' });
+    assert(cr.json.ok && cr.json.crafted.id === 'dague_os' && cr.json.character.shards === 25, cr.text);
+    const up = await fa({ type: 'CHAR_UPGRADE', uid: cr.json.crafted.uid });
+    assert(up.json.ok && up.json.character.inventory.find((i) => i.uid === cr.json.crafted.uid).plus === 1, up.text);
+    eq((await bob.get('/api/profile')).json.characters[0].shards, 21, 'les éclats sont enregistrés');
     const del = await bob.post('/api/character', { type: 'CHAR_DELETE', charId: kael.id });
     assert(del.json.ok && del.json.deletedId === kael.id, del.text);
     eq((await bob.get('/api/profile')).json.characters.length, 0);

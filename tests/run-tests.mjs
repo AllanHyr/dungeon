@@ -7,7 +7,8 @@ import {
   canLearnSkill, skillRequirements, resetSkills, getCombatView, validTargets, resolveDice, skillOf, totalShield, checkUsable,
   createFarm, applyFarmResult, openChest, chestInfo, addXpCapped, checkAchievements, hasFeature, gearLevel, achievementProgress, titlesOf, waveInfo,
   EQUIP_SLOTS, slotsFor, planEquip, equipFromBag, unequipToBag, twoHandedWorn, applyCharacterAction, CHARACTER_ACTIONS, cleanName,
-  afkAction, whoMustAct, turnKey, xpForNext, campDeckOptions
+  afkAction, whoMustAct, turnKey, xpForNext, campDeckOptions,
+  salvageValue, upgradeCost, craftableItems, itemView, forgeRules
 } from '../src/core/index.js';
 import { dungeonsOf, dungeonIdOf, dungeonRules, canBeRaised, activeSets } from '../src/core/index.js';
 import { hotkeyIndex, keyLabel, learnKey } from '../src/ui/keys.js';
@@ -3876,6 +3877,105 @@ console.log('\n● Barde : chants, inspiration, Tempo');
     mp.resources.inspiration = 3;
     assert(cast(m, mp.id, 'barde_grand_crescendo').ok);
     assert(mw.statuses.some((x) => x.id === 'mod' && x.stat === 'pa' && x.flat === 1), 'Rythme endiablé : +1 PA au prochain tour du Guerrier');
+  });
+}
+
+console.log('\n● Forge : démanteler, protéger, améliorer, forger');
+{
+  const make = () => {
+    const chars = [];
+    const ch = applyCharacterAction(content, chars, { type: 'CHAR_CREATE', classId: 'guerrier', name: 'F' }, { newId: () => 'f1' }).character;
+    ch.inventory = [{ uid: 'c1', id: 'capuchon_de_toile_rapee' }, { uid: 'c2', id: 'piece_percee' }, { uid: 'u1', id: 'amulette_corbeau' }, { uid: 'r1', id: 'collier_de_saphir' }];
+    return { chars, ch, go: (a) => applyCharacterAction(content, chars, { charId: 'f1', ...a }) };
+  };
+
+  test('démanteler : des éclats selon la rareté ; jamais un objet protégé, porté, ou une potion', () => {
+    const { ch, go } = make();
+    eq(ch.shards, 0);
+    assert(go({ type: 'CHAR_LOCK', uid: 'r1' }).ok);
+    eq(ch.locked, ['r1']);
+    assert(!go({ type: 'CHAR_SALVAGE', uid: 'r1' }).ok, 'protégé');
+    const r = go({ type: 'CHAR_SALVAGE', uid: 'u1' });
+    assert(r.ok && r.shards === 3 && ch.shards === 3, 'peu commun : 3 éclats');
+    ch.equipment.head = { uid: 'w1', id: 'heaume_de_fer_noirci' };
+    assert(!go({ type: 'CHAR_SALVAGE', uid: 'w1' }).ok, 'un objet porté ne se démantèle pas');
+    const potion = content.itemList.find((i) => i.consumable);
+    ch.inventory.push({ uid: 'p1', id: potion.id });
+    assert(!go({ type: 'CHAR_SALVAGE', uid: 'p1' }).ok, 'une potion ne se démantèle pas');
+    // en masse : les communs, sans le collier protégé ni la potion
+    const bulk = go({ type: 'CHAR_SALVAGE_BULK', rarity: 'rare' });
+    assert(bulk.ok && bulk.salvaged === 2 && ch.shards === 5, `en masse : 2 communs (${ch.shards})`);
+    eq(ch.inventory.map((i) => i.uid).sort(), ['p1', 'r1']);
+    assert(!go({ type: 'CHAR_SALVAGE_BULK', rarity: 'common' }).ok, 'plus rien à démanteler');
+  });
+
+  test('améliorer : +10 % par cran sur PV/attaque/défense/soin (pas les PA ni la chance), prix croissant, +5 au maximum', () => {
+    const { ch, go } = make();
+    ch.equipment.head = { uid: 'w1', id: 'heaume_de_fer_noirci' }; // rare : def 1, hp 1
+    ch.shards = 1000;
+    const base = { ...content.items.heaume_de_fer_noirci.stats };
+    const spent = [];
+    for (let i = 0; i < 5; i++) { const before = ch.shards; assert(go({ type: 'CHAR_UPGRADE', uid: 'w1' }).ok); spent.push(before - ch.shards); }
+    eq(spent, [8, 16, 24, 32, 40], 'rare : 8 × le cran');
+    eq(ch.equipment.head.plus, 5);
+    assert(!go({ type: 'CHAR_UPGRADE', uid: 'w1' }).ok, 'pas plus de +5');
+    eq(itemView(content, ch.equipment.head).stats.def, Math.round(base.def * 1.5 * 100) / 100);
+    eq(itemView(content, { uid: 'x', id: 'piece_percee', plus: 3 }).stats.luck, content.items.piece_percee.stats.luck, 'la chance ne grandit pas');
+    // dans le combat : la défense du joueur porte l'amélioration
+    const t = createTraining(content, [{ classId: 'guerrier', level: 3 }], { dummy: 'mannequin', count: 1 });
+    const p = t.players[0];
+    p.equipment.head = { uid: 'w1', id: 'heaume_de_fer_noirci' };
+    const d0 = computeStats(t, p).def;
+    p.equipment.head.plus = 5;
+    assert(Math.abs(computeStats(t, p).def - d0 - base.def * 0.5) < 1e-6, 'la défense en combat gagne +50 % de celle du heaume');
+    // démanteler un objet amélioré rend la moitié des éclats investis
+    eq(salvageValue(content, { id: 'heaume_de_fer_noirci', plus: 2 }), 8 + Math.floor((8 + 16) / 2));
+    const poor = make();
+    assert(!poor.go({ type: 'CHAR_UPGRADE', uid: 'r1' }).ok, 'sans éclats, pas d\'amélioration');
+  });
+
+  test('forger : seulement les objets d\'un donjon TERMINÉ, au prix de leur rareté ; l\'objet arrive dans le sac', () => {
+    const { ch, go } = make();
+    ch.shards = 100;
+    assert(!go({ type: 'CHAR_CRAFT', itemId: 'dague_os' }).ok, 'donjon jamais terminé');
+    eq(craftableItems(content, ch).length, 0);
+    ch.stats.dungeons = { caves_humides: 1 };
+    const list = craftableItems(content, ch);
+    assert(list.length > 0 && list.every((x) => content.itemDungeon[x.id] === 'caves_humides'), 'les objets des Caves humides');
+    const r = go({ type: 'CHAR_CRAFT', itemId: 'dague_os' });
+    assert(r.ok && ch.inventory.some((i) => i.uid === r.crafted.uid && i.id === 'dague_os'), 'dans le sac');
+    eq(ch.shards, 100 - forgeRules(content).craftCost.uncommon);
+    assert(!go({ type: 'CHAR_CRAFT', itemId: 'capuchon_de_toile_rapee' }).ok, 'un objet ordinaire ne se forge pas');
+  });
+
+  test('sauvegarde : les éclats, les cadenas et les améliorations survivent ; une partie les garde aussi', () => {
+    const { ch } = make();
+    ch.shards = 12; ch.locked = ['r1', 'disparu'];
+    ch.inventory[3].plus = 2;
+    ch.inventory[0].plus = 99;
+    const back = sanitizeCharacter(content, JSON.parse(JSON.stringify(ch)));
+    eq(back.shards, 12);
+    eq(back.locked, ['r1'], 'un cadenas sur un objet qu\'on n\'a plus disparaît');
+    eq(back.inventory.find((i) => i.uid === 'r1').plus, 2);
+    eq(back.inventory.find((i) => i.uid === 'c1').plus, 5, 'une amélioration est bornée à +5');
+    // une partie de donjon gagnée : l'objet porté amélioré revient amélioré, toujours protégé
+    let checked = false;
+    for (let seed = 1; seed < 300; seed++) {
+      const chars = makeParty(content, A, 1, 'good', seed);
+      const slot = EQUIP_SLOTS.find((x) => chars[0].equipment[x]);
+      const inst = chars[0].equipment[slot];
+      inst.plus = 3;
+      chars[0].locked = [inst.uid];
+      const { state } = playRun(content, { tranche: 1, mode: 'tranche' }, chars, seed * 31);
+      if (!state.result.won) continue;
+      applyRunResult(content, chars, state);
+      const back = [...chars[0].inventory, ...EQUIP_SLOTS.map((x) => chars[0].equipment[x])].find((i) => i?.uid === inst.uid);
+      eq(back?.plus, 3, 'l\'amélioration a survécu à la partie');
+      eq(chars[0].locked, [inst.uid]);
+      checked = true;
+      break;
+    }
+    assert(checked, 'aucune partie gagnée pour vérifier');
   });
 }
 

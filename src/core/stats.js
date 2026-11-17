@@ -14,6 +14,7 @@
 // Un modificateur peut dépendre de l'état de l'unité (ex. : +0,8 % de dégâts par % de PV manquants).
 
 import { EQUIP_SLOTS } from './content.js';
+import { upgradedStat } from './forge.js';
 import { alliesOf, enemiesOf } from './geometry.js';
 
 /** Les statistiques de base d'une unité. */
@@ -194,7 +195,8 @@ export function computeStats(state, unit) {
       if (!inst || unit.cursedUid === inst.uid) continue;
       const def = c.items[inst.id];
       if (!def?.stats || !itemIsActive(state, def)) continue;
-      for (const [k, v] of Object.entries(def.stats)) {
+      for (const [k, raw] of Object.entries(def.stats)) {
+        const v = upgradedStat(c, inst, k, raw); // (un objet amélioré à la forge, +1 à +5 : ses statistiques grandissent)
         if (k === 'pa') paFlat += v;
         else base[k] = (base[k] || 0) + v;
       }

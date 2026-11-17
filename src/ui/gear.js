@@ -9,7 +9,7 @@
 import { h, mount } from './dom.js';
 import { icon } from './icons.js';
 import { EQUIP_SLOTS } from '../core/content.js';
-import { canEquip, slotsFor, planEquip, twoHandedWorn, rarityOf, itemSummary, gearLevel } from '../core/index.js';
+import { canEquip, slotsFor, planEquip, twoHandedWorn, rarityOf, itemSummary, gearLevel, itemView, salvageValue } from '../core/index.js';
 import { statEntries, compareItems, typeLabel } from './format.js';
 
 /** L'icône de chaque emplacement. */
@@ -45,7 +45,11 @@ export function statPills(content, def) {
     h('span', { class: `pill ${value < 0 ? 'down' : ''}` }, h('b', null, `${value > 0 ? '+' : ''}${value}`), ` ${label}`)));
 }
 
-const defOf = (content, inst) => content.items[inst.id];
+// (un objet amélioré à la forge se montre avec ses statistiques améliorées)
+const defOf = (content, inst) => itemView(content, inst);
+
+/** Le nom d'un objet, avec son amélioration : « Heaume de fer +2 ». */
+export const itemName = (def) => (def.plus ? `${def.name} +${def.plus}` : def.name);
 const narrowScreen = () => !!window.matchMedia && window.matchMedia('(max-width: 760px)').matches;
 
 /** À appeler juste après avoir affiché la page : sur téléphone, descend au sac quand on vient de choisir un emplacement. */
@@ -111,7 +115,7 @@ export function equipmentView({ content, holder, view, tranche = null, actions, 
       h('div', { class: 'gear-icon' }, icon(SLOT_ICON[slot], 26)),
       h('div', { class: 'gear-main' },
         h('div', { class: 'gear-slot' }, name, ' · ', `niveau ${def.level}`, h('span', { class: 'rarity-pill' }, rarity.name)),
-        h('div', { class: 'gear-name' }, def.name),
+        h('div', { class: 'gear-name' }, itemName(def)),
         h('div', { class: 'gear-type' }, typeLabel(content, def)),
         statPills(content, def),
         def.effect ? h('div', { class: 'gear-effect' }, icon('star', 12), def.effect) : null,
@@ -141,7 +145,7 @@ export function equipmentView({ content, holder, view, tranche = null, actions, 
     const rarity = def ? rarityOf(content, def) : null;
     const inactive = tranche && inst && def.level > tranche;
     const cursed = !!(inst && holder.cursedUid && holder.cursedUid === inst.uid);
-    const label = def ? `${content.slotNames[slot]} : ${def.name}${off ? ' (arme à deux mains)' : ''}` : `${content.slotNames[slot]} : libre`;
+    const label = def ? `${content.slotNames[slot]} : ${itemName(def)}${off ? ' (arme à deux mains)' : ''}` : `${content.slotNames[slot]} : libre`;
     const tile = h('button', {
       type: 'button', dataset: { slot },
       class: `dslot ${def ? `filled r-${rarity.id}` : 'empty'} ${off ? 'blocked' : ''} ${cursed ? 'cursed' : ''} ${view.sel === slot ? 'is-selected' : ''} ${inactive ? 'is-inactive' : ''}`,
@@ -171,7 +175,22 @@ export function equipmentView({ content, holder, view, tranche = null, actions, 
     const def = defOf(content, inst);
     const rarity = rarityOf(content, def);
     const extra = actions.extra ? actions.extra(inst) : null;
-    const head = (meta) => h('div', { class: 'bag-line1' }, h('b', { class: 'bag-name' }, def.name), h('span', { class: 'rarity-pill' }, rarity.name), h('span', { class: 'bag-meta' }, meta));
+    const isLocked = !!actions.isLocked?.(inst);
+    const lockedMark = isLocked ? h('span', { class: 'lock-mark', title: 'Objet protégé : il ne peut pas être démantelé' }, icon('lock', 12)) : null;
+    // Cadenas et démantèlement (la fiche seulement : pas pendant une partie)
+    const forgeBtns = actions.salvage && !def.consumable ? [
+      h('button', {
+        type: 'button', class: `btn btn-small btn-icon bag-lock ${isLocked ? 'on' : ''}`, disabled: actions.locked, 'aria-pressed': isLocked ? 'true' : 'false',
+        title: actions.locked ? actions.lockedReason : isLocked ? 'Retirer la protection' : 'Protéger cet objet (il ne pourra pas être démantelé)',
+        'aria-label': isLocked ? `Retirer la protection : ${def.name}` : `Protéger : ${def.name}`, onClick: () => actions.lock(inst)
+      }, icon('lock', 14)),
+      h('button', {
+        type: 'button', class: 'btn btn-small btn-icon bag-salvage', disabled: actions.locked || isLocked,
+        title: actions.locked ? actions.lockedReason : isLocked ? 'Objet protégé : retire le cadenas pour le démanteler' : `Démanteler : +${salvageValue(content, inst)} éclats`,
+        'aria-label': `Démanteler : ${def.name}`, onClick: () => actions.salvage(inst)
+      }, icon('trash', 14))
+    ] : null;
+    const head = (meta) => h('div', { class: 'bag-line1' }, h('b', { class: 'bag-name' }, itemName(def)), lockedMark, h('span', { class: 'rarity-pill' }, rarity.name), h('span', { class: 'bag-meta' }, meta));
 
     if (def.consumable) {
       return h('div', { class: `bag-row r-${rarity.id}`, style: { '--rar': rarity.color }, dataset: { item: inst.id } },
@@ -197,7 +216,7 @@ export function equipmentView({ content, holder, view, tranche = null, actions, 
       compare = h('div', { class: `bag-cmp ${verdict.cls}` },
         h('span', { class: 'verdict' }, icon(verdict.ic, 12), verdict.text),
         displaced.length
-          ? h('span', { class: 'deltas' }, 'remplace ', h('i', null, displaced.map((i) => defOf(content, i).name).join(' + ')), where, cmp.deltas.length ? ' : ' : '',
+          ? h('span', { class: 'deltas' }, 'remplace ', h('i', null, displaced.map((i) => itemName(defOf(content, i))).join(' + ')), where, cmp.deltas.length ? ' : ' : '',
               cmp.deltas.map((d) => h('span', { class: `delta ${d.delta > 0 ? 'up' : 'down'}` }, `${d.delta > 0 ? '▲ +' : '▼ −'}${Math.abs(d.delta)} ${d.label}`)))
           : h('span', { class: 'deltas' }, `rien à remplacer : tout ce qu'il donne est gagné${where}`));
     }
@@ -219,7 +238,8 @@ export function equipmentView({ content, holder, view, tranche = null, actions, 
           type: 'button', class: 'btn btn-small', disabled: actions.locked || !check.ok,
           title: actions.locked ? actions.lockedReason : check.ok ? `Équiper : ${def.name}${where}` : check.reason,
           onClick: () => actions.equip(inst, target)
-        }, 'Équiper')));
+        }, 'Équiper'),
+        forgeBtns));
   }
 
   // ---- le sac, en sections

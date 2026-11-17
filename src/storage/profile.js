@@ -11,6 +11,7 @@
 import { EQUIP_SLOTS } from '../core/content.js';
 import { equipFromBag, slotsFor } from '../core/items.js';
 import { createCharacter, specLevel, pruneDeck, fillDeck } from '../core/progression.js';
+import { forgeRules, ownedItems } from '../core/forge.js';
 
 const PROFILE_KEY = 'donjon.profile.v1';
 const RUN_KEY = 'donjon.run.v1';
@@ -163,7 +164,8 @@ export function sanitizeCharacter(content, raw) {
     let uid = String(it.uid || '');
     if (!uid || seen.has(uid)) uid = `${it.id}-${Math.random().toString(36).slice(2, 8)}`;
     seen.add(uid);
-    return { uid, id: it.id };
+    const plus = Math.max(0, Math.min(forgeRules(content).upgradeMax, Math.floor(Number(it.plus)) || 0));
+    return plus && !content.items[it.id].consumable ? { uid, id: it.id, plus } : { uid, id: it.id };
   };
   for (const it of Array.isArray(raw.inventory) ? raw.inventory : []) {
     const clean = cleanItem(it);
@@ -186,6 +188,10 @@ export function sanitizeCharacter(content, raw) {
     const def = content.items[clean.id];
     equipFromBag(content, holder, clean.uid, EQUIP_SLOTS.includes(slot) && slotsFor(def).includes(slot) ? slot : null);
   }
+  // La forge : les éclats, et les cadenas (seulement sur des objets qu'on possède encore)
+  ch.shards = n(raw.shards);
+  const owned = new Set(ownedItems(ch).map((o) => o.inst.uid));
+  ch.locked = [...new Set(Array.isArray(raw.locked) ? raw.locked.filter((u) => typeof u === 'string' && owned.has(u)) : [])];
   return ch;
 }
 

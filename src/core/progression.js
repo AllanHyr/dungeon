@@ -25,6 +25,8 @@ export function createCharacter(content, { id, name, classId }) {
     deck: [], // les sorts actifs équipés (au plus rules.deckSize)
     inventory: [],
     equipment,
+    shards: 0, // les éclats de la forge (en démantelant des objets)
+    locked: [], // les objets protégés (cadenas) : on ne peut pas les démanteler
     chest: [], // le coffre : objets gagnés (au farm...) qu'on n'a pas encore ouverts
     achievements: {}, // succès débloqués par CE personnage : { id: true }
     stats: newCharacterStats()

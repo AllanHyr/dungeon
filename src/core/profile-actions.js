@@ -2,7 +2,7 @@
 //  profile-actions.js — Tout ce qu'on peut faire à un personnage HORS d'une partie
 // ============================================================
 // Créer, supprimer, équiper, retirer un objet, apprendre une compétence, réinitialiser les compétences, choisir sa spécialisation
-// et son deck de sorts, ouvrir le coffre.
+// et son deck de sorts, ouvrir le coffre ; démanteler, protéger, améliorer et forger des objets (voir forge.js).
 //
 // C'est le MÊME code qui s'exécute :
 //   - dans le navigateur, quand on joue seul (la démo publiée) : les personnages sont dans le navigateur ;
@@ -19,12 +19,14 @@
 import { createCharacter, learnSkill, resetSkills, setSpec, setDeck } from './progression.js';
 import { equipFromBag, unequipToBag } from './items.js';
 import { openChest } from './farm.js';
+import { salvageValue, canUpgrade, craftableItems, bulkSalvageList, ownedItems, forgeRules } from './forge.js';
 import { checkAchievements } from './achievements.js';
 import { EQUIP_SLOTS } from './content.js';
 import { GameError, assert } from './util.js';
 
 /** Les actions acceptées (le champ `type` d'une demande). */
-export const CHARACTER_ACTIONS = ['CHAR_CREATE', 'CHAR_DELETE', 'CHAR_EQUIP', 'CHAR_UNEQUIP', 'CHAR_LEARN', 'CHAR_RESET_SKILLS', 'CHAR_SET_SPEC', 'CHAR_SET_DECK', 'CHAR_OPEN_CHEST'];
+export const CHARACTER_ACTIONS = ['CHAR_CREATE', 'CHAR_DELETE', 'CHAR_EQUIP', 'CHAR_UNEQUIP', 'CHAR_LEARN', 'CHAR_RESET_SKILLS', 'CHAR_SET_SPEC', 'CHAR_SET_DECK', 'CHAR_OPEN_CHEST',
+  'CHAR_SALVAGE', 'CHAR_SALVAGE_BULK', 'CHAR_LOCK', 'CHAR_UPGRADE', 'CHAR_CRAFT'];
 
 /** Combien de personnages au maximum (une limite de sécurité pour une base de données partagée). */
 export const MAX_CHARACTERS = 30;
@@ -109,6 +111,62 @@ export function applyCharacterAction(content, characters, action, ctx = {}) {
         assert(ch.chest.length > 0, 'Le coffre est vide.');
         const opened = openChest(content, ch);
         return { ok: true, character: ch, opened, unlocked: checkAchievements(content, ch) };
+      }
+      case 'CHAR_SALVAGE': {
+        // Démanteler un objet DU SAC (pas un objet porté, pas un objet protégé, pas une potion) : il devient des éclats.
+        assert(typeof action.uid === 'string', 'Objet invalide.');
+        const i = ch.inventory.findIndex((it) => it.uid === action.uid);
+        assert(i >= 0, 'Cet objet n\'est pas dans le sac.');
+        assert(!(ch.locked || []).includes(action.uid), 'Cet objet est protégé : retire le cadenas pour le démanteler.');
+        const gain = salvageValue(content, ch.inventory[i]);
+        assert(gain > 0, 'Cet objet ne se démantèle pas.');
+        ch.inventory.splice(i, 1);
+        ch.shards = (ch.shards || 0) + gain;
+        return { ok: true, character: ch, shards: gain, salvaged: 1, unlocked: checkAchievements(content, ch) };
+      }
+      case 'CHAR_SALVAGE_BULK': {
+        // Tout démanteler jusqu'à une rareté (« tous les objets communs ») ; jamais les objets protégés ni les potions.
+        assert(typeof action.rarity === 'string' && content.rarityIndex[action.rarity] !== undefined, 'Rareté inconnue.');
+        const list = bulkSalvageList(content, ch, action.rarity);
+        assert(list.length > 0, 'Rien à démanteler.');
+        let gain = 0;
+        for (const inst of list) gain += salvageValue(content, inst);
+        const gone = new Set(list.map((it) => it.uid));
+        ch.inventory = ch.inventory.filter((it) => !gone.has(it.uid));
+        ch.shards = (ch.shards || 0) + gain;
+        return { ok: true, character: ch, shards: gain, salvaged: list.length, unlocked: checkAchievements(content, ch) };
+      }
+      case 'CHAR_LOCK': {
+        // Poser ou retirer le cadenas d'un objet (dans le sac ou porté).
+        assert(typeof action.uid === 'string' && ownedItems(ch).some((o) => o.inst.uid === action.uid), 'Objet introuvable.');
+        const locked = new Set(ch.locked || []);
+        if (locked.has(action.uid)) locked.delete(action.uid); else locked.add(action.uid);
+        ch.locked = [...locked];
+        break;
+      }
+      case 'CHAR_UPGRADE': {
+        // Améliorer un objet (sac ou porté) d'un cran : +1 à +5.
+        assert(typeof action.uid === 'string', 'Objet invalide.');
+        const own = ownedItems(ch).find((o) => o.inst.uid === action.uid);
+        assert(own, 'Objet introuvable.');
+        const res = canUpgrade(content, ch, own.inst);
+        assert(res.ok, res.reason);
+        ch.shards -= res.cost;
+        own.inst.plus = (own.inst.plus || 0) + 1;
+        break;
+      }
+      case 'CHAR_CRAFT': {
+        // Forger un objet exclusif d'un donjon déjà terminé ; il arrive dans le sac.
+        assert(typeof action.itemId === 'string', 'Objet invalide.');
+        const entry = craftableItems(content, ch).find((x) => x.id === action.itemId);
+        assert(entry, 'Termine d\'abord le donjon où tombe cet objet pour pouvoir le forger.');
+        assert((ch.shards || 0) >= entry.cost, `${entry.cost} éclats requis (tu en as ${ch.shards || 0}).`);
+        const cap = forgeRules(content).bagMax;
+        assert(ch.inventory.length < cap, `Ton sac est plein (${cap} objets) : démantèle quelque chose d'abord.`);
+        ch.shards -= entry.cost;
+        const inst = { uid: `${entry.id}-${Math.random().toString(36).slice(2, 8)}`, id: entry.id };
+        ch.inventory.push(inst);
+        return { ok: true, character: ch, crafted: inst, unlocked: checkAchievements(content, ch) };
       }
       default:
         throw new GameError(`Action inconnue : ${action.type}`);

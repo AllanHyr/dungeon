@@ -88,9 +88,9 @@ export function endRun(state, outcome) {
   state.pending = { kind: 'end' };
   state.combat = null;
   if (state.farm) {
-    // Session de farm : bilan à part (vagues vaincues, XP plafonnée, coffre). Voir farm.js.
+    // Session de farm : bilan à part (vagues vaincues, XP de rattrapage, éclats, objets au choix). Voir farm.js.
     state.result = computeFarmResult(state, outcome);
-    const text = { stop: 'Fin de la session de farm : tu repars avec ton coffre.', defeat: 'Tu tombes... la vague en cours ne rapporte rien, le reste est gardé.', abandon: 'Tu quittes la zone avec ce que tu as déjà gagné.' };
+    const text = { stop: 'Fin de la session de farm : tu repars avec tes éclats et une récompense à choisir.', defeat: 'Tu tombes... la vague en cours ne rapporte rien, le reste est gardé.', abandon: 'Tu quittes la zone avec ce que tu as déjà gagné.' };
     log(state, text[outcome] || text.stop, outcome === 'defeat' ? 'bad' : 'info');
     return;
   }

@@ -27,7 +27,7 @@ export function createCharacter(content, { id, name, classId }) {
     equipment,
     shards: 0, // les éclats de la forge (en démantelant des objets)
     locked: [], // les objets protégés (cadenas) : on ne peut pas les démanteler
-    chest: [], // le coffre : objets gagnés (au farm...) qu'on n'a pas encore ouverts
+    lootChoice: [], // la récompense du farm en attente : 3 objets, on en garde un (voir farm.js)
     achievements: {}, // succès débloqués par CE personnage : { id: true }
     stats: newCharacterStats()
   };

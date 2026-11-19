@@ -17,12 +17,12 @@ import { redraw, startRun, startFarm, savedRunInfo, resumeRun, discardSavedRun, 
 import { portrait, xpBar, equipStrip, previewStats, statsLine, btn, progressBar } from '../components.js';
 import { assess, VERDICT, VERDICT_SENTENCE, modeEffects, listFr, plural } from '../assess.js';
 import { openSheet } from './sheet.js';
-import { openSaveModal, openHelpModal, openCreateModal, openTrainingModal, openChestModal, openAccountModal, openDeleteCharacter, heroSlots } from './dialogs.js';
+import { openSaveModal, openHelpModal, openCreateModal, openTrainingModal, openLootModal, openAccountModal, openDeleteCharacter, heroSlots } from './dialogs.js';
 import { play, isSoundEnabled } from '../sound.js';
 import { openSoundLab } from './sound-lab.js';
 import { dungeonPicker, dungeonBrief, comingSoonNote, selectedDungeon } from './dungeons.js';
 import {
-  availableTranches, chestInfo, canStartFarm, gearLevel, hasFeature, achievementForFeature,
+  availableTranches, catchUpLevel, canStartFarm, gearLevel, hasFeature, achievementForFeature,
   achievementProgress, skillPointsToSpend, pendingChoices
 } from '../../core/index.js';
 
@@ -184,7 +184,7 @@ function viewTabs(view) {
       online
         ? ['dungeon', 'Donjon à plusieurs', 'boss', "Jusqu'à 4 joueurs, un héros chacun, explorent un donjon jusqu'au boss."]
         : ['dungeon', 'Donjon en équipe', 'boss', "Jusqu'à 4 héros explorent un donjon jusqu'au boss."],
-      ['farm', 'Zone de farm solo', 'treasure', 'Un seul héros enchaîne des vagues de monstres. Butin modeste.']
+      ['farm', 'Zone de farm solo', 'treasure', 'Un seul héros enchaîne des vagues : des éclats, un objet au choix, et de l\'XP pour rattraper tes autres héros.']
     ].map(([id, label, ic, hint]) =>
       h('button', {
         class: `view-tab ${view === id ? 'on' : ''}`, role: 'tab', 'aria-selected': view === id, 'data-view': id,
@@ -216,7 +216,7 @@ function heroesPanel(chars, view) {
 function heroCard(ch, view, locks) {
   const { content, profile } = app;
   const ui = app.ui;
-  const farm = view === 'farm'; // (le coffre et le niveau d'équipement ne se montrent toujours qu'au farm)
+  const farm = view === 'farm'; // (le niveau d'équipement ne se montre qu'au farm)
   const single = view !== 'dungeon'; // un seul héros : au farm, ou dans un salon en ligne (une équipe de 4 héros n'existe qu'en jeu local)
   const cls = content.classes[ch.classId];
   const idx = ui.team.indexOf(ch.id);
@@ -233,11 +233,11 @@ function heroCard(ch, view, locks) {
     redraw();
   };
 
-  // Les petites étiquettes d'un héros : des points de compétence à dépenser, un coffre à ouvrir, une partie en cours...
+  // Les petites étiquettes d'un héros : des points de compétence à dépenser, une récompense de farm à choisir, une partie en cours...
   const free = skillPointsToSpend(content, ch);
   const todo = pendingChoices(content, ch);
   const todoText = todo.spec ? 'Spécialisation à choisir' : todo.talents ? `${todo.talents} talent${plural(todo.talents, '', 's')} à choisir` : '';
-  const chest = chestInfo(content, ch);
+  const loot = ch.lootChoice?.length || 0;
   const worn = Object.values(ch.equipment || {}).filter(Boolean).length;
   const tags = [
     free > 0
@@ -251,11 +251,11 @@ function heroCard(ch, view, locks) {
             onClick: (e) => { e.stopPropagation(); openSheet(ch.id, 'skills'); }
           }, icon('star', 14), todoText)
         : null,
-    farm || chest.count > 0
+    loot
       ? h('button', {
-          class: `hero-tag chest-btn ${chest.count ? 'has-items' : ''}`, type: 'button', title: 'Ouvrir le coffre',
-          onClick: (e) => { e.stopPropagation(); openChestModal(ch.id); }
-        }, icon('treasure', 14), `Coffre ${chest.count}/${chest.capacity}`)
+          class: 'hero-tag loot-btn has-items', type: 'button', title: 'La récompense de ta dernière session de farm : choisis un objet parmi ' + loot,
+          onClick: (e) => { e.stopPropagation(); openLootModal(ch.id); }
+        }, icon('treasure', 14), 'Récompense à choisir')
       : null,
     locks.has(ch.id)
       ? h('span', { class: 'hero-tag hero-tag-bad', title: 'Ce héros est dans la partie en cours : reprends-la ou abandonne-la pour le modifier.' }, icon('lock', 13), 'Partie en cours')
@@ -451,20 +451,22 @@ function farmPlan(chars, saved) {
   const rarityName = (id) => content.rarities.find((x) => x.id === id)?.name || id;
 
   // ---- La zone
-  const totalWeight = Object.values(r.rarityWeights).reduce((a, b) => a + b, 0);
-  const chances = Object.entries(r.rarityWeights).map(([id, w]) => `${rarityName(id)} ${Math.round((100 * w) / totalWeight)} %`);
-  const never = content.rarities.filter((x) => !(x.id in r.rarityWeights)).map((x) => x.name.toLowerCase());
+  const tierText = (t) => Object.entries(t.rarityWeights).map(([id, w]) => `${rarityName(id).toLowerCase()} ${Math.round((100 * w) / Object.values(t.rarityWeights).reduce((x, y) => x + y, 0))} %`).join(', ');
   const heal = Math.round(zone.healBetweenWavesPct * 100);
   const facts = [
     `Des vagues de monstres de plus en plus fortes, et un boss toutes les ${zone.waves.bossEvery} vagues.`,
-    `Après chaque vague tu choisis : continuer, ou partir avec ton coffre (tu récupères ${heal} % de tes PV entre deux vagues).`,
-    'Si tu tombes, tu ne perds que la vague en cours : le reste est gardé.',
-    `Récompenses : de l'XP jusqu'au niveau ${r.xpMaxLevel}, et des objets de niveau ${r.itemMaxLevel} au plus (${chances.join(' · ')}).${never.length ? ` Jamais d'objet ${never.join(' ni ')} ici : le meilleur équipement vient des donjons en équipe.` : ''}`
+    `Après chaque vague tu choisis : continuer, ou t'arrêter (tu récupères ${heal} % de tes PV entre deux vagues). Si tu tombes, tu ne perds que la vague en cours.`,
+    `Chaque vague donne ${r.shardsPerWave} éclat${plural(r.shardsPerWave, '', 's')} pour la forge (+${r.bossShards} pour un boss).`,
+    `À la fin, tu choisis ${r.choiceCount > 1 ? `1 objet parmi ${r.choiceCount}` : 'ton objet'} (niveau ${r.itemMaxLevel} au plus) ; les autres deviennent des éclats. Plus tu tiens, meilleurs ils sont : ${r.choiceTiers.map((t) => `${t.waves} vague${plural(t.waves, '', 's')} : ${tierText(t)}`).join(' · ')}.`,
+    `L'XP sert à RATTRAPER : seul un héros plus bas que ton meilleur héros en gagne (×${r.catchUpXpMult}), jusqu'au niveau de celui-ci.`
   ];
+  const cap = selected ? catchUpLevel(content, chars, selected) : 0;
   const alerts = [];
   if (selected) {
-    if (selected.level >= r.xpMaxLevel) alerts.push(['info', `${selected.name} a atteint le niveau ${r.xpMaxLevel} : cette zone ne donne plus d'XP, seulement du butin.`]);
-    if (chestInfo(content, selected).full) alerts.push(['bad', 'Ton coffre est plein : ouvre-le avant de repartir.']);
+    alerts.push(cap
+      ? ['good', `Rattrapage : ${selected.name} gagne de l'XP ici (×${r.catchUpXpMult}) jusqu'au niveau ${cap}, celui de ton meilleur héros.`]
+      : ['info', `${selected.name} n'est en retard sur aucun de tes héros : le farm ne lui donne pas d'XP, mais des éclats et un objet au choix.`]);
+    if (selected.lootChoice?.length) alerts.push(['bad', ['Choisis d\'abord la récompense de ta dernière session. ', h('button', { class: 'btn btn-small', id: 'farm-pick-loot', onClick: () => openLootModal(selected.id) }, icon('treasure', 14), 'Choisir')]]);
   }
   const stats = selected?.stats;
   const chip = (ic, text) => h('span', { class: 'zone-chip' }, icon(ic, 15), text);
@@ -494,9 +496,9 @@ function farmPlan(chars, saved) {
         h('p', null, zone.description),
         h('div', { class: 'zone-chips' },
           chip('boss', `Boss toutes les ${zone.waves.bossEvery} vagues`),
-          chip('heart', `${heal} % de PV rendus entre deux vagues`),
-          chip('star', `XP jusqu'au niveau ${r.xpMaxLevel}`),
-          chip('treasure', `Objets de niveau ${r.itemMaxLevel} au plus`)),
+          chip('flame', `${r.shardsPerWave} éclat${plural(r.shardsPerWave, '', 's')} par vague`),
+          chip('treasure', `1 objet au choix parmi ${r.choiceCount}`),
+          chip('star', 'XP de rattrapage')),
         h('details', { class: 'zone-more' }, h('summary', null, 'Comment ça marche ?'), h('ul', { class: 'zone-facts' }, facts.map((f) => h('li', null, f)))),
         stats ? h('div', { class: 'zone-record' }, icon('star', 16), `Record de ${selected.name} : ${stats.farmBest} vague${plural(stats.farmBest, '', 's')} · ${stats.farmWaves} vague${plural(stats.farmWaves, '', 's')} vaincue${plural(stats.farmWaves, '', 's')} au total`) : null)),
     alerts.map(([tone, text]) => h('div', { class: `farm-alert tone-${tone}` }, text)),

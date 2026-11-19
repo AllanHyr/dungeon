@@ -1,4 +1,4 @@
-# La zone de farm solo, le coffre et les succès
+# La zone de farm solo, la récompense au choix, la forge et les succès
 
 Tout est décrit en JSON : **`data/farm.json`** (les zones de farm) et **`data/achievements.json`** (les succès).
 Tu n'as pas besoin de toucher au code pour ajouter une zone, régler les récompenses ou créer un succès.
@@ -8,18 +8,22 @@ Tu n'as pas besoin de toucher au code pour ajouter une zone, régler les récomp
 ## 1. Le principe du farm
 
 * **Un seul personnage** entre dans une petite zone et enchaîne des **vagues** de monstres, de plus en plus fortes.
-* Après chaque vague vaincue, il choisit : **vague suivante**, ou **partir avec son coffre**.
+* Après chaque vague vaincue, il choisit : **vague suivante**, ou **s'arrêter**.
 * S'il meurt, il **ne perd que la vague en cours** : tout ce qu'il a gagné dans les vagues précédentes est gardé.
-* Les récompenses sont **volontairement restreintes** (début de jeu) : de l'XP jusqu'à un niveau plafond, et des objets communs ou inhabituels
-  (rarement rares), jamais d'épique ni de légendaire. Le meilleur équipement vient des **donjons en équipe**.
-* L'XP est ajoutée tout de suite à la fin de la session ; les **objets vont dans le coffre** du personnage (capacité 24), qu'on **ouvre** quand on veut :
-  tout passe alors dans l'inventaire, avec une petite révélation du moins rare au plus rare.
+* Chaque vague donne des **éclats** (pour la forge, voir §3 bis), un boss en donne plus.
+* À la fin de la session (au moins une vague vaincue), on **choisit 1 objet parmi 3** : il va dans le sac, les deux autres sont démantelés en éclats.
+  Plus on a tenu de vagues, meilleurs sont les objets proposés (paliers `choiceTiers`). Jamais d'épique ni de légendaire, ni d'objet exclusif d'un donjon :
+  le meilleur équipement vient des **donjons en équipe**. Le choix attend sur le personnage (`personnage.lootChoice`) tant qu'il n'est pas fait,
+  et bloque la session suivante (l'accueil affiche « Récompense à choisir »).
+* L'**XP sert à rattraper** : seul un héros **plus bas que le meilleur héros du joueur** en gagne (×`catchUpXpMult`), et jamais au-delà du niveau de ce meilleur héros.
+  Le héros le plus avancé ne gagne pas d'XP au farm : pour lui, ce sont des éclats et un objet. Le plafond est calculé au lancement de la session
+  (`catchUpLevel` dans `src/core/farm.js`) : par le navigateur hors ligne, par le serveur en ligne (le joueur ne peut pas le choisir).
 * Pendant une session, on ne peut pas changer d'équipement (seulement boire des potions et se soigner entre deux vagues).
 * Le farm se joue avec **tout l'équipement** du personnage (aucune restriction de niveau) : un personnage bien équipé écrase la zone,
   ce qui justifiera le farm automatique (étape suivante), débloqué par un succès.
 
 Une session de farm se sauvegarde comme un donjon (on peut fermer la page et reprendre). Tant qu'une partie est en cours, ses personnages sont
-**verrouillés** (pas d'équipement, de compétences ni d'ouverture de coffre) : cela évite d'écraser des changements au moment de la fin de session.
+**verrouillés** (pas d'équipement, de compétences, de forge ni de choix de récompense) : cela évite d'écraser des changements au moment de la fin de session.
 
 ---
 
@@ -69,38 +73,36 @@ Les monstres sont déjà adaptés à **un seul joueur** (`partyScaling` de `rule
 
 | Champ | Sens |
 | --- | --- |
-| `xpMult`, `xpPerWave` | XP d'une vague = XP des monstres × `xpMult` × (1 + `xpPerWave` × (vague − 1)) |
-| `xpMaxLevel` | **plafond** : l'XP de cette zone ne fait jamais dépasser ce niveau (un personnage qui l'a atteint ne gagne plus d'XP ici) |
-| `lootChance` | probabilité d'un objet après chaque vague normale |
-| `bossItems`, `bossMinRarity` | le boss donne ce nombre d'objets, d'au moins cette rareté |
-| `rarityWeights` | poids de chaque rareté. **Les raretés absentes ne tombent jamais** (pas d'épique ni de légendaire ici) |
-| `itemMaxLevel` | niveau maximum des objets qui peuvent tomber |
-| `potionChance` | part des butins qui sont des potions |
-| `chestCapacity` (en haut du fichier) | taille du coffre. Plein : on ne peut plus lancer de session ; en cours de route, ce qui dépasse est perdu |
+| `xpMult`, `xpPerWave` | XP d'une vague = XP des monstres × `xpMult` × (1 + `xpPerWave` × (vague − 1)) × `catchUpXpMult` |
+| `catchUpXpMult` | bonus de l'XP de **rattrapage** (seul un héros plus bas que ton meilleur héros gagne de l'XP au farm) |
+| `shardsPerWave`, `bossShards` | éclats gagnés par vague vaincue, et en plus pour un boss |
+| `choiceCount` | nombre d'objets proposés en fin de session (on en garde un) |
+| `itemMaxLevel` | niveau maximum des objets proposés |
+| `choiceTiers` | les paliers de la récompense : `{ "waves": 5, "rarityWeights": { ... } }` = à partir de 5 vagues vaincues, ces poids de rareté. **Les raretés absentes ne sortent jamais** |
 
-Si une rareté est dans `rarityWeights` sans aucun objet qui convienne (niveau ≤ `itemMaxLevel`), le jeu le dit au chargement
+Si une rareté d'un palier n'a aucun objet qui convienne (niveau ≤ `itemMaxLevel`, ni potion ni objet exclusif), le jeu le dit au chargement
 (`aucun objet de rareté "epic" et de niveau <= 0 dans items.json`).
 
 ### Régler l'équilibre : `node tests/farm-sim.mjs`
 
 Le simulateur fait jouer des robots dans la zone (chaque classe, plusieurs niveaux) et affiche : vagues atteintes, part des sessions qui atteignent le boss,
-part des morts, XP et objets par session.
+part des morts, XP de rattrapage (le robot rattrape un héros de niveau 8), éclats, et nombre d'objets rares proposés.
 
 ```bash
 node tests/farm-sim.mjs 60           # 60 sessions par ligne
 node tests/farm-sim.mjs 60 "niv 1"   # seulement les lignes qui contiennent "niv 1"
 ```
 
-Repères actuels (robots, provisoires) : un niveau 1 sans équipement tient 4 à 5 vagues et butte sur le premier boss (sauf le Berserker, qui le bat une fois sur deux) ;
-il faut environ 6 à 10 sessions pour passer du niveau 1 au niveau 4.
+Repères actuels (robots, provisoires) : un niveau 1 sans équipement tient environ 4 vagues (≈ 4 éclats, ≈ 50 XP de rattrapage) ;
+un niveau 3-4 correctement équipé tient 10 à 25 vagues (17 à 45 éclats) et rattrape plusieurs niveaux en une ou deux sessions.
 
 ---
 
-## 3. Le coffre
+## 3. La récompense au choix
 
-* Chaque personnage a un coffre (`personnage.chest`, une liste d'objets) : les objets du farm y arrivent à la fin de la session.
-* **Ouvrir le coffre** déplace tout dans l'inventaire (`openChest` dans `src/core/farm.js`) ; l'interface fait la révélation.
-* Le coffre est enregistré avec le personnage (sauvegarde, export / import).
+* En fin de session, `computeFarmResult` tire les objets proposés (`result.choices`) ; `applyFarmResult` les pose sur le personnage (`lootChoice`).
+* L'action `CHAR_PICK_LOOT { uid }` (`pickLoot` dans `src/core/farm.js`) met l'objet choisi dans le sac et démantèle les autres en éclats.
+* Il n'y a plus de coffre : une ancienne sauvegarde qui en avait un voit son contenu passer dans le sac au chargement.
 
 ## 3 bis. La forge : que faire du butin — `src/core/forge.js`
 
@@ -160,7 +162,7 @@ Une compétence ne peut être débloquée que par **un seul** succès, et seulem
 
 ### Quand les succès se vérifient-ils ?
 
-À la fin de chaque run (donjon ou farm), quand on change d'équipement, quand on ouvre un coffre, et au démarrage du jeu (en silence). Un succès débloqué est annoncé par un message
+À la fin de chaque run (donjon ou farm), quand on change d'équipement, quand on choisit une récompense, et au démarrage du jeu (en silence). Un succès débloqué est annoncé par un message
 et sur l'écran de fin ; il reste acquis pour toujours (même si on réinitialise ses compétences).
 
 ### Ajouter une nouvelle condition

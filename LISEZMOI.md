@@ -1,7 +1,7 @@
 # Donjon — jeu de donjon coopératif au tour par tour
 
 > **État du projet : étape 6 sur 6 — les finitions (animations, sons, illustrations) sont là, le jeu se joue à plusieurs en ligne.** Le jeu (combat à points d'action, rangs, frise d'initiative, D20 par
-> compétence, vraies classes, **zone de farm solo**, **coffre**, **succès par personnage**, interface « Lanterne ») tourne
+> compétence, vraies classes, **zone de farm solo**, **forge**, **succès par personnage**, interface « Lanterne ») tourne
 > **hors ligne**, comme avant, **et en ligne** : un petit serveur Node sans aucune dépendance garde les **comptes** et les
 > **personnages**, **applique lui-même les règles** (impossible de tricher en bricolant la page) et fait jouer des **donjons à plusieurs** :
 > on crée un **salon**, on invite ses amis avec un code, et **chacun joue SON héros sur son propre écran** (un seul héros par compte),
@@ -78,11 +78,11 @@ node server/server.mjs        # Node 22.13 ou plus récent, rien à installer ->
 ## 2. Comment jouer (en bref)
 
 1. **Crée ton héros** (sur l'accueil, clique sur la classe qui te plaît ; ou sur « Créer 3 héros d'exemple »), puis choisis ton **équipe** (1 à 4 héros, à gauche), un **donjon** et sa **difficulté** (à droite).
-   Chaque donjon dit tout de suite s'il convient à l'équipe : *Adapté*, *Risqué* ou *Très dangereux*. Les étiquettes sur un héros disent ce qu'il y a à faire (points de compétence à dépenser, coffre à ouvrir).
+   Chaque donjon dit tout de suite s'il convient à l'équipe : *Adapté*, *Risqué* ou *Très dangereux*. Les étiquettes sur un héros disent ce qu'il y a à faire (points de compétence à dépenser, récompense de farm à choisir).
    *(En ligne, chaque joueur amène UN héros dans un salon ; l'équipe de 1 à 4 héros sert à jouer seul, hors ligne.)*
 2. Chaque tour : le joueur sous les projecteurs clique **Avancer**, lance le **D20**, puis décide.
 3. Cases possibles : combat, trésor, piège, fontaine d'XP, fontaine de vie (rare), coup bas, marchand, un **feu de camp garanti au milieu** (chacun peut changer ses sorts équipés et choisir : se reposer, affûter ses armes ou monter la garde), et le boss à la fin.
-   *(Ou, sur l'accueil, l'onglet **Zone de farm solo** : un seul personnage, des vagues de monstres, un coffre — voir §3.)*
+   *(Ou, sur l'accueil, l'onglet **Zone de farm solo** : un seul personnage, des vagues de monstres, un objet au choix — voir §3.)*
 4. Un mort devient **fantôme** : il peut encore aider. Il peut être ressuscité (fontaine de vie ou compétence du Veilleur), **une seule fois par run**.
 5. **L'équipement** : 14 emplacements (tête, épaules, dos, torse, mains, ceinture, jambes, pieds, cou, 2 anneaux, relique, main droite et main gauche). Une arme à
    **deux mains** occupe les deux mains ; sinon, deux armes à une main, ou une arme et un bouclier. Détails : [`docs/EQUIPEMENT.md`](docs/EQUIPEMENT.md).
@@ -141,15 +141,15 @@ en Tranche et Stasis, c'est `min(niveau réel, tranche)`).
 
 ---
 
-## 3. La zone de farm solo, le coffre et les succès
+## 3. La zone de farm solo, la forge et les succès
 
 Sur l'accueil, l'onglet **Zone de farm solo** :
 
 * **Un seul personnage** enchaîne des **vagues** de monstres (zone « Les Terriers »), de plus en plus fortes, avec un boss toutes les 5 vagues.
-* Après chaque vague : **vague suivante**, ou **partir avec le coffre**. Si le personnage meurt, il **ne perd que la vague en cours**.
-* Les récompenses sont **restreintes** (début de jeu) : de l'XP jusqu'au niveau 4, et des objets communs ou inhabituels (rarement rares),
-  jamais d'épique ni de légendaire. Le meilleur équipement vient des donjons en équipe.
-* Les objets gagnés vont dans le **coffre** du personnage (24 places) ; on l'**ouvre** quand on veut (révélation du moins rare au plus rare).
+* Après chaque vague : **vague suivante**, ou **s'arrêter**. Si le personnage meurt, il **ne perd que la vague en cours**.
+* Chaque vague donne des **éclats** pour la forge. En fin de session, on **garde 1 objet parmi 3** (meilleurs si l'on a tenu longtemps), les deux autres deviennent des éclats.
+  Jamais d'épique ni de légendaire : le meilleur équipement vient des donjons en équipe.
+* L'**XP sert à rattraper** : seul un héros plus bas que ton meilleur héros en gagne, jusqu'au niveau de celui-ci. Ton meilleur héros, lui, y gagne des éclats et un objet.
 * Les **succès** (fiche du personnage > onglet *Succès*) sont propres à chaque personnage : finir un donjon en équipe, vaincre des vagues,
   atteindre un niveau d'équipement... Ils débloquent une **compétence** pour ce personnage, une **fonction** du jeu (le farm automatique,
   à l'étape suivante) ou un **titre**. Exemple fourni : le Veilleur ne peut apprendre *Cantique de hâte* qu'après avoir fini le premier donjon en groupe.
@@ -242,7 +242,7 @@ donjon/
 ├── docs/
 │   ├── SERVEUR.md             mettre le jeu en ligne : VPS, HTTPS, sauvegardes, mises à jour, sécurité, API, dépannage
 │   ├── ECRIRE-UNE-CLASSE.md   le guide pour écrire des classes, compétences, monstres et objets à effets
-│   ├── FARM-ET-SUCCES.md      le guide de la zone de farm, du coffre et des succès
+│   ├── FARM-ET-SUCCES.md      le guide de la zone de farm, de la récompense au choix, de la forge et des succès
 │   ├── DIRECTION-ARTISTIQUE.md  le guide du style : variables, briques réutilisables, écran de combat
 │   └── EQUIPEMENT.md          les 14 emplacements, les deux mains, les anneaux, comment ajouter des objets
 ├── data/                 TOUT LE CONTENU (fichiers JSON, modifiables sans toucher au code)
@@ -253,7 +253,7 @@ donjon/
 │   ├── classes.json      les classes, leurs stats et leurs compétences (provisoires)
 │   ├── skills.json       les compétences communes à toutes les classes (ex. Garde)
 │   ├── items.json        raretés (couleurs) et objets (certains ont des effets)
-│   ├── farm.json         les zones de farm solo : vagues, récompenses restreintes, capacité du coffre
+│   ├── farm.json         les zones de farm solo : vagues, éclats, paliers de la récompense au choix, XP de rattrapage
 │   ├── achievements.json les succès (condition + récompenses : compétence, fonction, titre)
 │   ├── monsters.json     monstres, boss, leurs compétences et leurs particularités (régénération, riposte...)
 │   ├── tiles.json        types de cases et textes d'ambiance
@@ -329,7 +329,7 @@ dans un JSON, le jeu affiche une erreur en français qui dit où chercher.
 ## 6. Les tests
 
 ```bash
-node tests/run-tests.mjs        # 257 tests de règles (PA, rangs, dés, boucliers, passifs, donjons à thème et mécaniques de monstres, butin exclusif, description des bonus et malus, marque et venin de l'Assassin, puissance sacrée et auras du Templier, formes et Expiation du Prêtre, rage, postures et blessure profonde du Guerrier, formes du Druide, chants et Tempo du Barde, feu de camp, forge, équipement à 14 emplacements, raccourcis clavier, farm, coffre, succès, actions sur les personnages, niveau effectif, stasis, coups bas, sauvegarde, pilote automatique...)
+node tests/run-tests.mjs        # 257 tests de règles (PA, rangs, dés, boucliers, passifs, donjons à thème et mécaniques de monstres, butin exclusif, description des bonus et malus, marque et venin de l'Assassin, puissance sacrée et auras du Templier, formes et Expiation du Prêtre, rage, postures et blessure profonde du Guerrier, formes du Druide, chants et Tempo du Barde, feu de camp, forge, équipement à 14 emplacements, raccourcis clavier, farm (rattrapage, récompense au choix), succès, actions sur les personnages, niveau effectif, stasis, coups bas, sauvegarde, pilote automatique...)
 node tests/server-api.mjs       # 36 tests du SERVEUR (sans navigateur : on parle à l'API) : comptes, sessions, mots de passe, limites anti-abus, tricheries refusées, parties complètes jouées par un robot, fichiers publics, outil d'administration
 node tests/server-rooms.mjs     # 21 tests des SALONS (sans navigateur) : un héros par compte, prêt / réglages / retirer / quitter, parties à 2-3 joueurs jouées par des robots, tricheries refusées, rien de secret envoyé, temps réel, minuteur du serveur, redémarrage
 node tests/fuzz.mjs 1000        # 1000 parties (avec un donjon, des spécialisations et des talents tirés au hasard), salles d'entraînement et sessions de farm « chaotiques » : aucune erreur attendue (et une action refusée ne change jamais l'état)
@@ -356,7 +356,7 @@ Tests de l'interface dans un vrai navigateur (nécessite Playwright, et le jeu l
 PORT=8765 node serve.mjs &
 node tests/ui-smoke.cjs http://localhost:8765/ /tmp     # joue une run en cliquant comme un humain
 node tests/ui-tour.cjs http://localhost:8765/ /tmp      # fiches, fenêtres, scénarios forcés, combat, version téléphone
-node tests/ui-farm.cjs http://localhost:8765/ /tmp      # farm : onglet, coffre, vagues, succès, mort, reprise, téléphone
+node tests/ui-farm.cjs http://localhost:8765/ /tmp      # farm : onglet, XP de rattrapage, vagues et éclats, 1 objet au choix parmi 3, succès, mort, reprise, ancien coffre, téléphone
 node tests/ui-sheet.cjs http://localhost:8765/ /tmp     # la fiche : stats, poupée d'équipement, sac par sections, arbre de compétences, téléphone
 node tests/ui-spec.cjs http://localhost:8765/ /tmp     # spécialisation et deck : cartes, choix unique, sort évolué, équiper / retirer, téléphone
 node tests/ui-donjons.cjs http://localhost:8765/ /tmp  # les donjons : choix par tranche, « à savoir », encyclopédie (bestiaire, butin exclusif), partie dans le donjon choisi, particularités en combat, téléphone
@@ -396,15 +396,15 @@ Le plan convenu (une étape = un jeu qui marche et qu'on peut tester) :
 
 1. ✅ **Nouveau combat, hors ligne** : points d'action, rangs, frise d'initiative, D20 par compétence, boucliers, système de
    compétences et de passifs 100 % en JSON, 4 classes d'exemple, Atelier de classes.
-2. ✅ **Zone de farm solo + coffre + succès** : une petite zone en vagues, aux récompenses modestes ; un **coffre** qu'on
-   ouvre ; des **succès par personnage** (finir le 1er donjon en groupe → débloque une compétence ; atteindre un niveau
+2. ✅ **Zone de farm solo + succès** : une petite zone en vagues ; des éclats à chaque vague, **1 objet au choix parmi 3** en fin de session,
+   de l'**XP de rattrapage** pour les héros en retard (le coffre d'origine a été retiré) ; la **forge** ; des **succès par personnage** (finir le 1er donjon en groupe → débloque une compétence ; atteindre un niveau
    d'équipement → débloque le farm auto), le tout décrit en JSON.
 3. **Farm automatique** : débloqué par le succès « Équipé pour la gloire » (niveau d'équipement 36), pour que le début de partie
-   reste un défi. Il rejouera des sessions de farm en arrière-plan avec un robot jusqu'à remplir le coffre. *(Fait après le serveur :
+   reste un défi. Il deviendra les **expéditions** : on envoie un héros, il revient plus tard avec des éclats, de l'XP de rattrapage et un objet au choix. *(Fait après le serveur :
    ce sera une tâche du serveur, qui continue de tourner même quand le joueur a fermé son navigateur.)*
 4. **Serveur sur ton VPS** : Node 22 sans dépendance (`http` + `node:sqlite`), le serveur applique les règles (donc impossible de tricher).
    * ✅ **4a — comptes et parties solo en ligne** : inscription / connexion (mots de passe hachés, sessions, code d'invitation),
-     personnages, coffre et succès **stockés sur le serveur**, parties (farm solo, donjon avec ses propres personnages) jouées
+     personnages, éclats et succès **stockés sur le serveur**, parties (farm solo, donjon avec ses propres personnages) jouées
      *via* le serveur et reprises après un rechargement ou sur un autre appareil, sauvegarde et administration en ligne de commande.
      Guide de mise en service : [`docs/SERVEUR.md`](docs/SERVEUR.md). Remarque : la version publiée sur la plateforme Claude ne peut pas appeler
      ton VPS (page isolée) : elle reste une démo en mode hors ligne.

@@ -23,7 +23,7 @@ import { resolveMode } from '../fx.js';
 import { vignetteSvg, sceneCss, sceneIdFor } from '../art.js';
 import {
   computeStats, getCombatView, skillOf, activeSkillIds, checkUsable, needsPick, validTargets, skillWorksOutside,
-  itemPrice, shopPrice, sellPrice, canBeRevived, wornFor, unitById, totalShield, otherRow, rarityOf, waveInfo, farmZone, chestInfo, previewXpCapped, campDeckOptions
+  itemPrice, shopPrice, sellPrice, canBeRevived, wornFor, unitById, totalShield, otherRow, rarityOf, waveInfo, farmZone, choiceTier, previewXpCapped, campDeckOptions
 } from '../../core/index.js';
 
 const ROW_NAME = { front: 'avant', back: 'arrière' };
@@ -134,7 +134,7 @@ function runHeader(run, middle = null) {
     middle,
     h('div', { class: 'run-stats' },
       run.training ? null : run.farm
-        ? h('div', { class: 'gold farm-gains', title: 'Gagné pendant cette session (gardé si tu pars ou si tu tombes après la vague)' }, icon('treasure', 20), h('b', null, `${run.farm.xp} XP · ${run.farm.items.length} objet${run.farm.items.length > 1 ? 's' : ''}`))
+        ? h('div', { class: 'gold farm-gains', title: 'Gagné pendant cette session (gardé si tu pars ou si tu tombes après la vague)' }, icon('flame', 20), h('b', null, `${run.farm.shards || 0} éclat${(run.farm.shards || 0) > 1 ? 's' : ''}${run.farm.xp ? ` · ${run.farm.xp} XP` : ''}`))
         : h('div', { class: 'gold', title: "Or de la run (perdu à la fin, sauf s'il est dépensé)" }, icon('coin', 20), h('b', null, run.gold)),
       run.bonus.rollMod
         ? h('div', { class: `mod-badge ${run.bonus.rollMod > 0 ? 'up' : 'down'}`, title: 'Bonus/malus du fantôme sur le prochain jet' }, icon('ghost', 16), `${run.bonus.rollMod > 0 ? '+' : ''}${run.bonus.rollMod} au prochain jet`)
@@ -219,21 +219,22 @@ function farmBar(run) {
   const zone = farmZone(run);
   const info = waveInfo(zone, f.wave);
   const nextBossIn = zone.waves.bossEvery - (f.wave % zone.waves.bossEvery);
-  const chestFree = f.chestFree - f.items.length;
+  const tier = choiceTier(zone, f.cleared);
   return h('div', { class: 'card farm-bar' },
     h('div', { class: 'farm-wave' },
       h('span', { class: 'muted' }, 'Vague'),
       h('b', null, f.wave),
       info.boss ? h('span', { class: 'chip chip-bad' }, 'BOSS') : null),
     h('div', { class: 'farm-stat' }, h('span', { class: 'muted' }, 'Vaincues'), h('b', null, f.cleared)),
-    h('div', { class: 'farm-stat' }, h('span', { class: 'muted' }, 'XP gagnée'), h('b', null, f.xp)),
-    h('div', { class: 'farm-stat' }, h('span', { class: 'muted' }, 'Dans le coffre'), h('b', null, f.items.length)),
+    f.xpCap > run.players[0].realLevel ? h('div', { class: 'farm-stat' }, h('span', { class: 'muted' }, 'XP gagnée'), h('b', null, f.xp)) : null,
+    h('div', { class: 'farm-stat' }, h('span', { class: 'muted' }, 'Éclats'), h('b', null, f.shards || 0)),
+    h('div', { class: 'farm-stat', title: 'La qualité des objets au choix en fin de session' }, h('span', { class: 'muted' }, 'Récompense'), h('b', null, tier ? `palier ${zone.rewards.choiceTiers.indexOf(tier) + 1}` : '—')),
     h('div', { class: 'farm-stat grow' },
       info.boss ? h('span', { class: 'tone-bad' }, 'Le gardien de la zone est là !') : h('span', { class: 'muted' }, `Prochain boss : dans ${nextBossIn} vague${nextBossIn > 1 ? 's' : ''}`),
-      chestFree <= 0 ? h('span', { class: 'tone-bad small' }, 'Coffre plein : le butin suivant sera perdu.') : null));
+      null));
 }
 
-/** Entre deux vagues : le bilan de la vague, puis « vague suivante » ou « partir avec le coffre ». */
+/** Entre deux vagues : le bilan de la vague, puis « vague suivante » ou « s'arrêter » (et choisir sa récompense). */
 function sceneFarmBreak(run) {
   const c = app.content;
   const f = run.farm;
@@ -241,8 +242,14 @@ function sceneFarmBreak(run) {
   const p = run.players[0];
   const last = f.last;
   const next = waveInfo(zone, f.wave + 1);
-  const cap = zone.rewards.xpMaxLevel;
-  const preview = previewXpCapped(c, { level: p.realLevel, xp: p.xpStart }, f.xp, cap);
+  const cap = f.xpCap || 0;
+  const catchUp = cap > p.realLevel;
+  const preview = catchUp ? previewXpCapped(c, { level: p.realLevel, xp: p.xpStart }, f.xp, cap) : null;
+  const tiers = zone.rewards.choiceTiers;
+  const tier = choiceTier(zone, f.cleared);
+  const nextTier = tiers.find((t) => t.waves > f.cleared);
+  const rarName = (id) => c.rarities.find((x) => x.id === id)?.name.toLowerCase() || id;
+  const best = tier ? Object.keys(tier.rarityWeights).sort((a, b) => c.rarityIndex[b] - c.rarityIndex[a])[0] : null;
   const stats = computeStats(run, p);
   const nextText = next.boss
     ? 'La prochaine vague est le BOSS de la zone : le gardien, bien plus costaud.'
@@ -252,24 +259,23 @@ function sceneFarmBreak(run) {
     h('div', { class: 'card farm-break' },
       h('h2', null, icon('check', 24), `Vague ${last.wave} vaincue !`),
       h('div', { class: 'wave-gains' },
-        h('div', null, h('span', { class: 'muted' }, 'XP de la vague'), h('b', null, `+${last.xp}`)),
-        h('div', null, h('span', { class: 'muted' }, 'XP de la session'), h('b', null, f.xp)),
-        h('div', null, h('span', { class: 'muted' }, 'Objets dans le coffre'), h('b', null, f.items.length))),
-      preview.capped
-        ? h('p', { class: 'tone-info small' }, preview.applied === 0 && p.realLevel >= cap
-            ? `${p.name} a atteint le niveau ${cap} : cette zone ne donne plus d'XP, seulement du butin.`
-            : `Cette zone ne fait pas dépasser le niveau ${cap} : l'XP en trop est perdue.`)
-        : preview.level > p.realLevel ? h('p', { class: 'tone-good small' }, `${p.name} passera niveau ${preview.level} à la fin de la session !`) : null,
-      last.items.length
-        ? h('div', { class: 'wave-loot' }, last.items.map((inst) => itemCard(c, inst, { compact: true, realLevel: p.realLevel })))
-        : h('p', { class: 'muted' }, 'Pas de butin cette fois.'),
-      last.lost ? h('p', { class: 'tone-bad small' }, `${last.lost} objet${last.lost > 1 ? 's' : ''} perdu${last.lost > 1 ? 's' : ''} : ton coffre est plein.`) : null,
+        h('div', null, h('span', { class: 'muted' }, 'Éclats de la vague'), h('b', null, `+${last.shards || 0}`)),
+        h('div', null, h('span', { class: 'muted' }, 'Éclats de la session'), h('b', null, f.shards || 0)),
+        catchUp ? h('div', null, h('span', { class: 'muted' }, 'XP de la session'), h('b', null, f.xp)) : null),
+      catchUp
+        ? (preview.level > p.realLevel ? h('p', { class: 'tone-good small' }, `Rattrapage : ${p.name} passera niveau ${preview.level} à la fin de la session !`)
+            : preview.capped ? h('p', { class: 'tone-info small' }, `Rattrapage terminé : ${p.name} a rejoint le niveau ${cap} de ton meilleur héros.`) : null)
+        : null,
+      h('div', { class: `farm-tier ${last.tierUp ? 'is-up' : ''}` }, icon('treasure', 18),
+        h('span', null, last.tierUp ? h('b', null, 'Ta récompense s\'améliore ! ') : null,
+          `En t'arrêtant maintenant : 1 objet au choix parmi ${zone.rewards.choiceCount}, jusqu'à ${rarName(best)}.`,
+          nextTier ? h('span', { class: 'muted' }, ` Encore ${nextTier.waves - f.cleared} vague${nextTier.waves - f.cleared > 1 ? 's' : ''} pour un meilleur palier.`) : null)),
       h('div', { class: 'farm-hp' },
         h('span', { class: 'muted' }, `${p.name} :`), hpBar(p.hp, stats.hpMax)),
       h('p', { class: next.boss ? 'tone-bad' : 'muted' }, nextText),
       h('div', { class: 'row gap wrap farm-actions' },
         h('button', { class: `btn btn-xl ${next.boss ? '' : 'btn-primary'}`, id: 'farm-next', onClick: () => { play('click'); act({ type: 'FARM_NEXT' }); } }, icon('combat', 22), next.boss ? 'Affronter le boss' : 'Vague suivante'),
-        h('button', { class: `btn btn-xl ${next.boss ? 'btn-primary' : ''}`, id: 'farm-stop', onClick: () => { play('click'); act({ type: 'FARM_STOP' }); } }, icon('treasure', 22), 'Partir avec le coffre'))),
+        h('button', { class: `btn btn-xl ${next.boss ? 'btn-primary' : ''}`, id: 'farm-stop', onClick: () => { play('click'); act({ type: 'FARM_STOP' }); } }, icon('treasure', 22), 'M\'arrêter et choisir'))),
     tools // peut être null (ni soin ni potion) : on ne l'ajoute alors pas
   ].filter(Boolean);
 }

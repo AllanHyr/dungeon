@@ -476,8 +476,7 @@ export function buildContent(raw) {
   if (!c.trancheList.some((t) => t.available)) fail('aucune tranche disponible.');
 
   // --- Zones de farm solo
-  c.farm = { chestCapacity: raw.farm.chestCapacity ?? 24, zones: {}, zoneList: [] };
-  if (!(c.farm.chestCapacity > 0)) fail("farm.json : 'chestCapacity' doit être un nombre positif.");
+  c.farm = { zones: {}, zoneList: [] };
   for (const [id, z] of Object.entries(raw.farm.zones || {})) {
     const where = `zone de farm "${id}"`;
     if (!c.tranches[z.trancheId]?.available) fail(`${where} : 'trancheId' ${z.trancheId} inconnu ou indisponible.`);
@@ -490,14 +489,19 @@ export function buildContent(raw) {
     if (!w.bossScale || typeof w.bossScale.hp !== 'number' || typeof w.bossScale.atk !== 'number') fail(`${where} : waves.bossScale doit être { "hp": ..., "atk": ... }.`);
     if (typeof z.healBetweenWavesPct !== 'number') fail(`${where} : 'healBetweenWavesPct' manquant.`);
     const r = z.rewards || {};
-    for (const k of ['xpMult', 'xpPerWave', 'xpMaxLevel', 'lootChance', 'bossItems', 'itemMaxLevel', 'potionChance']) if (typeof r[k] !== 'number') fail(`${where} : rewards.${k} manquant (nombre).`);
-    if (r.lootChance < 0 || r.lootChance > 1 || r.potionChance < 0 || r.potionChance > 1) fail(`${where} : lootChance et potionChance sont des probabilités (0 à 1).`);
-    if (!r.rarityWeights || !Object.keys(r.rarityWeights).length) fail(`${where} : rewards.rarityWeights est vide.`);
-    for (const rar of Object.keys(r.rarityWeights)) {
-      if (c.rarityIndex[rar] === undefined) fail(`${where} : rareté "${rar}" inconnue dans rewards.rarityWeights.`);
-      if (!c.itemList.some((i) => i.rarity === rar && i.level <= r.itemMaxLevel && i.slot !== 'consumable')) fail(`${where} : aucun objet de rareté "${rar}" et de niveau <= ${r.itemMaxLevel} dans items.json (impossible de tirer ce butin).`);
+    for (const k of ['xpMult', 'xpPerWave', 'catchUpXpMult', 'shardsPerWave', 'bossShards', 'choiceCount', 'itemMaxLevel']) if (typeof r[k] !== 'number') fail(`${where} : rewards.${k} manquant (nombre).`);
+    if (!(r.choiceCount >= 1)) fail(`${where} : rewards.choiceCount doit valoir au moins 1.`);
+    if (!Array.isArray(r.choiceTiers) || !r.choiceTiers.length) fail(`${where} : rewards.choiceTiers est vide.`);
+    let prev = 0;
+    for (const tier of r.choiceTiers) {
+      if (!(tier.waves > prev)) fail(`${where} : rewards.choiceTiers doit être rangé par 'waves' croissant (à partir de 1).`);
+      prev = tier.waves;
+      if (!tier.rarityWeights || !Object.keys(tier.rarityWeights).length) fail(`${where} : un palier de choiceTiers n'a pas de rarityWeights.`);
+      for (const rar of Object.keys(tier.rarityWeights)) {
+        if (c.rarityIndex[rar] === undefined) fail(`${where} : rareté "${rar}" inconnue dans choiceTiers.`);
+        if (!c.itemList.some((i) => i.rarity === rar && i.level <= r.itemMaxLevel && i.slot !== 'consumable' && !c.itemDungeon?.[i.id])) fail(`${where} : aucun objet de rareté "${rar}" et de niveau <= ${r.itemMaxLevel} dans items.json (impossible de tirer ce butin).`);
+      }
     }
-    if (r.bossMinRarity && c.rarityIndex[r.bossMinRarity] === undefined) fail(`${where} : bossMinRarity "${r.bossMinRarity}" inconnue.`);
     c.farm.zones[id] = { ...z, id };
     c.farm.zoneList.push(c.farm.zones[id]);
   }

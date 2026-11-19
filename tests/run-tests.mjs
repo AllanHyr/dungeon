@@ -5,7 +5,7 @@ import {
   buildContent, createRun, createTraining, dispatch, cloneState, restoreState, computeStats, effectiveLevel,
   levelFactor, createCharacter, addXp, applyRunResult, availableTranches, canBeRevived, learnSkill, skillPointsFree,
   canLearnSkill, skillRequirements, resetSkills, getCombatView, validTargets, resolveDice, skillOf, totalShield, checkUsable,
-  createFarm, applyFarmResult, openChest, chestInfo, addXpCapped, checkAchievements, hasFeature, gearLevel, achievementProgress, titlesOf, waveInfo,
+  createFarm, applyFarmResult, catchUpLevel, choiceTier, addXpCapped, checkAchievements, hasFeature, gearLevel, achievementProgress, titlesOf, waveInfo,
   EQUIP_SLOTS, slotsFor, planEquip, equipFromBag, unequipToBag, twoHandedWorn, applyCharacterAction, CHARACTER_ACTIONS, cleanName,
   afkAction, whoMustAct, turnKey, xpForNext, campDeckOptions,
   salvageValue, upgradeCost, craftableItems, itemView, forgeRules
@@ -22,7 +22,7 @@ import { SCENES as SCENE_DRAWINGS } from '../src/ui/art/scenes.js';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { rollFarmItem } from '../src/core/farm.js';
+import { rollFarmItem, rollChoices } from '../src/core/farm.js';
 import { rollItem, rollShopItem } from '../src/core/loot.js';
 import { makeMonster, spawnMonsters, planMonsters, endCombat } from '../src/core/combat.js';
 import { nextFloat } from '../src/core/rng.js';
@@ -414,14 +414,16 @@ console.log('\n● Actions sur les personnages (les mêmes règles en local et s
     assert(act(chars, { type: 'CHAR_RESET_SKILLS', charId: ch.id }).ok);
     eq(skillPointsFree(content, ch), 8);
   });
-  test("le coffre s'ouvre dans l'inventaire (et renvoie ce qui est sorti) ; un coffre vide est refusé", () => {
+  test("la récompense du farm : on garde UN objet (dans le sac), les autres deviennent des éclats ; rien à choisir = refusé", () => {
     const chars = [];
     const ch = act(chars, { type: 'CHAR_CREATE', name: 'Kael', classId: 'duelliste' }).character;
-    assert(!act(chars, { type: 'CHAR_OPEN_CHEST', charId: ch.id }).ok, 'coffre vide');
-    ch.chest.push({ uid: 'k1', id: 'dague_os' }, { uid: 'k2', id: 'potion_mineure' });
-    const r = act(chars, { type: 'CHAR_OPEN_CHEST', charId: ch.id });
+    assert(!act(chars, { type: 'CHAR_PICK_LOOT', charId: ch.id, uid: 'k1' }).ok, 'rien à choisir');
+    ch.lootChoice = [{ uid: 'k1', id: 'dague_os' }, { uid: 'k2', id: 'piece_percee' }, { uid: 'k3', id: 'amulette_corbeau' }];
+    assert(!act(chars, { type: 'CHAR_PICK_LOOT', charId: ch.id, uid: 'zz' }).ok, 'un objet hors de la récompense');
+    const r = act(chars, { type: 'CHAR_PICK_LOOT', charId: ch.id, uid: 'k1' });
     assert(r.ok, r.error);
-    eq([r.opened.length, ch.chest.length, ch.inventory.length], [2, 0, 2]);
+    eq([r.picked.id, ch.inventory.map((i) => i.uid), ch.lootChoice.length], ['dague_os', ['k1'], 0]);
+    eq([r.shards, ch.shards], [1 + 3, 4], 'commun 1 + inhabituel 3');
   });
   test("un personnage engagé dans une partie n'est pas modifiable ; un personnage inconnu non plus ; les succès sont renvoyés", () => {
     const chars = [];
@@ -1076,12 +1078,12 @@ test('une session de farm démarre directement sur la vague 1, en solo, sans auc
   eq(s.players[0].effLevel, s.players[0].realLevel);
   eq(s.combat.monsters.length, 1);
 });
-test('après une vague : récompenses dans le coffre de session, petit soin, choix suivante / partir', () => {
-  const s = createFarm(content, farmHero(), { seed: 5 });
+test('après une vague : éclats (et XP de rattrapage), petit soin, choix suivante / s\'arrêter', () => {
+  const s = createFarm(content, farmHero(), { seed: 5, xpCap: 6 });
   s.players[0].hp = 10;
   winWave(s);
-  eq([s.pending.kind, s.phase, s.farm.cleared, s.combat], ['farm', 'farm', 1, null]);
-  assert(s.farm.xp > 0, 'XP gagnée');
+  eq([s.pending.kind, s.phase, s.farm.cleared, s.combat, s.farm.shards], ['farm', 'farm', 1, null, 1]);
+  assert(s.farm.xp > 0, 'XP de rattrapage gagnée');
   assert(s.players[0].hp > 10, 'petit soin entre deux vagues');
   assert(!dispatch(s, { type: 'ADVANCE' }).ok, "les actions de donjon n'existent pas en farm");
   assert(dispatch(s, { type: 'FARM_NEXT' }).ok);
@@ -1104,20 +1106,28 @@ test('les vagues montent en difficulté (plus de monstres, plus forts) et la 5e 
   const m1 = createFarm(content, farmHero(), { seed: 5 }).combat.monsters[0];
   assert(s.combat.monsters[0].hpMax > m1.hpMax, 'le boss est bien plus costaud');
 });
-test("le butin du farm est RESTREINT : jamais d'épique ni de légendaire, niveau 1 maximum, le boss donne au moins de l'inhabituel", () => {
+test("la récompense du farm : 3 objets DIFFÉRENTS, niveau 1, jamais d'épique ni d'exclusif ; meilleure quand on tient plus de vagues", () => {
   const s = createFarm(content, farmHero(), { seed: 9 });
   const zone = content.farm.zones.terriers;
-  const seen = { normal: {}, boss: {} };
-  for (let i = 0; i < 4000; i++) {
-    const a = content.items[rollFarmItem(s, zone).id];
-    const b = content.items[rollFarmItem(s, zone, { minRarity: zone.rewards.bossMinRarity }).id];
-    assert(a.level <= 1 && b.level <= 1, 'niveau 1 maximum');
-    seen.normal[a.rarity] = (seen.normal[a.rarity] || 0) + 1;
-    seen.boss[b.rarity] = (seen.boss[b.rarity] || 0) + 1;
-  }
-  eq(Object.keys(seen.normal).sort(), ['common', 'rare', 'uncommon']);
-  eq(Object.keys(seen.boss).sort(), ['rare', 'uncommon']);
-  assert(seen.normal.common > seen.normal.uncommon && seen.normal.uncommon > seen.normal.rare, JSON.stringify(seen.normal));
+  eq(rollChoices(s, zone, 0), [], 'aucune vague vaincue : rien');
+  eq(choiceTier(zone, 4), zone.rewards.choiceTiers[0]);
+  eq(choiceTier(zone, 5), zone.rewards.choiceTiers[1]);
+  const avg = (waves) => {
+    let t = 0;
+    for (let i = 0; i < 300; i++) {
+      const list = rollChoices(s, zone, waves);
+      eq(list.length, 3);
+      eq(new Set(list.map((it) => it.id)).size, 3, 'trois objets différents');
+      for (const it of list) {
+        const d = content.items[it.id];
+        assert(d.level <= 1 && !d.consumable && !content.itemDungeon[it.id] && ['common', 'uncommon', 'rare'].includes(d.rarity), `${it.id}`);
+        t += content.rarityIndex[d.rarity];
+      }
+    }
+    return t;
+  };
+  const a1 = avg(1), a5 = avg(5), a15 = avg(15);
+  assert(a1 < a5 && a5 < a15, `rareté moyenne : ${a1} < ${a5} < ${a15}`);
 });
 test("l'XP du farm ne fait JAMAIS dépasser le niveau plafond (4), et ne rapporte plus rien au-delà", () => {
   const c = createCharacter(content, { id: 'x', name: 'X', classId: 'berserker' });
@@ -1131,42 +1141,62 @@ test("l'XP du farm ne fait JAMAIS dépasser le niveau plafond (4), et ne rapport
   e.level = 6;
   eq(addXpCapped(content, e, 999, 4).applied, 0, 'un niveau 6 ne gagne rien');
 });
-test("la MORT ne fait perdre que la vague en cours : les vagues précédentes sont gardées dans le coffre", () => {
+test("la MORT ne fait perdre que la vague en cours : éclats et récompense des vagues précédentes sont gardés", () => {
   const ch = farmHero('berserker', 4);
   const s = createFarm(content, ch, { seed: 21 });
   for (let i = 0; i < 3; i++) { winWave(s); dispatch(s, { type: 'FARM_NEXT' }); }
-  const keptItems = s.farm.items.map((it) => it.id);
-  const keptXp = s.farm.xp;
+  eq(s.farm.shards, 3, '1 éclat par vague');
   // le héros tombe dans la vague 4
   s.players[0].hp = 1;
   for (let i = 0; i < 40 && s.phase !== 'ended'; i++) endTurn(s);
-  eq([s.phase, s.result.outcome, s.result.waves, s.result.diedAtWave], ['ended', 'defeat', 3, 4]);
-  eq(s.result.items.map((it) => it.id), keptItems);
-  eq(s.result.xp.earned, keptXp);
-  const before = ch.chest.length;
+  eq([s.phase, s.result.outcome, s.result.waves, s.result.diedAtWave, s.result.shards], ['ended', 'defeat', 3, 4, 3]);
+  eq(s.result.choices.length, 3, 'la récompense des 3 vagues vaincues');
   applyFarmResult(content, ch, s);
-  eq(ch.chest.map((it) => it.id), keptItems);
-  assert(ch.chest.length === before + keptItems.length);
+  eq(ch.lootChoice.map((it) => it.uid), s.result.choices.map((it) => it.uid));
+  eq(ch.shards, 3);
   eq([ch.stats.farmRuns, ch.stats.farmWaves, ch.stats.farmBest], [1, 3, 3]);
 });
-test('« Partir avec le coffre » (FARM_STOP) donne le même bilan, appliqué UNE seule fois', () => {
+test('« M\'arrêter » (FARM_STOP) donne le même bilan, appliqué UNE seule fois ; un boss donne des éclats en plus', () => {
   const ch = farmHero('berserker', 2);
-  const s = createFarm(content, ch, { seed: 4 });
+  const s = createFarm(content, ch, { seed: 4, xpCap: 5 });
   winWave(s);
   assert(dispatch(s, { type: 'FARM_STOP' }).ok);
   eq([s.phase, s.result.outcome, s.result.waves], ['ended', 'stop', 1]);
   const xp0 = ch.xp + ch.level * 1000;
   assert(applyFarmResult(content, ch, s) !== null);
   const after = ch.xp + ch.level * 1000;
-  assert(after > xp0, 'XP gagnée');
+  assert(after > xp0, 'XP de rattrapage gagnée');
   eq(applyFarmResult(content, ch, s), null, 'jamais deux fois');
   eq(ch.stats.farmRuns, 1);
   assert(!dispatch(s, { type: 'FARM_NEXT' }).ok, 'la session est terminée');
+  const b = createFarm(content, farmHero('berserker', 6), { seed: 5 });
+  for (let i = 1; i < 5; i++) { winWave(b); dispatch(b, { type: 'FARM_NEXT' }); }
+  assert(b.combat.boss);
+  winWave(b);
+  eq(b.farm.shards, 5 + content.farm.zones.terriers.rewards.bossShards, 'le boss : +4 éclats');
 });
-test('on ne peut pas partir en plein combat, ni repartir sans avoir fini la vague', () => {
-  const s = createFarm(content, farmHero(), { seed: 5 });
-  assert(!dispatch(s, { type: 'FARM_STOP' }).ok);
-  assert(!dispatch(s, { type: 'FARM_NEXT' }).ok);
+test("XP de RATTRAPAGE : seul un héros plus bas que ton meilleur héros en gagne, jusqu'au niveau de celui-ci", () => {
+  const top = farmHero('berserker', 6, 1);
+  const low = farmHero('berserker', 2, 2);
+  top.id = 'top'; low.id = 'low';
+  eq(catchUpLevel(content, [top, low], low), 6);
+  eq(catchUpLevel(content, [top, low], top), 0, 'le meilleur héros ne rattrape personne');
+  eq(catchUpLevel(content, [top], top), 0, 'un héros seul non plus');
+  // sans rattrapage : des éclats, pas d'XP
+  const s = createFarm(content, top, { seed: 4, xpCap: 0 });
+  winWave(s);
+  eq(s.farm.xp, 0);
+  dispatch(s, { type: 'FARM_STOP' });
+  const lv = [top.level, top.xp];
+  applyFarmResult(content, top, s);
+  eq([top.level, top.xp], lv, 'pas d\'XP pour le meilleur héros');
+  // avec rattrapage : jamais au-delà du niveau du meilleur héros
+  low.level = 5; low.xp = 0;
+  const t = createFarm(content, low, { seed: 4, xpCap: 6 });
+  t.farm.xp = 1e6;
+  dispatch(t, { type: 'ABANDON' });
+  applyFarmResult(content, low, t);
+  eq([low.level, low.xp], [6, 0], 'rattrape exactement le niveau 6');
 });
 test("pas de changement d'équipement pendant une session de farm", () => {
   const ch = farmHero();
@@ -1176,27 +1206,16 @@ test("pas de changement d'équipement pendant une session de farm", () => {
   const r = dispatch(s, { type: 'EQUIP', playerId: 'p1', uid: 'w1' });
   assert(!r.ok && r.error.includes('farm'), r.error);
 });
-test("le coffre a une capacité : coffre plein = pas de session ; ce qui dépasse en cours de route est perdu", () => {
+test("une récompense pas encore choisie bloque la session suivante ; l'ancien coffre passe dans le sac", () => {
   const ch = farmHero();
-  const cap = content.farm.chestCapacity;
-  ch.chest = Array.from({ length: cap }, (_, i) => ({ uid: `c${i}`, id: 'piece_percee' }));
+  ch.lootChoice = [{ uid: 'c1', id: 'piece_percee' }];
   let msg = '';
   try { createFarm(content, ch, { seed: 5 }); } catch (e) { msg = e.message; }
-  assert(msg.includes('coffre est plein'), msg);
-  ch.chest.pop(); // une seule place
-  const s = createFarm(content, ch, { seed: 5 });
-  eq(s.farm.chestFree, 1);
-  s.farm.chestFree = 1;
-  for (let i = 0; i < 10 && s.phase !== 'ended'; i++) { winWave(s); if (s.pending?.kind === 'farm') dispatch(s, { type: 'FARM_NEXT' }); }
-  assert(s.farm.items.length <= 1, 'jamais plus que la place disponible');
-  assert(s.farm.lostItems > 0, "ce qui dépasse est perdu : " + s.farm.lostItems);
-  eq(chestInfo(content, ch).free, 1);
-});
-test("ouvrir le coffre met tous les objets dans l'inventaire", () => {
-  const ch = farmHero();
-  ch.chest = [{ uid: 'a', id: 'piece_percee' }, { uid: 'b', id: 'dague_os' }];
-  const got = openChest(content, ch);
-  eq([ch.chest.length, got.length, ch.inventory.filter((i) => ['a', 'b'].includes(i.uid)).length], [0, 2, 2]);
+  assert(msg.includes('récompense'), msg);
+  const old = JSON.parse(JSON.stringify(farmHero()));
+  old.chest = [{ uid: 'a', id: 'piece_percee' }, { uid: 'b', id: 'dague_os' }];
+  const back = sanitizeCharacter(content, old);
+  assert(['a', 'b'].every((u) => back.inventory.some((i) => i.uid === u)) && !('chest' in back), 'le coffre est vidé dans le sac');
 });
 test('les potions bues en farm disparaissent de l\'inventaire du personnage (et rien d\'autre ne change)', () => {
   const ch = farmHero('berserker', 4);
@@ -1231,7 +1250,7 @@ test('des centaines de sessions de farm robotisées ne cassent rien (cohérence,
     const cls = ['berserker', 'veilleur', 'druide_ancien', 'duelliste'][i % 4];
     const { state } = playFarm(content, farmHero(cls, 1 + (i % 5), i + 1), 100 + i * 31, undefined, { stopBelow: 0.3 + (i % 3) * 0.2 });
     assert(state.phase === 'ended' && state.result.farm);
-    assert(state.result.items.every((it) => ['common', 'uncommon', 'rare'].includes(content.items[it.id].rarity)), 'raretés restreintes');
+    assert(state.result.choices.every((it) => ['common', 'uncommon', 'rare'].includes(content.items[it.id].rarity)), 'raretés restreintes');
   }
 });
 test('une faute dans farm.json est expliquée (rareté sans objet, zone sans monstre)', () => {
@@ -3313,7 +3332,7 @@ console.log('\n● Donjons à thème : plusieurs donjons par tranche, mécanique
     for (let i = 0; i < 200; i++) assert(!own[rollShopItem(ogres).id], 'jamais chez le marchand');
     const farm = createFarm(content, makeParty(content, ['berserker'], 3, 'none', 1)[0], { seed: 3 });
     const zone = content.farm.zones.terriers;
-    for (let i = 0; i < 300; i++) assert(!own[rollFarmItem(farm, zone).id], 'jamais au farm');
+    for (let i = 0; i < 300; i++) assert(!own[rollFarmItem(farm, zone, zone.rewards.choiceTiers.at(-1).rarityWeights).id], 'jamais au farm');
     // chaque table offre plusieurs raretés
     for (const d of content.dungeonList.filter((x) => x.loot)) assert(new Set(d.loot.map((id) => content.items[id].rarity)).size >= 3, `${d.id} : au moins trois raretés`);
   });

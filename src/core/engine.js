@@ -199,18 +199,18 @@ export function createTraining(content, specs, opts = {}) {
 
 /**
  * Crée une session de farm : UN personnage sauvegardé affronte des vagues (voir farm.js et data/farm.json).
- * @param opts  { zoneId?, seed? }  (zone par défaut : la première)
+ * @param opts  { zoneId?, seed?, xpCap? }  (zone par défaut : la première ; xpCap : niveau jusqu'auquel ce héros gagne de l'XP,
+ *              celui du meilleur autre héros du joueur — voir catchUpLevel dans farm.js ; 0 = pas d'XP)
  */
 export function createFarm(content, character, opts = {}) {
   const zone = opts.zoneId ? content.farm.zones[opts.zoneId] : content.farm.zoneList[0];
   if (!zone) throw new GameError(`Zone de farm inconnue : ${opts.zoneId}`);
-  const free = content.farm.chestCapacity - (character.chest?.length || 0);
-  if (free <= 0) throw new GameError('Ton coffre est plein : ouvre-le avant de repartir au farm.');
+  if (character.lootChoice?.length) throw new GameError('Choisis d\'abord la récompense de ta dernière session.');
   // Le farm se joue en mode "Basic" : aucune restriction de niveau (le personnage joue avec tout son équipement).
   const state = createRun(content, { tranche: zone.trancheId, mode: 'basic' }, [character], opts.seed);
   state.log.length = 0;
   state.dungeon.name = zone.name;
-  state.farm = { zoneId: zone.id, wave: 0, cleared: 0, kills: 0, xp: 0, items: [], lostItems: 0, chestFree: free, last: null };
+  state.farm = { zoneId: zone.id, wave: 0, cleared: 0, kills: 0, xp: 0, shards: 0, xpCap: Math.max(0, Math.floor(Number(opts.xpCap)) || 0), last: null };
   log(state, `Session de farm : ${zone.name}. Ce que tu gagnes est gardé si tu t'arrêtes ; si tu tombes, tu ne perds que la vague en cours.`, 'system');
   startFarmWave(state);
   return state;
@@ -305,7 +305,7 @@ function handle(state, a) {
       farmNext(state);
       break;
 
-    case 'FARM_STOP': // farm : partir avec le coffre
+    case 'FARM_STOP': // farm : s'arrêter (et choisir sa récompense)
       assert(state.farm && pend?.kind === 'farm', "Ce n'est pas le moment de partir.");
       endRun(state, 'stop');
       break;

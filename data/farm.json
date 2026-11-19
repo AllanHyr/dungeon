@@ -1,8 +1,5 @@
 {
-  "_note": "ZONES DE FARM SOLO. Un seul personnage affronte des vagues de monstres qui montent en difficulté. Il peut s'arrêter après chaque vague (le butin va dans son coffre) ; s'il meurt, il ne perd que la vague en cours. Les récompenses sont volontairement RESTREINTES (début de jeu) : le meilleur équipement vient des donjons à plusieurs. Voir docs/FARM-ET-SUCCES.md pour le détail de chaque réglage.",
-
-  "chestCapacity": 24,
-  "_chestCapacity": "Nombre maximum d'objets dans le coffre d'un personnage. Coffre plein = on ne peut plus lancer de session (ouvre-le d'abord). Utile aussi pour borner le futur farm automatique.",
+  "_note": "ZONES DE FARM SOLO. Un seul personnage affronte des vagues de monstres qui montent en difficulté. Il peut s'arrêter après chaque vague ; s'il meurt, il ne perd que la vague en cours. Chaque vague donne des ÉCLATS (pour la forge) ; en fin de session on CHOISIT 1 objet parmi 3 (les deux autres sont démantelés en éclats), meilleurs si l'on a tenu longtemps. L'XP du farm ne sert qu'à RATTRAPER : seul un héros plus bas que le meilleur héros du joueur en gagne, jusqu'au niveau de ce dernier. Voir docs/FARM-ET-SUCCES.md pour le détail de chaque réglage.",
 
   "zones": {
     "terriers": {
@@ -26,16 +23,20 @@
       "healBetweenWavesPct": 0.2,
 
       "rewards": {
-        "_note": "xpMult x XP des monstres ; +xpPerWave par vague ; l'XP de la zone ne fait JAMAIS dépasser xpMaxLevel. Butin : un objet avec la probabilité lootChance après chaque vague (le boss en donne bossItems, au moins de la rareté bossMinRarity). Les raretés absentes de rarityWeights (épique, légendaire...) ne tombent JAMAIS ici. itemMaxLevel : niveau maximum des objets.",
+        "_note": "XP : xpMult x XP des monstres, +xpPerWave par vague, x catchUpXpMult ; UNIQUEMENT pour un héros plus bas que le meilleur héros du joueur, et jamais au-delà de son niveau (rattrapage). Éclats : shardsPerWave par vague vaincue, bossShards en plus pour un boss. Fin de session (au moins une vague vaincue) : choiceCount objets au choix ; la rareté suit le palier 'choiceTiers' atteint (waves = vagues vaincues). Un objet de niveau <= itemMaxLevel, jamais un objet exclusif de donjon.",
         "xpMult": 1.0,
         "xpPerWave": 0.08,
-        "xpMaxLevel": 4,
-        "lootChance": 0.28,
-        "bossItems": 1,
-        "bossMinRarity": "uncommon",
-        "rarityWeights": { "common": 80, "uncommon": 18, "rare": 2 },
+        "catchUpXpMult": 1.5,
+        "shardsPerWave": 1,
+        "bossShards": 4,
+        "choiceCount": 3,
         "itemMaxLevel": 1,
-        "potionChance": 0.2
+        "choiceTiers": [
+          { "waves": 1, "rarityWeights": { "common": 70, "uncommon": 27, "rare": 3 } },
+          { "waves": 5, "rarityWeights": { "common": 35, "uncommon": 55, "rare": 10 } },
+          { "waves": 10, "rarityWeights": { "uncommon": 65, "rare": 35 } },
+          { "waves": 15, "rarityWeights": { "uncommon": 35, "rare": 65 } }
+        ]
       }
     }
   }

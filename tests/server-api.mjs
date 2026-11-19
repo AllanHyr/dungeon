@@ -153,7 +153,7 @@ const main = async () => {
   });
   await test('triche : agir sur le personnage d\'un autre, ou envoyer des choses interdites', async () => {
     const kael = (await bob.get('/api/profile')).json.characters[0];
-    for (const type of ['CHAR_DELETE', 'CHAR_RESET_SKILLS', 'CHAR_OPEN_CHEST']) {
+    for (const type of ['CHAR_DELETE', 'CHAR_RESET_SKILLS', 'CHAR_PICK_LOOT']) {
       const r = await alice.post('/api/character', { type, charId: kael.id });
       assert(r.json.ok === false && /introuvable/.test(r.json.error), `${type} : ${r.text}`);
     }
@@ -204,11 +204,12 @@ const main = async () => {
     assert(swap.json.ok && !swap.json.character.skills.includes('pretre_hymne'), 'un autre choix du même palier remplace le précédent');
     assert(!(await learn('guerrier_massacre')).json.ok, 'talent d\'une autre classe');
   });
-  await test('le coffre s\'ouvre ; la forge ; supprimer un personnage ; la limite de personnages', async () => {
+  await test('la récompense au choix ; la forge ; supprimer un personnage ; la limite de personnages', async () => {
     const kael = (await bob.get('/api/profile')).json.characters[0];
-    seed(app, bobId, kael.id, (ch) => ch.chest.push({ uid: 'k1', id: 'dague_os' }));
-    const r = await bob.post('/api/character', { type: 'CHAR_OPEN_CHEST', charId: kael.id });
-    assert(r.json.ok && r.json.opened.length === 1 && r.json.character.inventory.some((i) => i.uid === 'k1'), r.text);
+    seed(app, bobId, kael.id, (ch) => { ch.lootChoice = [{ uid: 'k1', id: 'dague_os' }, { uid: 'k0', id: 'piece_percee' }]; });
+    const r = await bob.post('/api/character', { type: 'CHAR_PICK_LOOT', charId: kael.id, uid: 'k1' });
+    assert(r.json.ok && r.json.picked.id === 'dague_os' && r.json.character.inventory.some((i) => i.uid === 'k1') && r.json.character.shards === 1, r.text);
+    seed(app, bobId, kael.id, (ch) => { ch.shards = 0; });
     // La forge : le serveur applique les mêmes règles (cadenas, démantèlement, amélioration, forge)
     const fa = (body) => bob.post('/api/character', { charId: kael.id, ...body });
     assert((await fa({ type: 'CHAR_LOCK', uid: 'k1' })).json.ok, 'cadenas');
@@ -289,7 +290,8 @@ const main = async () => {
     assert(ended.run.phase === 'ended' && ended.run.result.applied === true && ended.info === null, 'bilan appliqué');
     const after = ended.characters.find((c) => c.id === thorneId);
     assert(after.stats.farmRuns === before.stats.farmRuns + 1, `session comptée (${after.stats.farmRuns})`);
-    assert(after.xp !== before.xp || after.level !== before.level || after.chest.length > before.chest.length || after.stats.farmWaves > 0, 'de l\'XP ou du butin');
+    assert(after.xp !== before.xp || after.level !== before.level || (after.shards || 0) > (before.shards || 0) || after.stats.farmWaves > 0, 'des éclats ou des vagues');
+    if (after.stats.farmWaves > 0) eq(after.lootChoice.length, 3, 'une récompense au choix attend');
     const stored = (await alice.get('/api/profile')).json;
     assert(stored.run === null && JSON.stringify(stored.characters.find((c) => c.id === thorneId)) === JSON.stringify(after), 'enregistré, partie effacée');
     eq((await alice.get('/api/run')).json.run, null);

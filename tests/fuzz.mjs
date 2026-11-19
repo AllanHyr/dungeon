@@ -127,13 +127,12 @@ let farmOk = 0;
 const farmOutcomes = { stop: 0, defeat: 0, abandon: 0 };
 for (let g = 0; g < Math.ceil(N / 4); g++) {
   const [ch] = makeParty(content, [R(CLASSES)], R([1, 2, 3, 4, 6, 10]), R(['none', 'decent', 'good']), g + 1);
-  ch.chest = Array.from({ length: Math.floor(nextFloat(rs) * 22) }, (_, i) => ({ uid: `cc${g}-${i}`, id: 'piece_percee' }));
-  const state = createFarm(content, ch, { seed: g * 4243 + 1 });
+  const state = createFarm(content, ch, { seed: g * 4243 + 1, xpCap: R([0, 0, 8]) });
   playChaos(state, `farm ${g}: ${ch.classId} niveau ${ch.level}`);
-  const before = ch.chest.length;
+  const shards0 = ch.shards || 0;
   applyFarmResult(content, ch, state);
-  if (ch.chest.length > content.farm.chestCapacity) throw new Error('le coffre dépasse sa capacité');
-  if (ch.chest.length < before) throw new Error('le coffre a perdu des objets');
+  if ((ch.lootChoice?.length || 0) !== (state.result.waves > 0 ? 3 : 0)) throw new Error('farm : la récompense au choix est incohérente');
+  if (ch.shards < shards0 + state.result.waves) throw new Error('farm : des éclats ont été perdus');
   farmOutcomes[state.result.outcome]++;
   farmOk++;
 }

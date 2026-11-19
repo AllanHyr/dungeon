@@ -1469,19 +1469,15 @@ html.fx-playing .run { pointer-events: none; } /* (le temps d'une animation : un
 .zone-record { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 2px 14px; border-radius: 999px; border: 1px solid var(--brass-3); color: var(--brass-4); font-size: 0.88rem; }
 .farm-alert { margin-top: 10px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line-2); background: rgba(255, 255, 255, 0.03); font-size: 0.94rem; }
 .farm-alert.tone-bad { border-color: rgba(226, 88, 62, 0.6); background: rgba(226, 88, 62, 0.1); }
+.farm-alert.tone-good { border-color: rgba(106, 166, 83, 0.55); background: rgba(106, 166, 83, 0.1); }
+.farm-alert .btn { margin-left: 6px; }
 .farm-alert.tone-info { border-color: rgba(124, 196, 245, 0.5); background: rgba(124, 196, 245, 0.08); }
 .auto-card { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: var(--radius); border: 1px dashed var(--line-3); color: var(--muted); }
 .auto-card.unlocked { border: 1px solid var(--good-2); color: var(--good); background: rgba(106, 166, 83, 0.08); }
 .auto-body { flex: 1; min-width: 0; }
 .auto-body b { color: var(--text); }
-.chest-btn.has-items { border-color: var(--brass-3); color: var(--brass-4); background: linear-gradient(#3a2e1b, #2a2113); }
+.loot-btn.has-items { border-color: var(--brass-3); color: var(--brass-4); background: linear-gradient(#3a2e1b, #2a2113); }
 
-.chest-closed { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 0 6px; text-align: center; }
-.chest-icon { width: 120px; height: 120px; display: grid; place-items: center; border-radius: 50%; color: var(--brass-4); border: 3px solid var(--brass-3); background: radial-gradient(circle, #3a2e1b, var(--ink-2)); box-shadow: 0 0 30px rgba(245, 168, 59, 0.35); animation: bob-chest 2.4s ease-in-out infinite; }
-@keyframes bob-chest { 50% { transform: translateY(-4px); } }
-.chest-slots { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 420px; }
-.chest-slot { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; border: 1px dashed #6a5a85; color: #8a7aa8; font-weight: 700; }
-.chest-empty { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 20px 0; color: var(--muted); }
 .reveal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; margin: 10px 0 14px; }
 .reveal-item { opacity: 0; animation: reveal 0.5s ease-out forwards; animation-delay: calc(var(--i, 0) * 0.22s); }
 @keyframes reveal { from { opacity: 0; transform: translateY(12px) scale(0.94); } to { opacity: 1; transform: none; } }
@@ -1498,7 +1494,16 @@ html.fx-playing .run { pointer-events: none; } /* (le temps d'une animation : un
 .wave-gains { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 12px; }
 .wave-gains > div { display: flex; flex-direction: column; padding: 4px 16px; border-left: 2px solid var(--line-2); color: var(--muted); }
 .wave-gains b { font-family: var(--serif); font-size: 1.4rem; color: var(--brass-4); }
-.wave-loot { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.farm-tier { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0 10px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line-2); background: rgba(255, 255, 255, 0.03); color: var(--brass-4); }
+.farm-tier span { color: var(--text, inherit); }
+.farm-tier.is-up { border-color: var(--brass-3); background: rgba(212, 170, 80, 0.12); }
+.loot-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 10px 0 14px; }
+.loot-choice { display: flex; flex-direction: column; gap: 8px; }
+.loot-choice > :first-child { flex: 1; }
+.loot-pick { justify-content: center; }
+.loot-pick small { opacity: 0.8; font-weight: 500; }
+.loot-done { margin: 0 0 12px; }
+.farm-loot h3 { margin-top: 0; }
 .farm-hp { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
 .farm-hp .hpbar { flex: 1; max-width: 360px; }
 .farm-actions { margin-top: 12px; }

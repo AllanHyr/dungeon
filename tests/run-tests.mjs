@@ -5,7 +5,7 @@ import {
   buildContent, createRun, createTraining, dispatch, cloneState, restoreState, computeStats, effectiveLevel,
   levelFactor, createCharacter, addXp, applyRunResult, availableTranches, canBeRevived, learnSkill, skillPointsFree,
   canLearnSkill, skillRequirements, resetSkills, getCombatView, validTargets, resolveDice, skillOf, totalShield, checkUsable,
-  createFarm, applyFarmResult, catchUpLevel, choiceTier, addXpCapped, checkAchievements, hasFeature, gearLevel, achievementProgress, titlesOf, waveInfo,
+  createFarm, applyFarmResult, catchUpLevel, choiceTier, canStartFarm, addXpCapped, checkAchievements, hasFeature, gearLevel, achievementProgress, titlesOf, waveInfo,
   EQUIP_SLOTS, slotsFor, planEquip, equipFromBag, unequipToBag, twoHandedWorn, applyCharacterAction, CHARACTER_ACTIONS, cleanName,
   afkAction, whoMustAct, turnKey, xpForNext, campDeckOptions,
   salvageValue, upgradeCost, craftableItems, itemView, forgeRules
@@ -4060,6 +4060,29 @@ console.log('\n● Expéditions (le côté « idle »)');
     eq(gone.expedition, null, 'une expédition qui n\'existe plus est oubliée');
   });
 }
+
+console.log('\n● Zones de farm des tranches 4 et 8');
+test('trois zones ; chacune exige un niveau ; plus haut = plus d\'éclats et des objets de plus haut niveau', () => {
+  const ids = content.farm.zoneList.map((z) => z.id);
+  eq(ids, ['terriers', 'fourres', 'fosses']);
+  const z4 = content.farm.zones.fourres, z8 = content.farm.zones.fosses;
+  eq([z4.minLevel, z8.minLevel, z4.rewards.itemMaxLevel, z8.rewards.itemMaxLevel], [4, 8, 4, 8]);
+  const low = farmHero('berserker', 3, 1);
+  assert(!canStartFarm(content, low, z4).ok, 'niveau 3 : pas les Fourrés');
+  let msg = '';
+  try { createFarm(content, low, { zoneId: 'fourres', seed: 1 }); } catch (e) { msg = e.message; }
+  assert(/niveau 4 requis/.test(msg), msg);
+  const hero = farmHero('berserker', 8, 1);
+  const s = createFarm(content, hero, { zoneId: 'fosses', seed: 3 });
+  assert(content.farm.zones.fosses.monsterPool.includes(s.combat.monsters[0].defId), 'des ogres');
+  winWave(s);
+  eq(s.farm.shards, 3, '3 éclats par vague aux Fosses');
+  dispatch(s, { type: 'FARM_STOP' });
+  assert(s.result.choices.every((it) => content.items[it.id].level <= 8));
+  // la force des monstres est réglable par zone (waves.scale)
+  const w1 = waveInfo(content.farm.zones.terriers, 1), w4 = waveInfo(z4, 1);
+  assert(w4.hpMult < w1.hpMult && Math.abs(w4.hpMult - z4.waves.scale.hp) < 1e-9, 'Fourrés : monstres ×0,65 PV');
+});
 
 console.log(`\n${failed ? '❌' : '✅'} ${passed} tests réussis, ${failed} échoués\n`);
 process.exit(failed ? 1 : 0);

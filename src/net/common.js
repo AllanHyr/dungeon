@@ -14,7 +14,7 @@
 //   savePrefs()         enregistre les préférences (son, minuteur, dernière équipe...) ; en local, tout le profil
 //   character(action)   une action sur un personnage (voir src/core/profile-actions.js) -> { ok, error?, character?, deletedId?, opened?, unlocked:[succès] }
 //   savedRunInfo()      résumé de la partie en cours (ou null)
-//   startDungeon(setup, charIds, { replace }), startFarm(charId, { replace }), resumeRun(), discardRun()   -> { ok, error?, run? }
+//   startDungeon(setup, charIds, { replace }), startFarm(charId, { replace, zoneId }), resumeRun(), discardRun()   -> { ok, error?, run? }
 //   act(run, action)    une action de partie -> { ok, error?, events, run, ended, unlockedList:[{ charId, charName, achievement }] }
 //   room, rooms         (en ligne) mon salon et la liste des salons ouverts ; les gestes des salons : createRoom, joinRoom, leaveRoom, roomHero...
 //   connect(handlers)   (en ligne) le temps réel : les autres joueurs changent le salon ou la partie, on le reçoit tout de suite

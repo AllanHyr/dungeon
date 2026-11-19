@@ -173,9 +173,9 @@ export function createRemoteGateway({ content, apiBase, hello, storage, onUnauth
     async startDungeon() {
       return { ok: false, error: 'Les donjons se jouent dans un salon : crée-en un ou rejoins celui d\'un ami.' };
     },
-    async startFarm(charId, { replace = false } = {}) {
+    async startFarm(charId, { replace = false, zoneId } = {}) {
       if (replace) await gw.discardRun();
-      const r = await gw.call('POST', 'run/start', { kind: 'farm', charId });
+      const r = await gw.call('POST', 'run/start', { kind: 'farm', charId, zoneId });
       if (!r.ok) return { ok: false, error: r.error };
       return gw.receiveRun(r);
     },

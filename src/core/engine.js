@@ -207,6 +207,7 @@ export function createTraining(content, specs, opts = {}) {
 export function createFarm(content, character, opts = {}) {
   const zone = opts.zoneId ? content.farm.zones[opts.zoneId] : content.farm.zoneList[0];
   if (!zone) throw new GameError(`Zone de farm inconnue : ${opts.zoneId}`);
+  if (character.level < (zone.minLevel || 1)) throw new GameError(`${zone.name} : niveau ${zone.minLevel} requis.`);
   if (character.lootChoice?.length) throw new GameError('Choisis d\'abord la récompense de ta dernière session.');
   // Le farm se joue en mode "Basic" : aucune restriction de niveau (le personnage joue avec tout son équipement).
   const state = createRun(content, { tranche: zone.trancheId, mode: 'basic' }, [character], opts.seed);

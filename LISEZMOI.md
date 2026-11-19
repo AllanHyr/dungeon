@@ -145,7 +145,8 @@ en Tranche et Stasis, c'est `min(niveau réel, tranche)`).
 
 Sur l'accueil, l'onglet **Zone de farm solo** :
 
-* **Un seul personnage** enchaîne des **vagues** de monstres (zone « Les Terriers »), de plus en plus fortes, avec un boss toutes les 5 vagues.
+* **Un seul personnage** enchaîne des **vagues** de monstres, de plus en plus fortes, avec un boss toutes les 5 vagues. Trois zones : **Les Terriers** (dès le niveau 1),
+  **Les Fourrés de Grouinval** (niveau 4, tranche 4) et **Les Fosses aux ogres** (niveau 8, tranche 8) : plus haut, plus d'éclats et de meilleurs objets.
 * Après chaque vague : **vague suivante**, ou **s'arrêter**. Si le personnage meurt, il **ne perd que la vague en cours**.
 * Chaque vague donne des **éclats** pour la forge. En fin de session, on **garde 1 objet parmi 3** (meilleurs si l'on a tenu longtemps), les deux autres deviennent des éclats.
   Jamais d'épique ni de légendaire : le meilleur équipement vient des donjons en équipe.
@@ -332,7 +333,7 @@ dans un JSON, le jeu affiche une erreur en français qui dit où chercher.
 ## 6. Les tests
 
 ```bash
-node tests/run-tests.mjs        # 259 tests de règles (PA, rangs, dés, boucliers, passifs, donjons à thème et mécaniques de monstres, butin exclusif, description des bonus et malus, marque et venin de l'Assassin, puissance sacrée et auras du Templier, formes et Expiation du Prêtre, rage, postures et blessure profonde du Guerrier, formes du Druide, chants et Tempo du Barde, feu de camp, forge, équipement à 14 emplacements, raccourcis clavier, farm (rattrapage, récompense au choix), expéditions, succès, actions sur les personnages, niveau effectif, stasis, coups bas, sauvegarde, pilote automatique...)
+node tests/run-tests.mjs        # 260 tests de règles (PA, rangs, dés, boucliers, passifs, donjons à thème et mécaniques de monstres, butin exclusif, description des bonus et malus, marque et venin de l'Assassin, puissance sacrée et auras du Templier, formes et Expiation du Prêtre, rage, postures et blessure profonde du Guerrier, formes du Druide, chants et Tempo du Barde, feu de camp, forge, équipement à 14 emplacements, raccourcis clavier, farm (rattrapage, récompense au choix), expéditions, succès, actions sur les personnages, niveau effectif, stasis, coups bas, sauvegarde, pilote automatique...)
 node tests/server-api.mjs       # 36 tests du SERVEUR (sans navigateur : on parle à l'API) : comptes, sessions, mots de passe, limites anti-abus, tricheries refusées, parties complètes jouées par un robot, fichiers publics, outil d'administration
 node tests/server-rooms.mjs     # 21 tests des SALONS (sans navigateur) : un héros par compte, prêt / réglages / retirer / quitter, parties à 2-3 joueurs jouées par des robots, tricheries refusées, rien de secret envoyé, temps réel, minuteur du serveur, redémarrage
 node tests/fuzz.mjs 1000        # 1000 parties (avec un donjon, des spécialisations et des talents tirés au hasard), salles d'entraînement et sessions de farm « chaotiques » : aucune erreur attendue (et une action refusée ne change jamais l'état)

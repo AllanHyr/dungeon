@@ -250,8 +250,10 @@ const main = async () => {
     thorneId = chars.find((c) => c.name === 'Thorne').id;
     maeveId = chars.find((c) => c.name === 'Maeve').id;
     seed(app, aliceId, thorneId, (ch) => { ch.level = 4; ch.skills.push('sacrieur_carapace'); });
-    const r = await alice.post('/api/run/start', { kind: 'farm', charId: thorneId });
-    assert(r.status === 200 && r.json.run.farm && r.json.run.players.length === 1 && r.json.info.farm === true, r.text.slice(0, 200));
+    const tooHigh = await alice.post('/api/run/start', { kind: 'farm', charId: thorneId, zoneId: 'fosses' });
+    assert(tooHigh.status === 400 && /niveau 8 requis/.test(tooHigh.json.error), tooHigh.text);
+    const r = await alice.post('/api/run/start', { kind: 'farm', charId: thorneId, zoneId: 'fourres' });
+    assert(r.status === 200 && r.json.run.farm?.zoneId === 'fourres' && r.json.run.farm && r.json.run.players.length === 1 && r.json.info.farm === true, r.text.slice(0, 200));
     assert(r.json.run.pending.kind === 'combat' || r.json.run.pending.kind === 'farm', JSON.stringify(r.json.run.pending));
     assert(!('content' in r.json.run), 'le contenu du jeu n\'est pas envoyé avec la partie');
     eq((await alice.post('/api/run/start', { kind: 'farm', charId: thorneId })).status, 409);

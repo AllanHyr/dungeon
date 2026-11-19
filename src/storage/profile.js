@@ -67,7 +67,7 @@ export function createEmptyProfile() {
     version: 1,
     nextCharNumber: 1,
     characters: [],
-    settings: { sound: false, volume: 0.7, fx: null, turnSeconds: 0, training: null, view: 'dungeon', farmChar: null },
+    settings: { sound: false, volume: 0.7, fx: null, turnSeconds: 0, training: null, view: 'dungeon', farmChar: null, farmZone: null },
     lastTeam: [],
     lastSetup: { tranche: 1, dungeon: null, mode: 'tranche', stasisLevel: 1 }
   };
@@ -226,7 +226,8 @@ export function sanitizeProfile(content, raw) {
     turnSeconds: Math.max(0, Math.min(300, Number(raw.settings?.turnSeconds) || 0)), // minuteur de tour (0 = désactivé)
     training: raw.settings?.training && Array.isArray(raw.settings.training.specs) ? raw.settings.training : null, // dernière salle d'entraînement
     view: ['farm', 'expeditions'].includes(raw.settings?.view) ? raw.settings.view : 'dungeon', // onglet de l'accueil : donjon en équipe, farm solo ou expéditions
-    farmChar: ids.has(raw.settings?.farmChar) ? raw.settings.farmChar : null // dernier personnage envoyé au farm
+    farmChar: ids.has(raw.settings?.farmChar) ? raw.settings.farmChar : null, // dernier personnage envoyé au farm
+    farmZone: typeof raw.settings?.farmZone === 'string' && content.farm.zones[raw.settings.farmZone] ? raw.settings.farmZone : null // dernière zone de farm
   };
   profile.lastTeam = (Array.isArray(raw.lastTeam) ? raw.lastTeam : []).filter((id) => ids.has(id)).slice(0, 4);
   const ls = raw.lastSetup || {};

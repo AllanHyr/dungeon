@@ -57,6 +57,16 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   check((await page.textContent('.zone-card')).includes('Les Terriers'), 'la zone « Les Terriers » est présentée');
   check((await page.textContent('.zone-card')).includes('1 objet au choix parmi 3'), 'la zone annonce la récompense au choix');
   check(/Rattrapage.*niveau 4/.test(await page.textContent('.home-plan')), 'Thorne (niv. 2) rattrape Maeve (niv. 4) : XP jusqu\'au niveau 4');
+  check((await page.$$('.zone-pick')).length === 3, 'trois zones au choix');
+  check(await page.$eval('.zone-pick[data-zone="fourres"]', (b) => b.disabled) && await page.$eval('.zone-pick[data-zone="fosses"]', (b) => b.disabled), 'Thorne (niv. 2) : les Fourrés (niv. 4) et les Fosses (niv. 8) sont fermés');
+  await page.click('.char-card:has-text("Maeve")');
+  await page.waitForSelector('.zone-pick[data-zone="fourres"]:not([disabled])');
+  await page.click('.zone-pick[data-zone="fourres"]');
+  await page.waitForSelector('.zone-card[data-zone="fourres"]');
+  check(/Grouinval/.test(await page.textContent('.zone-card')), 'Maeve (niv. 4) peut choisir les Fourrés de Grouinval');
+  await page.click('.zone-pick[data-zone="terriers"]');
+  await page.click('.char-card:has-text("Thorne")');
+  await page.waitForSelector('.zone-card[data-zone="terriers"]');
   check(await page.$eval('#farm-launch', (b) => !b.disabled), 'on peut entrer dans la zone');
   await page.screenshot({ path: `${out}/70-farm-menu.png`, fullPage: true });
 

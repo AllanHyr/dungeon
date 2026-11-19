@@ -65,6 +65,14 @@
       "watch": { "name": "Monter la garde", "icon": "shield", "desc": "−12 % de dégâts reçus pendant les 2 prochains combats.", "stat": "taken", "pct": -0.12, "combats": 2 }
     }
   },
+  "forge": {
+    "_note": "LA FORGE (fiche du personnage). Démanteler un objet du sac donne des ÉCLATS selon sa rareté (un objet amélioré rend en plus la moitié des éclats investis). Améliorer : +1 à +5, chaque cran +10 % aux PV, attaque, défense et soin de l'objet ; le cran n coûte upgradeCost[rareté] × n. Forger : un objet exclusif d'un donjon que le personnage a terminé, au prix craftCost[rareté]. Les objets protégés (cadenas) ne se démantèlent pas.",
+    "salvage": {"common": 1, "uncommon": 3, "rare": 8, "epic": 20, "legendary": 50},
+    "upgradeMax": 5, "upgradeStep": 0.1,
+    "upgradeCost": {"common": 2, "uncommon": 4, "rare": 8, "epic": 16, "legendary": 30},
+    "craftCost": {"common": 8, "uncommon": 15, "rare": 30, "epic": 60, "legendary": 120},
+    "bagMax": 200
+  },
   "shop": {"stockSize": 3, "sellRate": 0.35, "haggleBase": 1.25, "haggleStep": 0.02, "levelPriceStep": 0.3},
 
   "partyScaling": {

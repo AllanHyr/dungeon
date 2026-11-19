@@ -154,6 +154,11 @@ Sur l'accueil, l'onglet **Zone de farm solo** :
   atteindre un niveau d'équipement... Ils débloquent une **compétence** pour ce personnage, une **fonction** du jeu (le farm automatique,
   à l'étape suivante) ou un **titre**. Exemple fourni : le Veilleur ne peut apprendre *Cantique de hâte* qu'après avoir fini le premier donjon en groupe.
 
+**La forge** (fiche du personnage) : le butin inutile n'est jamais perdu.
+
+* Dans le sac, un **cadenas** protège un objet, une **corbeille** le **démantèle** en **éclats** (plus il est rare, plus il en donne) ; on peut aussi tout démanteler d'un coup (les communs...).
+* Onglet **Forge** : **améliorer** un objet de +1 à +5 (+10 % à ses PV, attaque, défense et soin par cran), ou **forger** un objet exclusif d'un donjon que ce personnage a déjà terminé.
+
 Tout est réglable en JSON : [`docs/FARM-ET-SUCCES.md`](docs/FARM-ET-SUCCES.md).
 
 ---
@@ -324,7 +329,7 @@ dans un JSON, le jeu affiche une erreur en français qui dit où chercher.
 ## 6. Les tests
 
 ```bash
-node tests/run-tests.mjs        # 253 tests de règles (PA, rangs, dés, boucliers, passifs, donjons à thème et mécaniques de monstres, butin exclusif, description des bonus et malus, marque et venin de l'Assassin, puissance sacrée et auras du Templier, formes et Expiation du Prêtre, rage, postures et blessure profonde du Guerrier, formes du Druide, chants et Tempo du Barde, feu de camp, équipement à 14 emplacements, raccourcis clavier, farm, coffre, succès, actions sur les personnages, niveau effectif, stasis, coups bas, sauvegarde, pilote automatique...)
+node tests/run-tests.mjs        # 257 tests de règles (PA, rangs, dés, boucliers, passifs, donjons à thème et mécaniques de monstres, butin exclusif, description des bonus et malus, marque et venin de l'Assassin, puissance sacrée et auras du Templier, formes et Expiation du Prêtre, rage, postures et blessure profonde du Guerrier, formes du Druide, chants et Tempo du Barde, feu de camp, forge, équipement à 14 emplacements, raccourcis clavier, farm, coffre, succès, actions sur les personnages, niveau effectif, stasis, coups bas, sauvegarde, pilote automatique...)
 node tests/server-api.mjs       # 36 tests du SERVEUR (sans navigateur : on parle à l'API) : comptes, sessions, mots de passe, limites anti-abus, tricheries refusées, parties complètes jouées par un robot, fichiers publics, outil d'administration
 node tests/server-rooms.mjs     # 21 tests des SALONS (sans navigateur) : un héros par compte, prêt / réglages / retirer / quitter, parties à 2-3 joueurs jouées par des robots, tricheries refusées, rien de secret envoyé, temps réel, minuteur du serveur, redémarrage
 node tests/fuzz.mjs 1000        # 1000 parties (avec un donjon, des spécialisations et des talents tirés au hasard), salles d'entraînement et sessions de farm « chaotiques » : aucune erreur attendue (et une action refusée ne change jamais l'état)
@@ -360,6 +365,7 @@ node tests/ui-pretre.cjs http://localhost:8765/ /tmp   # le Prêtre : fiche (3 s
 node tests/ui-guerrier.cjs http://localhost:8765/ /tmp # le Guerrier : fiche (3 spés, sorts évolués, palier 8), combat (rage, Exécution grisée, choix de la posture, blessure profonde), téléphone
 node tests/ui-druide.cjs http://localhost:8765/ /tmp   # le Druide : fiche (3 spés, sorts évolués, palier 8), combat (choix de la forme, changement de rang, sorts grisés hors de leur forme), téléphone
 node tests/ui-barde.cjs http://localhost:8765/ /tmp    # le Barde : fiche (3 spés, sorts évolués), combat (inspiration, choix du chant, chant sur l'allié, Tempo dans la frise), téléphone
+node tests/ui-forge.cjs http://localhost:8765/ /tmp    # la forge : cadenas et démantèlement dans le sac, tout démanteler, améliorer un objet porté, forger, rechargement ; téléphone
 node tests/ui-personnages.cjs http://localhost:8765/ /tmp # les places de personnages (8 par défaut) et la suppression d'un héros (corbeille sur sa carte, confirmation en tapant son nom), téléphone
 node tests/ui-camp.cjs http://localhost:8765/ /tmp       # le feu de camp : au milieu du donjon, chacun change ses sorts puis choisit une activité (repos, affûter, garde), téléphone
 node tests/ui-assassin.cjs http://localhost:8765/ /tmp # l'Assassin : fiche (sorts évolués selon la spé, palier 8), combat (Marque gratuite puis 1 PA, proie marquée, venin cumulable), téléphone

@@ -102,6 +102,21 @@ il faut environ 6 à 10 sessions pour passer du niveau 1 au niveau 4.
 * **Ouvrir le coffre** déplace tout dans l'inventaire (`openChest` dans `src/core/farm.js`) ; l'interface fait la révélation.
 * Le coffre est enregistré avec le personnage (sauvegarde, export / import).
 
+## 3 bis. La forge : que faire du butin — `src/core/forge.js`
+
+Fiche du personnage : dans le **sac** (onglet *Équipement*), chaque objet a un **cadenas** (le protéger) et une **corbeille** (le démanteler) ;
+l'onglet **Forge** regroupe le reste. Tous les nombres sont dans `data/rules.json` > `forge`.
+
+* **Démanteler** un objet du sac donne des **éclats** (`personnage.shards`) selon sa rareté (`salvage` : commun 1, inhabituel 3, rare 8, épique 20, légendaire 50).
+  Un objet amélioré rend en plus la moitié des éclats qu'on y a mis. Jamais : un objet **porté**, un objet **protégé** (`personnage.locked`, des `uid`), une potion.
+  La forge propose aussi de tout démanteler d'un coup (les communs ; jusqu'aux inhabituels ; jusqu'aux rares).
+* **Améliorer** un objet (porté ou dans le sac) : +1 à +5 (`upgradeMax`). Chaque cran donne **+10 %** (`upgradeStep`) aux PV, attaque, défense et soin
+  **de l'objet** (pas aux PA, initiative, chance ni sauvegarde ; un malus ne grandit pas). Le cran n coûte `upgradeCost[rareté]` × n.
+  L'amélioration est portée par l'objet lui-même (`{ uid, id, plus }`) : elle le suit dans les parties, et s'affiche « Heaume de fer +2 ».
+* **Forger** un objet **exclusif d'un donjon que ce personnage a terminé** (`stats.dungeons`), au prix `craftCost[rareté]` : il arrive dans le sac.
+  Le meilleur butin reste à gagner en donjon, mais on n'est plus à la merci de la chance pour la pièce qui manque.
+* Actions (mêmes règles hors ligne et sur le serveur, `src/core/profile-actions.js`) : `CHAR_SALVAGE {uid}`, `CHAR_SALVAGE_BULK {rarity}`, `CHAR_LOCK {uid}`, `CHAR_UPGRADE {uid}`, `CHAR_CRAFT {itemId}`.
+
 ---
 
 ## 4. Les succès — `data/achievements.json`

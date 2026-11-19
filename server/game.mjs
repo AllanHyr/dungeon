@@ -188,6 +188,7 @@ export class GameService {
       else this.store.saveCharacter(userId, res.character, now);
       return {
         ok: true, character: res.character ?? null, deletedId: res.deletedId ?? null, opened: res.opened ?? null,
+        shards: res.shards ?? null, salvaged: res.salvaged ?? null, crafted: res.crafted ?? null,
         unlocked: res.unlocked.map((a) => a.id)
       };
     });

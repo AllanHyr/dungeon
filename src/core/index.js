@@ -9,6 +9,7 @@ export { applyFarmResult, openChest, chestInfo, canStartFarm, waveInfo, farmZone
 export {
   checkAchievements, achievementProgress, achievementsFor, hasFeature, achievementForFeature, titlesOf, rewardTexts, gearLevel, isUnlocked
 } from './achievements.js';
+export { forgeRules, itemView, plusMult, upgradedStat, salvageValue, upgradeCost, canUpgrade, craftableItems, ownedItems, bulkSalvageList, UPGRADED_STATS } from './forge.js';
 export { applyRunResult, newItemsOf, contribution } from './results.js';
 export {
   createCharacter, newCharacterStats, addXp, addXpCapped, previewXpCapped, xpForNext, levelCap, previewXp, skillPointsFree, skillPointsSpent,

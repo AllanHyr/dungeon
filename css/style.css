@@ -652,7 +652,30 @@ button.hero-tag:hover { border-color: var(--brass-3); color: var(--brass-4); }
 .bag-meta { font-size: 0.82rem; color: var(--muted); }
 .bag-text { font-size: 0.92rem; }
 .bag-note { font-size: 0.82rem; color: var(--faint); }
-.bag-act { align-self: center; }
+.bag-act { align-self: center; display: flex; align-items: center; gap: 6px; }
+.btn-icon { padding: 6px 8px; display: inline-grid; place-items: center; }
+.bag-lock.on { color: var(--brass-3); border-color: var(--brass-3); background: rgba(212, 170, 80, 0.14); }
+.bag-salvage:not(:disabled):hover { color: var(--bad); border-color: var(--bad); }
+.lock-mark { display: inline-flex; color: var(--brass-3); }
+
+/* ---- La forge (onglet de la fiche) */
+.forge { display: flex; flex-direction: column; gap: 22px; }
+.forge-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.forge-head p { margin: 0; flex: 1 1 260px; }
+.forge-shards { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--brass-3); background: rgba(212, 170, 80, 0.1); color: var(--brass-3); }
+.forge-shards b { font-family: var(--serif); font-size: 1.5rem; line-height: 1; color: var(--brass-4); }
+.forge-sec { display: flex; flex-direction: column; gap: 10px; }
+.forge-sec .sec-title { display: flex; align-items: center; gap: 8px; margin: 0; }
+.forge-sec > p { margin: 0; }
+.forge-bulk { display: flex; flex-wrap: wrap; gap: 8px; }
+.forge-bulk small { color: var(--muted); }
+.forge-row { --rar: var(--line-3); display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--ink-3); }
+.forge-pips { display: flex; gap: 4px; }
+.forge-pips .pip { width: 10px; height: 10px; border-color: var(--line-3); }
+.forge-pips .pip.on { background: radial-gradient(circle at 35% 35%, #ffe4a0, #d49a2a); border-color: #ffe4a0; box-shadow: 0 0 6px rgba(245, 168, 59, 0.6); }
+.forge-next { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.forge-next .pill { opacity: 0.8; }
+.forge-dungeon + .forge-dungeon { margin-top: 10px; }
 .bag-cmp { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; font-size: 0.86rem; }
 .bag-cmp.locked { gap: 6px; color: var(--bad); }
 .verdict { display: inline-flex; align-items: center; gap: 5px; padding: 0 9px; border-radius: 999px; border: 1px solid; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.7; }
@@ -1776,6 +1799,9 @@ html.fx-playing .run { pointer-events: none; } /* (le temps d'une animation : un
   .bag-row { grid-template-columns: 38px minmax(0, 1fr); gap: 10px; }
   .bag-icon { width: 38px; height: 38px; }
   .bag-act { grid-column: 2; align-self: start; }
+  .forge-row { grid-template-columns: 38px minmax(0, 1fr); gap: 10px; }
+  .forge-row .bag-icon { width: 38px; height: 38px; }
+  .forge-row .bag-act { grid-column: 2; align-self: start; }
   .sk-layout { display: flex; flex-direction: column; gap: 12px; }
   .sk-tree { --nw: 96px; }
   .sk-panel { position: static; max-height: none; margin: -2px 0 2px; }

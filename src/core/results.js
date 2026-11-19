@@ -130,8 +130,11 @@ export function applyRunResult(content, characters, state) {
     for (const it of newItemsOf(p)) if (content.itemDungeon?.[it.id]) ch.stats.found[it.id] = true;
     addXp(content, ch, pr.xp.total);
     // Le sac de la run devient l'inventaire du personnage (butin récupéré, objets achetés...).
-    ch.inventory = p.bag.map((it) => ({ uid: it.uid, id: it.id }));
-    for (const slot of EQUIP_SLOTS) ch.equipment[slot] = p.equipment[slot] ? { uid: p.equipment[slot].uid, id: p.equipment[slot].id } : null;
+    const keep = (it) => (it.plus ? { uid: it.uid, id: it.id, plus: it.plus } : { uid: it.uid, id: it.id }); // (garde l'amélioration de la forge)
+    ch.inventory = p.bag.map(keep);
+    for (const slot of EQUIP_SLOTS) ch.equipment[slot] = p.equipment[slot] ? keep(p.equipment[slot]) : null;
+    // un objet vendu ou perdu pendant la partie perd son cadenas
+    if (ch.locked?.length) { const own = new Set([...ch.inventory, ...EQUIP_SLOTS.map((s) => ch.equipment[s]).filter(Boolean)].map((it) => it.uid)); ch.locked = ch.locked.filter((u) => own.has(u)); }
     // Les sorts équipés au feu de camp restent équipés après la partie (seulement ceux que le personnage peut équiper).
     if (Array.isArray(p.deck) && Array.isArray(ch.deck) && p.deck.join() !== ch.deck.join()) {
       const before = ch.deck;

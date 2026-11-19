@@ -1,8 +1,9 @@
 // ============================================================
 //  sheet.js — La fiche d'un personnage sauvegardé (hors run)
 // ============================================================
-// Quatre onglets :
-//   Équipement   « Porté » (3 emplacements) et « Sac » (avec ce que chaque objet changerait)
+// Cinq onglets :
+//   Équipement   « Porté » (3 emplacements) et « Sac » (avec ce que chaque objet changerait ; cadenas et démantèlement)
+//   Forge        les éclats : démanteler en masse, améliorer un objet (+1 à +5), forger un objet d'un donjon terminé
 //   Compétences  l'arbre : une rangée par branche, un panneau de détail, la liste des conditions
 //   Succès       ce que ce personnage a accompli
 //   Infos        statistiques, copie du code, suppression
@@ -14,11 +15,12 @@ import { app, toast, openModal, closeModal, confirmBox } from '../state.js';
 import { redraw, lockedCharIds, characterAction } from '../controller.js';
 import { portrait, xpBar, previewStats, progressBar } from '../components.js';
 import { skillBlurb, rawDice, diceStrip, skillIconName, skillKind } from '../format.js';
-import { equipmentView, afterEquipRender } from '../gear.js';
+import { equipmentView, afterEquipRender, statPills, itemName, SLOT_ICON } from '../gear.js';
 import { play } from '../sound.js';
 import {
   skillRequirements, skillPointsToSpend, skillPointsSpent, availableTranches, achievementsFor, achievementProgress,
-  rewardTexts, titlesOf, chestInfo, gearLevel, deckSize, specLevel, specsOf, deckEligible, choiceMate, knownSkills, activeSets, canLearnSkill
+  rewardTexts, titlesOf, chestInfo, gearLevel, deckSize, specLevel, specsOf, deckEligible, choiceMate, knownSkills, activeSets, canLearnSkill,
+  itemView, salvageValue, canUpgrade, craftableItems, ownedItems, bulkSalvageList, forgeRules, rarityOf
 } from '../../core/index.js';
 import { EQUIP_SLOTS } from '../../core/content.js';
 import { exportCode } from '../../storage/profile.js';
@@ -102,13 +104,14 @@ export function openSheet(charId, startTab = 'equip') {
 
       const free = skillPointsToSpend(content, ch);
       const tabs = h('div', { class: 'tabs', role: 'tablist' },
-        [['equip', 'Équipement', 'armor'], ['skills', 'Compétences', 'star'], ['ach', `Succès ${doneCount(content, ch)}/${achievementsFor(content, ch).length}`, 'check'], ['info', 'Infos', 'book']].map(([id, label, ic]) =>
+        [['equip', 'Équipement', 'armor'], ['forge', `Forge ${ch.shards || 0}`, 'flame'], ['skills', 'Compétences', 'star'], ['ach', `Succès ${doneCount(content, ch)}/${achievementsFor(content, ch).length}`, 'check'], ['info', 'Infos', 'book']].map(([id, label, ic]) =>
           h('button', { class: `tab ${state.tab === id ? 'on' : ''}`, role: 'tab', 'aria-selected': state.tab === id ? 'true' : 'false', 'data-tab': id, onClick: () => { state.tab = id; api.refresh(); } },
             icon(ic, 16), label,
             id === 'skills' && free > 0 ? h('span', { class: 'tab-badge', title: 'Points de compétence à dépenser' }, free) : null)));
 
       let body;
       if (state.tab === 'equip') body = equipTab(ch, api, state, tranche, locked);
+      else if (state.tab === 'forge') body = forgeTab(ch, api, state, locked);
       else if (state.tab === 'skills') body = skillsTab(ch, api, state, tranche, locked);
       else if (state.tab === 'ach') body = achTab(ch);
       else body = infoTab(ch, locked);
@@ -157,9 +160,129 @@ function equipTab(ch, api, state, tranche, locked) {
       unequip: async (slot) => {
         const res = await characterAction({ type: 'CHAR_UNEQUIP', charId: ch.id, slot });
         if (res.ok) api.refresh();
-      }
+      },
+      isLocked: (inst) => (ch.locked || []).includes(inst.uid),
+      lock: async (inst) => {
+        const res = await characterAction({ type: 'CHAR_LOCK', charId: ch.id, uid: inst.uid });
+        if (res.ok) api.refresh();
+      },
+      salvage: (inst) => salvageOne(ch, inst, api)
     }
   }));
+}
+
+/** Démanteler un objet du sac (on demande confirmation pour un objet rare ou mieux, ou amélioré). */
+async function salvageOne(ch, inst, api) {
+  const content = app.content;
+  const def = itemView(content, inst);
+  const gain = salvageValue(content, inst);
+  if ((content.rarityIndex[def.rarity] ?? 0) >= content.rarityIndex.rare || inst.plus) {
+    const ok = await confirmBox({ title: 'Démanteler ?', text: `${itemName(def)} (${rarityOf(content, def).name}) sera détruit et donnera ${gain} éclats.`, okLabel: `Démanteler (+${gain})`, danger: true });
+    if (!ok) return;
+  }
+  const res = await characterAction({ type: 'CHAR_SALVAGE', charId: ch.id, uid: inst.uid });
+  if (res.ok) {
+    play('coins');
+    toast(`${itemName(def)} démantelé : +${res.shards} éclats.`, 'good');
+    api.refresh();
+  }
+}
+
+// ============================================================
+//  Onglet Forge : les éclats (démanteler en masse, améliorer, forger)
+// ============================================================
+
+function forgeTab(ch, api, state, locked) {
+  const content = app.content;
+  const f = forgeRules(content);
+  const shards = ch.shards || 0;
+  const lockTitle = 'Ce personnage est dans une partie en cours.';
+  const act = async (action, done) => {
+    const res = await characterAction({ ...action, charId: ch.id });
+    if (res.ok) { if (done) done(res); api.refresh(); }
+  };
+
+  // ---- Démanteler en masse
+  const tiers = content.rarities.slice(0, 3).map((r) => {
+    const list = bulkSalvageList(content, ch, r.id);
+    const gain = list.reduce((t, inst) => t + salvageValue(content, inst), 0);
+    return { r, list, gain };
+  });
+  const bulk = h('section', { class: 'forge-sec forge-salvage' },
+    h('h4', { class: 'sec-title' }, icon('trash', 16), 'Démanteler'),
+    h('p', { class: 'muted small' }, `Un objet du sac démantelé donne des éclats : ${content.rarities.map((r) => `${r.name.toLowerCase()} ${f.salvage[r.id] ?? 1}`).join(' · ')}. Les objets protégés (`, icon('lock', 11), ') et les objets portés ne sont jamais démantelés. Pour un seul objet : le bouton ', icon('trash', 11), ' dans le sac (onglet Équipement).'),
+    h('div', { class: 'forge-bulk' }, tiers.map(({ r, list, gain }, i) => h('button', {
+      type: 'button', class: 'btn btn-small', dataset: { bulk: r.id }, disabled: locked || !list.length, title: locked ? lockTitle : list.length ? '' : 'Rien à démanteler',
+      onClick: async () => {
+        const what = i === 0 ? `les ${list.length} objets ${r.name.toLowerCase()}s` : `les ${list.length} objets ${tiers.slice(0, i + 1).map((t) => t.r.name.toLowerCase()).join(', ')}`;
+        if (!(await confirmBox({ title: 'Tout démanteler ?', text: `Détruire ${what} du sac (hors objets protégés) pour ${gain} éclats ?`, okLabel: `Démanteler (+${gain})`, danger: true }))) return;
+        act({ type: 'CHAR_SALVAGE_BULK', rarity: r.id }, (res) => { play('coins'); toast(`${res.salvaged} objet${res.salvaged > 1 ? 's' : ''} démantelé${res.salvaged > 1 ? 's' : ''} : +${res.shards} éclats.`, 'good'); });
+      }
+    }, i === 0 ? `Les ${r.name.toLowerCase()}s` : `Jusqu'aux ${r.name.toLowerCase()}s`, h('small', null, ` ${list.length} → +${gain}`)))));
+
+  // ---- Améliorer
+  const owned = ownedItems(ch).filter(({ inst }) => !content.items[inst.id].consumable)
+    .sort((a, b) => (a.where === 'bag') - (b.where === 'bag') || (b.inst.plus || 0) - (a.inst.plus || 0) || content.items[b.inst.id].level - content.items[a.inst.id].level);
+  const upRow = ({ inst, where }) => {
+    const def = itemView(content, inst);
+    const rarity = rarityOf(content, def);
+    const next = itemView(content, { ...inst, plus: (inst.plus || 0) + 1 });
+    const chk = canUpgrade(content, ch, inst);
+    const maxed = (inst.plus || 0) >= f.upgradeMax;
+    return h('div', { class: `forge-row r-${rarity.id}`, style: { '--rar': rarity.color }, dataset: { uid: inst.uid } },
+      h('div', { class: 'bag-icon' }, icon(SLOT_ICON[where] || def.slot, 22)),
+      h('div', { class: 'bag-main' },
+        h('div', { class: 'bag-line1' }, h('b', { class: 'bag-name' }, itemName(def)), h('span', { class: 'rarity-pill' }, rarity.name),
+          h('span', { class: 'bag-meta' }, where === 'bag' ? 'dans le sac' : `porté · ${content.slotNames[where]}`)),
+        h('div', { class: 'forge-pips', title: `Amélioration ${inst.plus || 0} sur ${f.upgradeMax}` }, Array.from({ length: f.upgradeMax }, (_, i) => h('span', { class: `pip ${i < (inst.plus || 0) ? 'on' : ''}` }))),
+        statPills(content, def),
+        maxed ? null : h('div', { class: 'forge-next muted small' }, `+${(inst.plus || 0) + 1} : `, statPills(content, next))),
+      h('div', { class: 'bag-act' },
+        h('button', {
+          type: 'button', class: 'btn btn-small forge-up', disabled: locked || !chk.ok, title: locked ? lockTitle : chk.ok ? `Améliorer pour ${chk.cost} éclats` : chk.reason,
+          onClick: () => act({ type: 'CHAR_UPGRADE', uid: inst.uid }, () => { play('crit'); toast(`${def.name} +${(inst.plus || 0) + 1} !`, 'good'); })
+        }, maxed ? 'Maximum' : `Améliorer · ${chk.cost ?? '?'}`)));
+  };
+  const upgrade = h('section', { class: 'forge-sec forge-upgrade' },
+    h('h4', { class: 'sec-title' }, icon('up', 16), 'Améliorer'),
+    h('p', { class: 'muted small' }, `Chaque amélioration (+1 à +${f.upgradeMax}) augmente de ${Math.round(f.upgradeStep * 100)} % les PV, l'attaque, la défense et le soin de l'objet. Le prix grandit à chaque cran.`),
+    owned.length ? h('div', { class: 'bag-list' }, owned.map(upRow)) : h('p', { class: 'muted empty-note' }, 'Aucun objet à améliorer.'));
+
+  // ---- Forger
+  const list = craftableItems(content, ch);
+  const byDungeon = new Map();
+  for (const x of list) { if (!byDungeon.has(x.dungeonId)) byDungeon.set(x.dungeonId, []); byDungeon.get(x.dungeonId).push(x); }
+  const full = ch.inventory.length >= f.bagMax;
+  const craftRow = (x) => {
+    const rarity = rarityOf(content, x.def);
+    const can = !locked && shards >= x.cost && !full;
+    return h('div', { class: `forge-row r-${rarity.id}`, style: { '--rar': rarity.color }, dataset: { craft: x.id } },
+      h('div', { class: 'bag-icon' }, icon(x.def.slot, 22)),
+      h('div', { class: 'bag-main' },
+        h('div', { class: 'bag-line1' }, h('b', { class: 'bag-name' }, x.def.name), h('span', { class: 'rarity-pill' }, rarity.name), h('span', { class: 'bag-meta' }, `niveau ${x.def.level}`)),
+        statPills(content, x.def),
+        x.def.effect ? h('div', { class: 'gear-effect' }, icon('star', 12), x.def.effect) : null),
+      h('div', { class: 'bag-act' },
+        h('button', {
+          type: 'button', class: 'btn btn-small forge-craft', disabled: !can,
+          title: locked ? lockTitle : full ? 'Ton sac est plein.' : shards < x.cost ? `${x.cost} éclats requis (tu en as ${shards}).` : `Forger pour ${x.cost} éclats`,
+          onClick: () => act({ type: 'CHAR_CRAFT', itemId: x.id }, () => { play('crit'); toast(`${x.def.name} forgé : il est dans ton sac.`, 'good'); })
+        }, `Forger · ${x.cost}`)));
+  };
+  const craft = h('section', { class: 'forge-sec forge-craft-sec' },
+    h('h4', { class: 'sec-title' }, icon('gift', 16), 'Forger'),
+    h('p', { class: 'muted small' }, 'Les objets exclusifs d\'un donjon que ce personnage a terminé : plus besoin de compter sur la chance.'),
+    byDungeon.size
+      ? [...byDungeon].map(([did, xs]) => h('div', { class: 'forge-dungeon', dataset: { dungeon: did } },
+          h('h5', { class: 'bag-sec-title' }, icon('boss', 14), content.dungeons[did].name, h('small', null, xs.length)),
+          h('div', { class: 'bag-list' }, xs.map(craftRow))))
+      : h('p', { class: 'muted empty-note' }, 'Termine un donjon (en le choisissant au départ d\'une partie) pour pouvoir forger ses objets exclusifs.'));
+
+  return h('div', { class: 'forge' },
+    h('div', { class: 'forge-head' },
+      h('div', { class: 'forge-shards', title: 'Les éclats de ce personnage' }, icon('flame', 22), h('b', null, shards), h('span', null, `éclat${shards > 1 ? 's' : ''}`)),
+      h('p', { class: 'muted small' }, 'Le butin inutile n\'est jamais perdu : démantèle-le en éclats, puis améliore tes objets préférés ou forge les objets d\'un donjon déjà vaincu.')),
+    bulk, upgrade, craft);
 }
 
 // ============================================================

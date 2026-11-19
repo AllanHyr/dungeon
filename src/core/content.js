@@ -224,6 +224,7 @@ export function buildContent(raw) {
     modes: raw.modes.modes,
     tiles: raw.tiles.tiles,
     lowBlows: raw.events.lowBlows,
+    pacts: raw.events.pacts || [],
     rarities: raw.items.rarities,
     slotNames: raw.items.slots, // noms des emplacements (« Main droite »...)
     typeNames: raw.items.types, // noms des types d'objets : { name: « Anneau », section: « Anneaux » }
@@ -476,6 +477,21 @@ export function buildContent(raw) {
     if (!c.itemList.some((i) => i.level <= t.id)) fail(`tranche ${t.id} : aucun objet de niveau <= ${t.id}.`);
   }
   if (!c.trancheList.some((t) => t.available)) fail('aucune tranche disponible.');
+
+  // --- Coups bas et pactes (events.json)
+  const GAINS = ['buff', 'heal'];
+  const checkGain = (g, where) => {
+    if (!g) return;
+    if (!GAINS.includes(g.kind)) fail(`${where} : gain.kind "${g.kind}" inconnu (buff, heal).`);
+    if (g.kind === 'buff' && (typeof g.stat !== 'string' || typeof g.pct !== 'number' || !(g.combats >= 1))) fail(`${where} : un gain « buff » demande stat, pct et combats.`);
+    if (g.kind === 'heal' && !(g.hpPct > 0)) fail(`${where} : un gain « heal » demande hpPct.`);
+  };
+  for (const b of c.lowBlows) { if (!['poison', 'damage', 'skip', 'curse'].includes(b.kind)) fail(`coup bas "${b.id}" : kind "${b.kind}" inconnu.`); checkGain(b.gain, `coup bas "${b.id}"`); }
+  for (const p of c.pacts) {
+    if (!p.id || !p.name || !p.cost || !p.gain) fail(`pacte "${p.id}" : id, name, cost et gain sont obligatoires.`);
+    if (!['poison', 'damage', 'skip', 'curse'].includes(p.cost.kind)) fail(`pacte "${p.id}" : cost.kind "${p.cost.kind}" inconnu.`);
+    checkGain(p.gain, `pacte "${p.id}"`);
+  }
 
   // --- Zones de farm solo
   c.farm = { zones: {}, zoneList: [] };

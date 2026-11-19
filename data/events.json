@@ -1,5 +1,5 @@
 {
-  "_note": "Coups bas possibles. TOUS les malus sont temporaires et limités à la run en cours : ils ne touchent JAMAIS le personnage sauvegardé ni son équipement. 'kind' est interprété par le code (poison, damage, skip, curse).",
+  "_note": "COUPS BAS et PACTES (la case « coup bas »). TOUS les effets sont temporaires et limités à la partie en cours : ils ne touchent JAMAIS le personnage sauvegardé ni son équipement. Un coup bas vise un ALLIÉ : s'il réussit (le saboteur ne fait pas un jet de rebond <= reboundMax), la VICTIME a un droit de réponse (jet d'esquive >= dodgeMin, rules.json > lowBlow) ; si elle ne l'esquive pas, elle subit le coup et le saboteur gagne son 'gain'. Un PACTE se passe de victime (il marche donc aussi seul) : on paie un 'cost' tout de suite pour un 'gain'. 'kind' (coût, coup) : poison, damage (hpPct), skip, curse. 'gain' : buff (stat, pct, combats : comme le feu de camp) ou heal (hpPct).",
   "lowBlows": [
     {
       "id": "poison",
@@ -7,26 +7,85 @@
       "kind": "poison",
       "desc": "La cible perd des PV à chaque tour pendant un moment.",
       "pct": 0.08,
-      "turns": 4
+      "turns": 4,
+      "gain": {
+        "kind": "buff",
+        "stat": "damage",
+        "pct": 0.12,
+        "combats": 2,
+        "desc": "+12 % de dégâts pendant 2 combats"
+      }
     },
     {
       "id": "damage",
       "name": "Faire un croche-pied",
       "kind": "damage",
-      "desc": "La cible perd tout de suite 25% de ses PV (sans la tuer).",
-      "hpPct": 0.25
+      "desc": "La cible perd tout de suite 25 % de ses PV (sans la tuer).",
+      "hpPct": 0.25,
+      "gain": {
+        "kind": "heal",
+        "hpPct": 0.2,
+        "desc": "regagne 20 % de ses PV"
+      }
     },
     {
       "id": "skip",
       "name": "Assommer",
       "kind": "skip",
-      "desc": "La cible passe sa prochaine action."
+      "desc": "La cible passe sa prochaine action.",
+      "gain": {
+        "kind": "buff",
+        "stat": "taken",
+        "pct": -0.12,
+        "combats": 2,
+        "desc": "−12 % de dégâts reçus pendant 2 combats"
+      }
     },
     {
       "id": "curse",
       "name": "Maudire un objet",
       "kind": "curse",
-      "desc": "Un objet équipé de la cible perd tous ses bonus jusqu'à la fin de la run."
+      "desc": "Un objet équipé de la cible perd tous ses bonus jusqu'à la fin de la partie.",
+      "gain": {
+        "kind": "buff",
+        "stat": "damage",
+        "pct": 0.15,
+        "combats": 3,
+        "desc": "+15 % de dégâts pendant 3 combats"
+      }
+    }
+  ],
+  "pacts": [
+    {
+      "id": "autel_sang",
+      "name": "Autel de sang",
+      "desc": "Verser son sang sur l'autel : perdre 20 % de ses PV maintenant, pour +15 % de dégâts pendant 2 combats.",
+      "cost": {
+        "kind": "damage",
+        "hpPct": 0.2
+      },
+      "gain": {
+        "kind": "buff",
+        "stat": "damage",
+        "pct": 0.15,
+        "combats": 2,
+        "desc": "+15 % de dégâts pendant 2 combats"
+      }
+    },
+    {
+      "id": "pacte_ombre",
+      "name": "Pacte de l'ombre",
+      "desc": "Offrir un objet porté aux ombres (il est maudit jusqu'à la fin de la partie), pour −15 % de dégâts reçus pendant 3 combats.",
+      "cost": {
+        "kind": "curse"
+      },
+      "gain": {
+        "kind": "buff",
+        "stat": "taken",
+        "pct": -0.15,
+        "combats": 3,
+        "desc": "−15 % de dégâts reçus pendant 3 combats"
+      }
     }
   ]
 }

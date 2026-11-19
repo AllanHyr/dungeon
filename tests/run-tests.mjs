@@ -937,7 +937,6 @@ test('le plateau finit toujours par un boss et respecte les contraintes', () => 
       assert(b.filter((t) => t.type === 'combat').length >= 4);
       assert(b.some((t) => t.type === 'treasure'));
       assert(b[0].type !== 'combat');
-      if (size === 1) assert(!b.some((t) => t.type === 'low_blow'), 'pas de coup bas en solo');
       for (let i = 2; i < b.length; i++) assert(!(b[i].type === 'combat' && b[i - 1].type === 'combat' && b[i - 2].type === 'combat'), '3 combats de suite');
     }
   }
@@ -4188,6 +4187,62 @@ console.log('\n● Mage : charges arcaniques, Déflagration, brûlure, givre');
     assert(m.statuses.some((st) => st.id === 'stun'), 'gelé');
     eq(p.resources.arcane, 0);
     eq(fight('arcaniste').players[0].resources.arcane, 3, 'Flux (1) + Maîtrise arcanique (2)');
+  });
+}
+
+console.log('\n● Coups bas : gain du saboteur, esquive de la victime, pactes (aussi en solo)');
+{
+  const tile = (party, seed = 11) => {
+    const s = createRun(content, { tranche: 1, mode: 'tranche' }, party, seed);
+    s.dungeon.board[0].type = 'low_blow';
+    dispatch(s, { type: 'ADVANCE' });
+    return s;
+  };
+  /** Rejoue le jet en changeant le hasard jusqu'à obtenir `want(snapshot)`. */
+  const rollUntil = (s, want) => {
+    for (let k = 0; k < 400; k++) { const snap = cloneState(s); dispatch(snap, { type: 'ROLL' }); if (want(snap)) { dispatch(s, { type: 'ROLL' }); return true; } s.rng++; }
+    return false;
+  };
+
+  test('seul, la case propose des PACTES : un coût tout de suite, un bonus pour les prochains combats', () => {
+    const s = tile(makeParty(content, ['berserker'], 2, 'good', 3));
+    eq(s.pending.subtype, 'low_blow');
+    assert(!s.pending.options.some((o) => o.blow), 'seul : pas de victime');
+    const p = s.players[0];
+    const hp0 = p.hp;
+    assert(dispatch(s, { type: 'CHOOSE', option: 'pact:autel_sang' }).ok);
+    assert(p.hp < hp0, 'l\'autel coûte des PV');
+    assert(p.campBuffs.some((b) => b.stat === 'damage' && b.pct === 0.15 && b.combats === 2), '+15 % de dégâts pendant 2 combats');
+    assert(computeStats(s, p).damage > 1.1, 'le bonus compte dans les stats');
+  });
+
+  test('un coup bas réussi : la victime lance un dé d\'esquive ; ratée, elle subit et le saboteur gagne ; réussie, rien ne se passe', () => {
+    const party = makeParty(content, ['berserker', 'duelliste'], 2, 'none', 4);
+    // Cas 1 : le saboteur réussit, la victime n'esquive pas
+    const s = tile(party);
+    const [a, v] = s.players;
+    dispatch(s, { type: 'CHOOSE', option: s.pending.options.find((o) => o.blow === 'poison' && o.target === v.id).id });
+    assert(rollUntil(s, (x) => x.pending?.purpose === 'dodge'), 'pas de rebond');
+    eq([s.pending.purpose, s.pending.actor], ['dodge', v.id], 'c\'est la VICTIME qui lance le dé d\'esquive');
+    assert(rollUntil(s, (x) => x.phase !== 'tile' || !x.pending || x.pending.kind !== 'roll'));
+    const hit = v.statuses.some((st) => st.id === 'poison');
+    if (hit) assert(a.campBuffs?.some((b) => b.stat === 'damage'), 'le saboteur gagne +12 % de dégâts');
+    // Cas 2 : on force une esquive
+    const s2 = tile(party, 12);
+    const [a2, v2] = s2.players;
+    dispatch(s2, { type: 'CHOOSE', option: s2.pending.options.find((o) => o.blow === 'poison' && o.target === v2.id).id });
+    assert(rollUntil(s2, (x) => x.pending?.purpose === 'dodge'));
+    assert(rollUntil(s2, (x) => x.log.some((l) => l.text.includes('esquive'))), 'une esquive possible');
+    assert(!v2.statuses.some((st) => st.id === 'poison') && !(a2.campBuffs || []).length, 'esquivé : ni poison, ni gain');
+  });
+
+  test('la case « coup bas » peut maintenant apparaître en solo (elle y propose les pactes)', () => {
+    let seen = false;
+    for (let seed = 1; seed < 80 && !seen; seed++) {
+      const s = createRun(content, { tranche: 4, mode: 'tranche' }, makeParty(content, ['berserker'], 4, 'none', seed), seed);
+      seen = s.dungeon.board.some((t) => t.type === 'low_blow');
+    }
+    assert(seen, 'jamais vue en solo');
   });
 }
 

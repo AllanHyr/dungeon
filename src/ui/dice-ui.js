@@ -15,6 +15,7 @@ const PURPOSE = {
   trap: 'Jet de sauvegarde',
   purity: "Pureté de l'eau",
   rebound: 'Le coup bas va-t-il rebondir ?',
+  dodge: 'Esquiver le coup bas',
   haggle: 'Marchandage',
   ghost: 'Souffle du fantôme',
   attack: 'Attaque'

@@ -240,7 +240,13 @@ Dans `data/classes.json` (id `mage`). Les **dégâts à distance et en zone**, a
   Effet sur l'équilibrage (robots) : +3-4 points de victoire au niveau 8, rien de notable en tranche 4.
 - Pistes : un **repas** (bonus de nourriture pour tout le groupe), un **PNJ rare** au camp (changer de spécialisation), des **rencontres de camp** (une embuscade pendant le repos ?), un camp aléatoire en plus dans les longs donjons.
 
-## 4 bis. Le coup bas : à revoir
+## 4 bis. Le coup bas ✅ *(refait — premier jet)*
+- **Fait (style A + pactes B)** : un coup bas réussi donne un **gain** au saboteur (`gain` dans `data/events.json` : un bonus de quelques combats comme le feu de camp, ou des PV) ;
+  la **victime a un droit de réponse** (jet d'esquive, `rules.json > lowBlow.dodgeMin` = 14 : le coup est annulé et le saboteur ne gagne rien) ; le **rebond** reste (5 ou moins).
+  La case propose aussi des **pactes** (`pacts` : Autel de sang, Pacte de l'ombre) : un coût tout de suite pour un bonus ; ils marchent **seul**, la case peut donc apparaître en solo.
+  En ligne, c'est le joueur de la victime qui lance son dé d'esquive.
+
+### (historique) Le coup bas : à revoir
 - **Constat** (lu dans `src/core/tiles.js` et `data/events.json`) : 4 malus purs (poison, −25 % PV, assommer, maudire un objet) contre un allié ; risque de retour de bâton sur un jet ≤ 5. **Aucun gain pour celui qui frappe.** Et **en solo (un seul héros) il n'y a aucune cible** : la case ne propose que « ne rien faire ».
 - ✅ **Décision : style A** pour la case « coup bas » (gain pour le saboteur + droit de réponse pour la victime). **B** (pactes / autels, qui marchent aussi en solo) peut s'ajouter **comme case en plus**.
 - **Pistes** :

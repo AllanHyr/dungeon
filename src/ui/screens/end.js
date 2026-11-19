@@ -25,6 +25,7 @@ function socialText(run, ev) {
     case 'share': return `${name(ev.from)} a partagé une fontaine d'XP (+${ev.detail} XP chacun).`;
     case 'sabotage': return `${name(ev.from)} a joué un sale tour à ${name(ev.to)} (${c.lowBlows.find((b) => b.id === ev.detail)?.name || 'coup bas'}).`;
     case 'rebound': return `Le coup bas de ${name(ev.from)} s'est retourné contre lui !`;
+    case 'dodge': return `${name(ev.from)} a esquivé le coup bas de ${name(ev.to)}.`;
     case 'revive': return `${name(ev.from)} a ressuscité ${name(ev.to)}${ev.detail === 'fountain' ? ' grâce à la fontaine' : ''}.`;
     case 'ghost': return `${name(ev.from)} (fantôme) a aidé le groupe.`;
     default: return ev.kind;

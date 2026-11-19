@@ -182,7 +182,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   check(head.height < 80, `l'en-tête tient sur une ligne (${Math.round(head.height)} px)`);
   check(!(await phone.$eval('.tagline', (e) => e.offsetParent !== null)) && !(await phone.$eval('.header-actions .btn-label', (e) => e.offsetParent !== null)), 'seules les icônes restent dans l\'en-tête');
   const tabs = await phone.$$eval('.view-tab', (els) => els.map((e) => Math.round(e.getBoundingClientRect().y)));
-  check(tabs.length === 2 && tabs[0] === tabs[1], 'les deux onglets côte à côte');
+  check(tabs.length === 3 && tabs.every((y) => y === tabs[0]), 'les trois onglets côte à côte');
   check(!(await phone.$eval('.hero-card .char-stats', (e) => e.offsetParent !== null)), 'les fiches de héros sont raccourcies (pas de ligne de stats)');
   const heroH = await phone.$$eval('.hero-card', (els) => Math.max(...els.map((e) => e.getBoundingClientRect().height)));
   check(heroH < 140, `une fiche de héros fait moins de 140 px de haut (${Math.round(heroH)} px)`);

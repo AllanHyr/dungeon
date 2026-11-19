@@ -213,7 +213,7 @@ function renderFarmEnd(root, run) {
     h('div', { class: 'end-actions' },
       h('button', {
         class: 'btn btn-primary btn-xl', id: 'farm-again', disabled: !ch || !!pending, title: pending ? 'Choisis d\'abord ta récompense.' : '',
-        onClick: () => ch && startFarm(ch.id)
+        onClick: () => ch && startFarm(ch.id, res.zoneId)
       }, icon('beast', 22), 'Rejouer une session'),
       h('button', { class: 'btn btn-xl', id: 'farm-menu', onClick: () => go('menu') }, 'Retour au menu')),
     h('div', { class: 'end-players' }, xpCard, lootCard),

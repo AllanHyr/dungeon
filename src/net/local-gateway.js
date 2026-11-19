@@ -95,12 +95,12 @@ export function createLocalGateway({ content, dataUrl, storage }) {
       saveRun(run, store);
       return { ok: true, run };
     },
-    async startFarm(charId) {
+    async startFarm(charId, { zoneId } = {}) {
       const ch = profile.characters.find((c) => c.id === charId);
       if (!ch) return { ok: false, error: 'Personnage introuvable.' };
       let run;
       try {
-        run = createFarm(gw.content, ch, { xpCap: catchUpLevel(gw.content, profile.characters, ch) });
+        run = createFarm(gw.content, ch, { zoneId, xpCap: catchUpLevel(gw.content, profile.characters, ch) });
       } catch (e) {
         return { ok: false, error: e.message }; // ex. récompense pas encore choisie
       }

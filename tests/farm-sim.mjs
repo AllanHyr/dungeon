@@ -1,7 +1,7 @@
 // Simule des sessions de farm avec un robot : combien de vagues, d'éclats, d'XP de rattrapage et quelle récompense au choix
 // selon la classe, le niveau et l'équipement ? (XP : le robot rattrape un héros de niveau 8)
 // Sert à RÉGLER data/farm.json (vagues, récompenses). Les robots ne remplacent pas un vrai joueur, mais repèrent les murs.
-// Usage : node tests/farm-sim.mjs [sessions_par_ligne] [filtre]
+// Usage : [ZONE=fourres|fosses] node tests/farm-sim.mjs [sessions_par_ligne] [filtre]
 //   TUNE="..." n'agit pas ici : modifie data/farm.json (ou un exemplaire en mémoire) pour tester d'autres réglages.
 import { loadContent } from './load-data.mjs';
 import { makeParty, playFarm } from './bot.mjs';
@@ -9,7 +9,7 @@ import { makeParty, playFarm } from './bot.mjs';
 const content = loadContent();
 const N = Number(process.argv[2]) || 60;
 const filter = process.argv[3] || '';
-const zone = content.farm.zoneList[0];
+const zone = content.farm.zones[process.env.ZONE] || content.farm.zoneList[0]; // ZONE=fourres ou ZONE=fosses pour les autres zones
 
 function line(label, classId, level, gear, opts = {}) {
   if (filter && !label.includes(filter)) return;
@@ -17,7 +17,7 @@ function line(label, classId, level, gear, opts = {}) {
   const hist = {};
   for (let i = 0; i < N; i++) {
     const [ch] = makeParty(content, [classId], level, gear, i + 1);
-    const { state, actions: a } = playFarm(content, ch, 500 + i * 7919, undefined, { xpCap: 8, ...opts });
+    const { state, actions: a } = playFarm(content, ch, 500 + i * 7919, undefined, { xpCap: 8, zoneId: zone.id, ...opts });
     const r = state.result;
     waves += r.waves;
     xp += r.xp.earned;

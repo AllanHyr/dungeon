@@ -69,6 +69,18 @@ Une session de farm se sauvegarde comme un donjon (on peut fermer la page et rep
 
 Les monstres sont déjà adaptés à **un seul joueur** (`partyScaling` de `rules.json`) : moins de PV, moins d'attaque, moins d'actions.
 
+### Les zones actuelles
+
+| Zone | Tranche | Niveau requis (`minLevel`) | Monstres | Force (`waves.scale`) | Éclats / vague (+ boss) | Objets |
+| --- | --- | --- | --- | --- | --- | --- |
+| Les Terriers | 1 | 1 | rats, gelées, chauves-souris... (Roi des rats) | ×1 | 1 (+4) | niveau ≤ 1 |
+| Les Fourrés de Grouinval | 4 | 4 | cochons sauvages (Grand Verrat) | ×0,65 PV, ×0,7 attaque | 2 (+6) | niveau ≤ 4 |
+| Les Fosses aux ogres | 8 | 8 | ogres (Roi ogre) | ×0,7 PV, ×0,7 attaque | 3 (+10) | niveau ≤ 8 |
+
+`waves.scale` (facultatif) multiplie la force de tous les monstres d'une zone : c'est le bouton pour régler une zone sans toucher aux monstres
+(qui servent aussi dans les donjons, à plusieurs). Réglées aux robots pour qu'un héros au niveau requis, correctement équipé, tienne en moyenne
+6 à 7 vagues, comme aux Terriers au niveau 1. L'accueil propose les zones ouvertes au héros choisi et retient la dernière.
+
 ### Les récompenses (`rewards`)
 
 | Champ | Sens |
@@ -91,6 +103,7 @@ part des morts, XP de rattrapage (le robot rattrape un héros de niveau 8), écl
 ```bash
 node tests/farm-sim.mjs 60           # 60 sessions par ligne
 node tests/farm-sim.mjs 60 "niv 1"   # seulement les lignes qui contiennent "niv 1"
+ZONE=fourres node tests/farm-sim.mjs 30   # une autre zone (fourres, fosses)
 ```
 
 Repères actuels (robots, provisoires) : un niveau 1 sans équipement tient environ 4 vagues (≈ 4 éclats, ≈ 50 XP de rattrapage) ;

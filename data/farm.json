@@ -6,11 +6,12 @@
       "name": "Les Terriers",
       "description": "L'entrée des caves, grouillante de rats, de gelées et de chauves-souris. Un seul personnage suffit : on enchaîne les vagues tant qu'on tient debout.",
       "trancheId": 1,
+      "minLevel": 1,
       "monsterPool": ["rat_geant", "gelee_verte", "chauve_souris_vampire", "squelette_rouille", "gobelin_pillard"],
       "bossId": "roi_des_rats",
 
       "waves": {
-        "_note": "Vague n : count = countStart + (n-1)/extraMonsterEvery (plafonné à countMax). Les PV et l'attaque des monstres grandissent de hpPerWave / atkPerWave à chaque vague. Toutes les bossEvery vagues, c'est le boss de la zone (avec bossScale).",
+        "_note": "scale (facultatif) : { hp, atk } multiplie la force de TOUS les monstres de la zone (pour régler une zone sans toucher aux monstres). Vague n : count = countStart + (n-1)/extraMonsterEvery (plafonné à countMax). Les PV et l'attaque des monstres grandissent de hpPerWave / atkPerWave à chaque vague. Toutes les bossEvery vagues, c'est le boss de la zone (avec bossScale).",
         "countStart": 1,
         "extraMonsterEvery": 3,
         "countMax": 3,
@@ -36,6 +37,52 @@
           { "waves": 5, "rarityWeights": { "common": 35, "uncommon": 55, "rare": 10 } },
           { "waves": 10, "rarityWeights": { "uncommon": 65, "rare": 35 } },
           { "waves": 15, "rarityWeights": { "uncommon": 35, "rare": 65 } }
+        ]
+      }
+    },
+
+    "fourres": {
+      "name": "Les Fourrés de Grouinval",
+      "description": "Les bois autour des soues : des cochons sauvages par troupeaux entiers, et le Grand Verrat qui charge tout ce qui bouge.",
+      "trancheId": 4,
+      "minLevel": 4,
+      "scene": "terriers",
+      "monsterPool": ["porcelet_teigneux", "sanglier_des_fourres", "goret_boueux", "truie_colossale"],
+      "bossId": "grand_verrat",
+      "waves": { "scale": { "hp": 0.65, "atk": 0.7 }, "countStart": 1, "extraMonsterEvery": 3, "countMax": 3, "hpPerWave": 0.07, "atkPerWave": 0.05, "bossEvery": 5, "bossScale": { "hp": 0.65, "atk": 0.85 } },
+      "healBetweenWavesPct": 0.2,
+      "rewards": {
+        "xpMult": 1.0, "xpPerWave": 0.08, "catchUpXpMult": 1.5,
+        "shardsPerWave": 2, "bossShards": 6,
+        "choiceCount": 3, "itemMaxLevel": 4,
+        "choiceTiers": [
+          { "waves": 1, "rarityWeights": { "common": 60, "uncommon": 35, "rare": 5 } },
+          { "waves": 5, "rarityWeights": { "common": 25, "uncommon": 60, "rare": 15 } },
+          { "waves": 10, "rarityWeights": { "uncommon": 60, "rare": 40 } },
+          { "waves": 15, "rarityWeights": { "uncommon": 30, "rare": 70 } }
+        ]
+      }
+    },
+
+    "fosses": {
+      "name": "Les Fosses aux ogres",
+      "description": "Les galeries au bord du Gouffre, où les ogres jettent les restes de leurs festins. On s'y bat pour la gloire... et pour les os.",
+      "trancheId": 8,
+      "minLevel": 8,
+      "scene": "depths",
+      "monsterPool": ["ogrillon_lanceur", "ogre_brise_os", "ogresse_chamane", "ogre_des_cryptes"],
+      "bossId": "roi_ogre",
+      "waves": { "scale": { "hp": 0.7, "atk": 0.7 }, "countStart": 1, "extraMonsterEvery": 3, "countMax": 3, "hpPerWave": 0.07, "atkPerWave": 0.05, "bossEvery": 5, "bossScale": { "hp": 0.6, "atk": 0.8 } },
+      "healBetweenWavesPct": 0.2,
+      "rewards": {
+        "xpMult": 1.0, "xpPerWave": 0.08, "catchUpXpMult": 1.5,
+        "shardsPerWave": 3, "bossShards": 10,
+        "choiceCount": 3, "itemMaxLevel": 8,
+        "choiceTiers": [
+          { "waves": 1, "rarityWeights": { "common": 50, "uncommon": 42, "rare": 8 } },
+          { "waves": 5, "rarityWeights": { "common": 20, "uncommon": 60, "rare": 20 } },
+          { "waves": 10, "rarityWeights": { "uncommon": 55, "rare": 45 } },
+          { "waves": 15, "rarityWeights": { "uncommon": 25, "rare": 75 } }
         ]
       }
     }

@@ -571,9 +571,19 @@ function expeditionPlan(chars) {
 function farmPlan(chars, saved) {
   const { content } = app;
   const ui = app.ui;
-  const zone = content.farm.zoneList[0];
-  const r = zone.rewards;
   const selected = chars.find((c) => c.id === ui.farmChar) || null;
+  // La zone : celle choisie (gardée dans les réglages), sinon la plus haute que le héros peut faire
+  const open = (z) => !selected || selected.level >= (z.minLevel || 1);
+  let zone = content.farm.zones[app.profile.settings.farmZone];
+  if (!zone || !open(zone)) zone = [...content.farm.zoneList].reverse().find(open) || content.farm.zoneList[0];
+  const r = zone.rewards;
+  const pickZone = (z) => { app.profile.settings.farmZone = z.id; persistProfile(); play('click'); redraw(); };
+  const zonePicker = content.farm.zoneList.length > 1
+    ? h('div', { class: 'zone-picker', role: 'radiogroup', 'aria-label': 'Zone de farm' }, content.farm.zoneList.map((z) => h('button', {
+        type: 'button', class: `zone-pick ${z === zone ? 'on' : ''}`, role: 'radio', 'aria-checked': z === zone ? 'true' : 'false', dataset: { zone: z.id },
+        disabled: !open(z), title: open(z) ? z.description : `Niveau ${z.minLevel} requis`, onClick: () => pickZone(z)
+      }, h('b', null, z.name), h('small', null, open(z) ? `Tranche ${z.trancheId} · niv. ${z.minLevel || 1}+` : `Niveau ${z.minLevel} requis`))))
+    : null;
   const rarityName = (id) => content.rarities.find((x) => x.id === id)?.name || id;
 
   // ---- La zone
@@ -599,7 +609,8 @@ function farmPlan(chars, saved) {
 
   const panel = h('section', { class: 'panel home-plan' },
     h('h2', null, h('span', { class: 'step' }, '2'), 'La zone'),
-    h('div', { class: 'zone-card' },
+    zonePicker,
+    h('div', { class: 'zone-card', dataset: { zone: zone.id } },
       h('div', { class: 'zone-icon' }, icon('beast', 46)),
       h('div', { class: 'zone-body' },
         h('h3', null, zone.name),
@@ -614,13 +625,13 @@ function farmPlan(chars, saved) {
     alerts.map(([tone, text]) => h('div', { class: `farm-alert tone-${tone}` }, text)));
 
   // ---- Lancement
-  const check = selected ? canStartFarm(content, selected) : { ok: false, reason: '' };
+  const check = selected ? canStartFarm(content, selected, zone) : { ok: false, reason: '' };
   const launch = async () => {
     if (!selected) return toast('Choisis un héros.', 'bad');
     if (!check.ok) return toast(check.reason, 'bad');
     if (saved && !(await confirmBox({ title: 'Remplacer la partie en cours ?', text: 'Une partie est déjà en cours. La lancer écrasera sa progression.', okLabel: 'Nouvelle session', danger: true }))) return;
     play('click');
-    startFarm(selected.id);
+    startFarm(selected.id, zone.id);
   };
   const bar = launchBar({
     heroes: selected ? [selected] : [],

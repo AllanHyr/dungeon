@@ -36,8 +36,8 @@ export function waveInfo(zone, wave) {
     wave,
     boss,
     count: boss ? 1 : Math.min(w.countMax, w.countStart + Math.floor((wave - 1) / w.extraMonsterEvery)),
-    hpMult: (1 + w.hpPerWave * (wave - 1)) * (boss ? w.bossScale.hp : 1),
-    atkMult: (1 + w.atkPerWave * (wave - 1)) * (boss ? w.bossScale.atk : 1)
+    hpMult: (w.scale?.hp ?? 1) * (1 + w.hpPerWave * (wave - 1)) * (boss ? w.bossScale.hp : 1),
+    atkMult: (w.scale?.atk ?? 1) * (1 + w.atkPerWave * (wave - 1)) * (boss ? w.bossScale.atk : 1)
   };
 }
 
@@ -226,8 +226,9 @@ export function applyFarmResult(content, ch, state) {
 //  La récompense au choix (en attente sur le personnage)
 // ============================================================
 
-/** Peut-on lancer une session de farm ? { ok, reason } */
-export function canStartFarm(content, ch) {
+/** Peut-on lancer une session de farm (dans cette zone, la première par défaut) ? { ok, reason } */
+export function canStartFarm(content, ch, zone = content.farm.zoneList[0]) {
+  if (ch.level < (zone?.minLevel || 1)) return { ok: false, reason: `${zone.name} : niveau ${zone.minLevel} requis.` };
   if (ch.expedition) return { ok: false, reason: `${ch.name} est en expédition : attends son retour.` };
   if (ch.lootChoice?.length) return { ok: false, reason: 'Choisis d\'abord la récompense de ta dernière session.' };
   return { ok: true };

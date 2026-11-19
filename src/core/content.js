@@ -488,6 +488,7 @@ export function buildContent(raw) {
     if (w.countStart < 1 || w.countMax < w.countStart || w.extraMonsterEvery < 1) fail(`${where} : waves.countStart >= 1, countMax >= countStart et extraMonsterEvery >= 1 sont obligatoires.`);
     if (!w.bossScale || typeof w.bossScale.hp !== 'number' || typeof w.bossScale.atk !== 'number') fail(`${where} : waves.bossScale doit être { "hp": ..., "atk": ... }.`);
     if (typeof z.healBetweenWavesPct !== 'number') fail(`${where} : 'healBetweenWavesPct' manquant.`);
+    if (z.minLevel !== undefined && !(z.minLevel >= 1)) fail(`${where} : 'minLevel' doit valoir au moins 1.`);
     const r = z.rewards || {};
     for (const k of ['xpMult', 'xpPerWave', 'catchUpXpMult', 'shardsPerWave', 'bossShards', 'choiceCount', 'itemMaxLevel']) if (typeof r[k] !== 'number') fail(`${where} : rewards.${k} manquant (nombre).`);
     if (!(r.choiceCount >= 1)) fail(`${where} : rewards.choiceCount doit valoir au moins 1.`);

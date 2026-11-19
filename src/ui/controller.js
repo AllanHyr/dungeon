@@ -63,14 +63,15 @@ export async function startRun(setup, teamIds) {
 }
 
 /** Lance une session de farm solo avec ce personnage. */
-export async function startFarm(charId) {
+export async function startFarm(charId, zoneId = app.profile.settings.farmZone) {
   if (app.busy) return;
   app.busy = true;
   try {
-    const res = await app.gateway.startFarm(charId, { replace: !!savedRunInfo() });
+    const res = await app.gateway.startFarm(charId, { replace: !!savedRunInfo(), zoneId: zoneId || undefined });
     if (!res.ok) return toast(res.error, 'bad'); // ex. récompense pas encore choisie
     app.run = res.run;
     app.profile.settings.farmChar = charId;
+    app.profile.settings.farmZone = res.run.farm?.zoneId || null;
     app.profile.settings.view = 'farm';
     persistProfile();
     go('run');

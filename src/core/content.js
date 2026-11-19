@@ -67,7 +67,7 @@ export const ACHIEVEMENT_CONDITIONS = {
 };
 export const ACHIEVEMENT_REWARDS = ['skill', 'feature', 'title'];
 /** Les fonctions du jeu qu'un succès peut débloquer (et leur nom affiché). */
-export const FEATURES = { autoFarm: 'Farm automatique' };
+export const FEATURES = { grandesExpeditions: 'Grandes expéditions (une nuit)' };
 
 function fail(message) {
   throw new Error('Données du jeu invalides : ' + message);
@@ -506,6 +506,25 @@ export function buildContent(raw) {
     c.farm.zoneList.push(c.farm.zones[id]);
   }
   if (!c.farm.zoneList.length) fail('farm.json : aucune zone de farm.');
+
+  // --- Expéditions (farm.json > expeditions)
+  const ex = raw.farm.expeditions || {};
+  if (!(ex.maxActive >= 1)) fail("farm.json : expeditions.maxActive doit valoir au moins 1.");
+  if (!Array.isArray(ex.list) || !ex.list.length) fail('farm.json : expeditions.list est vide.');
+  const exIds = new Set();
+  for (const e of ex.list) {
+    const where = `expédition "${e.id}"`;
+    if (!e.id || exIds.has(e.id)) fail(`${where} : identifiant manquant ou en double.`);
+    exIds.add(e.id);
+    if (!(e.minutes > 0) || !(e.minLevel >= 1) || typeof e.name !== 'string') fail(`${where} : name, minutes (> 0) et minLevel (>= 1) sont obligatoires.`);
+    if (e.feature && !FEATURES[e.feature]) fail(`${where} : fonction "${e.feature}" inconnue.`);
+    const r = e.rewards || {};
+    if (!Array.isArray(r.shards) || r.shards.length !== 2 || !(r.shards[0] <= r.shards[1])) fail(`${where} : rewards.shards doit être [min, max].`);
+    for (const k of ['xpFraction', 'itemChance', 'itemMaxLevel']) if (typeof r[k] !== 'number') fail(`${where} : rewards.${k} manquant (nombre).`);
+    if (!r.rarityWeights || !Object.keys(r.rarityWeights).length) fail(`${where} : rewards.rarityWeights est vide.`);
+    for (const rar of Object.keys(r.rarityWeights)) if (c.rarityIndex[rar] === undefined) fail(`${where} : rareté "${rar}" inconnue.`);
+  }
+  c.farm.expeditions = { maxActive: ex.maxActive, list: ex.list.map((e) => ({ ...e })) };
 
   // --- Succès (et compétences qu'ils débloquent)
   c.achievements = {};

@@ -446,7 +446,7 @@ export function openHelpModal() {
         h('h3', null, 'La zone de farm (solo)'),
         h('p', null, "Un seul personnage affronte des vagues de monstres de plus en plus fortes, avec un boss régulier. Après chaque vague tu choisis : continuer ou t'arrêter. Si tu tombes, tu ne perds que la vague en cours. Chaque vague donne des éclats pour la forge ; à la fin, tu gardes 1 objet parmi 3, d'autant meilleurs que tu as tenu longtemps (les autres deviennent des éclats). L'XP du farm sert à rattraper : seul un héros plus bas que ton meilleur héros en gagne. Le meilleur équipement vient des donjons en équipe."),
         h('h3', null, 'Les succès'),
-        h('p', null, "Chaque personnage a ses succès (fiche > Succès) : finir un donjon en équipe, vaincre des vagues, atteindre un niveau d'équipement... Ils débloquent des compétences, des fonctions du jeu (le farm automatique) ou des titres, pour ce personnage-là."),
+        h('p', null, "Chaque personnage a ses succès (fiche > Succès) : finir un donjon en équipe, vaincre des vagues, atteindre un niveau d'équipement... Ils débloquent des compétences, des fonctions du jeu (les grandes expéditions) ou des titres, pour ce personnage-là."),
         h('h3', null, 'Mort et fantômes'),
         h('p', null, 'Un joueur mort devient un fantôme : il aide encore (bénir ou gêner un jet, éclairer la prochaine case). Il peut être ressuscité par une fontaine de vie ou par le Soigneur (avec un coût partagé : PV max en moins, uniquement pendant la run).'),
         h('h3', null, 'Les modes'),

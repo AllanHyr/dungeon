@@ -113,6 +113,8 @@ export function createRun(content, setup, characters, seed = Math.floor(Math.ran
   if (setup.dungeon && (!asked || asked.tranche !== tranche.id || asked.available === false)) throw new GameError("Ce donjon n'est pas disponible.");
   const dungeon = asked || content.dungeons[dungeonIdOf(content, { tranche: tranche.id })];
   if (new Set(characters.map((c) => c.id)).size !== characters.length) throw new GameError("Chaque personnage ne peut jouer qu'une fois.");
+  const away = characters.find((c) => c.expedition);
+  if (away) throw new GameError(`${away.name} est en expédition : attends son retour (ou rappelle-le).`);
 
   const state = {
     version: STATE_VERSION,

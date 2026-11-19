@@ -228,6 +228,7 @@ export function applyFarmResult(content, ch, state) {
 
 /** Peut-on lancer une session de farm ? { ok, reason } */
 export function canStartFarm(content, ch) {
+  if (ch.expedition) return { ok: false, reason: `${ch.name} est en expédition : attends son retour.` };
   if (ch.lootChoice?.length) return { ok: false, reason: 'Choisis d\'abord la récompense de ta dernière session.' };
   return { ok: true };
 }

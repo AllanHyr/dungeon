@@ -31,7 +31,7 @@ Les potions (`"slot": "consumable"`) ne se portent pas : elles restent dans le s
 * **Deux anneaux** : le premier libre est choisi ; si les deux sont pris, on **clique d'abord sur l'anneau à remplacer** dans la poupée, puis sur « Équiper ».
 * **Rien ne se perd** : un objet remplacé retourne toujours dans le sac.
 * **Niveau requis** : comme avant, il faut le niveau **réel** du personnage. En mode Tranche / Stasis, un objet de niveau supérieur à la tranche reste porté mais est **inactif**.
-* **Niveau d'équipement** = la somme des niveaux des objets portés (14 emplacements maximum). Le succès « Équipé pour la gloire » (farm automatique) demande **36**.
+* **Niveau d'équipement** = la somme des niveaux des objets portés (14 emplacements maximum). Le succès « Équipé pour la gloire » (grandes expéditions) demande **36**.
 * **La relique** est l'emplacement du « gameplay » : ses objets ont souvent un effet (`effect`, `modifiers`, `triggers`, `+1 PA`...).
   Il n'y en a que de rares (épiques et légendaires), pour l'instant six.
 

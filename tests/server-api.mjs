@@ -224,6 +224,14 @@ const main = async () => {
     const up = await fa({ type: 'CHAR_UPGRADE', uid: cr.json.crafted.uid });
     assert(up.json.ok && up.json.character.inventory.find((i) => i.uid === cr.json.crafted.uid).plus === 1, up.text);
     eq((await bob.get('/api/profile')).json.characters[0].shards, 21, 'les éclats sont enregistrés');
+    // Les expéditions : l'heure est celle du SERVEUR (le navigateur ne peut pas avancer sa montre)
+    const ex = await fa({ type: 'CHAR_EXPEDITION_START', expeditionId: 'patrouille', now: Date.now() + 1e9 });
+    assert(ex.json.ok && ex.json.character.expedition.end - ex.json.character.expedition.start === 30 * 60000 && ex.json.character.expedition.start <= Date.now(), ex.text);
+    const tooSoon = await fa({ type: 'CHAR_EXPEDITION_CLAIM' });
+    assert(!tooSoon.json.ok && /pas encore revenu/.test(tooSoon.json.error), tooSoon.text);
+    seed(app, bobId, kael.id, (ch) => { ch.expedition.end = Date.now() - 1; });
+    const claim = await fa({ type: 'CHAR_EXPEDITION_CLAIM' });
+    assert(claim.json.ok && claim.json.claim.shards >= 2 && claim.json.character.expedition === null, claim.text);
     const del = await bob.post('/api/character', { type: 'CHAR_DELETE', charId: kael.id });
     assert(del.json.ok && del.json.deletedId === kael.id, del.text);
     eq((await bob.get('/api/profile')).json.characters.length, 0);

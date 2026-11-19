@@ -1275,7 +1275,7 @@ test("un succès de farm se débloque quand sa condition est remplie, une seule 
   eq(titlesOf(content, ch), ['Chasseur de rats']);
   eq(checkAchievements(content, ch), [], 'jamais deux fois');
 });
-test("le niveau d'équipement est la somme des niveaux des objets portés, et 36 débloque le farm automatique", () => {
+test("le niveau d'équipement est la somme des niveaux des objets portés, et 36 débloque les grandes expéditions", () => {
   const ch = farmHero('duelliste', 4);
   eq(gearLevel(content, ch), 0);
   // un objet de tranche 4 dans chacun de 8 emplacements : 32, pas assez
@@ -1283,13 +1283,13 @@ test("le niveau d'équipement est la somme des niveaux des objets portés, et 36
   const slots8 = ['head', 'neck', 'shoulders', 'back', 'chest', 'hands', 'belt', 'legs'];
   slots8.forEach((slot, i) => { ch.equipment[slot] = { uid: `u${i}`, id: piece(slot) }; });
   eq(gearLevel(content, ch), 32);
-  assert(!hasFeature(content, ch, 'autoFarm'));
+  assert(!hasFeature(content, ch, 'grandesExpeditions'));
   assert(!checkAchievements(content, ch).some((a) => a.id === 'equipe_pour_la_gloire'), 'pas encore');
   ch.equipment.feet = { uid: 'u9', id: piece('feet') }; // le neuvième : 36
   eq(gearLevel(content, ch), 36);
   const fresh = checkAchievements(content, ch);
   assert(fresh.some((a) => a.id === 'equipe_pour_la_gloire'));
-  assert(hasFeature(content, ch, 'autoFarm'), 'fonction débloquée');
+  assert(hasFeature(content, ch, 'grandesExpeditions'), 'fonction débloquée');
   const p = achievementProgress(content, farmHero('duelliste', 4), content.achievements.equipe_pour_la_gloire);
   eq([p.current, p.target, p.done], [0, 36, false]);
 });
@@ -1345,7 +1345,7 @@ test('une faute dans achievements.json est expliquée (condition inconnue, doubl
   msg = run((raw) => { raw.achievements.achievements[3].rewards[0].skillId = 'duelliste_estoc'; });
   assert(msg.includes('duelliste_estoc') && msg.includes('classes'), msg);
   msg = run((raw) => { raw.achievements.achievements[4].rewards[0].feature = 'volerEnPlusDuVent'; });
-  assert(msg.includes('volerEnPlusDuVent') && msg.includes('autoFarm'), msg);
+  assert(msg.includes('volerEnPlusDuVent') && msg.includes('grandesExpeditions'), msg);
 });
 
 console.log('\n● Sauvegarde (localStorage + code d\'export)');
@@ -3995,6 +3995,69 @@ console.log('\n● Forge : démanteler, protéger, améliorer, forger');
       break;
     }
     assert(checked, 'aucune partie gagnée pour vérifier');
+  });
+}
+
+console.log('\n● Expéditions (le côté « idle »)');
+{
+  const H = 3600000;
+  const roster = () => {
+    const chars = [];
+    const mk = (id, level, classId = 'guerrier') => { const c = applyCharacterAction(content, chars, { type: 'CHAR_CREATE', name: id, classId }, { newId: () => id }).character; c.level = level; return c; };
+    return { chars, top: mk('top', 6), low: mk('low', 3), mid: mk('mid', 4), last: mk('last', 2) };
+  };
+  const go = (chars, a, now, rand) => applyCharacterAction(content, chars, a, { now, rand });
+  const seq = (...xs) => { let i = 0; return () => xs[i++ % xs.length]; };
+
+  test('partir puis revenir : pas de récompense avant l\'heure ; au retour, éclats + XP de rattrapage + parfois un objet', () => {
+    const { chars, low } = roster();
+    const t0 = 1e12;
+    assert(go(chars, { type: 'CHAR_EXPEDITION_START', charId: 'low', expeditionId: 'chasse' }, t0).ok);
+    eq([low.expedition.id, low.expedition.end - t0], ['chasse', 2 * H]);
+    assert(!go(chars, { type: 'CHAR_EXPEDITION_START', charId: 'low', expeditionId: 'patrouille' }, t0).ok, 'déjà parti');
+    const early = go(chars, { type: 'CHAR_EXPEDITION_CLAIM', charId: 'low' }, t0 + H);
+    assert(!early.ok && /pas encore revenu/.test(early.error), early.error);
+    const r = go(chars, { type: 'CHAR_EXPEDITION_CLAIM', charId: 'low' }, t0 + 2 * H, seq(0.99, 0.1, 0.5, 0.5, 0.5));
+    assert(r.ok, r.error);
+    eq(r.claim.shards, 10, 'le haut de la fourchette [6, 10]');
+    eq(r.claim.xp, Math.round(180 * 0.45), 'XP de rattrapage : 45 % du niveau suivant (180)');
+    assert(r.claim.item && low.inventory.some((i) => i.uid === r.claim.item.uid), 'un objet dans le sac');
+    assert(content.items[r.claim.item.id].level <= low.level && !content.itemDungeon[r.claim.item.id], 'objet de niveau <= au héros, jamais exclusif');
+    eq([low.expedition, low.shards, low.stats.expeditions], [null, 10, 1]);
+  });
+
+  test('le meilleur héros ne gagne pas d\'XP ; 3 héros en route au plus ; niveau requis ; la grande expédition se débloque avec un succès', () => {
+    const { chars, top, low, mid, last } = roster();
+    const t0 = 1e12;
+    assert(go(chars, { type: 'CHAR_EXPEDITION_START', charId: 'top', expeditionId: 'patrouille' }, t0).ok);
+    const r = go(chars, { type: 'CHAR_EXPEDITION_CLAIM', charId: 'top' }, t0 + H, seq(0.5));
+    eq([r.claim.xp, top.xp, top.level], [0, 0, 6], 'pas d\'XP pour le meilleur héros');
+    assert(!go(chars, { type: 'CHAR_EXPEDITION_START', charId: 'last', expeditionId: 'chasse' }, t0).ok, 'chasse : niveau 3 requis');
+    const big = go(chars, { type: 'CHAR_EXPEDITION_START', charId: 'top', expeditionId: 'grande_expedition' }, t0);
+    assert(!big.ok && /succès/.test(big.error), big.error);
+    top.achievements.equipe_pour_la_gloire = true;
+    for (const id of ['top', 'low', 'mid']) assert(go(chars, { type: 'CHAR_EXPEDITION_START', charId: id, expeditionId: id === 'top' ? 'grande_expedition' : 'patrouille' }, t0).ok, id);
+    const fourth = go(chars, { type: 'CHAR_EXPEDITION_START', charId: 'last', expeditionId: 'patrouille' }, t0);
+    assert(!fourth.ok && /3 au plus/.test(fourth.error), fourth.error);
+    // rappeler : tout de suite, sans rien
+    assert(go(chars, { type: 'CHAR_EXPEDITION_CANCEL', charId: 'mid' }, t0 + 1000).ok);
+    eq([mid.expedition, mid.shards || 0], [null, 0]);
+    assert(go(chars, { type: 'CHAR_EXPEDITION_START', charId: 'last', expeditionId: 'patrouille' }, t0).ok, 'une place s\'est libérée');
+  });
+
+  test('un héros en expédition ne part ni en donjon ni au farm ; l\'expédition est sauvegardée', () => {
+    const { chars, low } = roster();
+    go(chars, { type: 'CHAR_EXPEDITION_START', charId: 'low', expeditionId: 'patrouille' }, 1e12);
+    let msg = '';
+    try { createRun(content, { tranche: 1, mode: 'tranche' }, [low]); } catch (e) { msg = e.message; }
+    assert(/expédition/.test(msg), msg);
+    msg = '';
+    try { createFarm(content, low, { seed: 1 }); } catch (e) { msg = e.message; }
+    assert(/expédition/.test(msg), msg);
+    const back = sanitizeCharacter(content, JSON.parse(JSON.stringify(low)));
+    eq(back.expedition, low.expedition);
+    const gone = sanitizeCharacter(content, { ...JSON.parse(JSON.stringify(low)), expedition: { id: 'inconnue', start: 1, end: 2 } });
+    eq(gone.expedition, null, 'une expédition qui n\'existe plus est oubliée');
   });
 }
 

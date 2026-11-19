@@ -1,4 +1,4 @@
-# La zone de farm solo, la récompense au choix, la forge et les succès
+# La zone de farm solo, la récompense au choix, la forge, les expéditions et les succès
 
 Tout est décrit en JSON : **`data/farm.json`** (les zones de farm) et **`data/achievements.json`** (les succès).
 Tu n'as pas besoin de toucher au code pour ajouter une zone, régler les récompenses ou créer un succès.
@@ -20,7 +20,7 @@ Tu n'as pas besoin de toucher au code pour ajouter une zone, régler les récomp
   (`catchUpLevel` dans `src/core/farm.js`) : par le navigateur hors ligne, par le serveur en ligne (le joueur ne peut pas le choisir).
 * Pendant une session, on ne peut pas changer d'équipement (seulement boire des potions et se soigner entre deux vagues).
 * Le farm se joue avec **tout l'équipement** du personnage (aucune restriction de niveau) : un personnage bien équipé écrase la zone,
-  ce qui justifiera le farm automatique (étape suivante), débloqué par un succès.
+  et l'onglet **Expéditions** (§5) prend le relais quand on n'a pas le temps de jouer.
 
 Une session de farm se sauvegarde comme un donjon (on peut fermer la page et reprendre). Tant qu'une partie est en cours, ses personnages sont
 **verrouillés** (pas d'équipement, de compétences, de forge ni de choix de récompense) : cela évite d'écraser des changements au moment de la fin de session.
@@ -155,7 +155,7 @@ Un succès est **propre à un personnage**. Il a une **condition** et des **réc
 | `type` | Paramètres | Effet |
 | --- | --- | --- |
 | `skill` | `skillId` | la compétence devient **apprenable par ce personnage**. Avant le succès, elle est verrouillée (« Succès requis : … »). Le succès ne l'apprend pas à ta place : il faut toujours des points de compétence |
-| `feature` | `feature` (aujourd'hui : `autoFarm`) | débloque une fonction du jeu |
+| `feature` | `feature` (aujourd'hui : `grandesExpeditions`) | débloque une fonction du jeu |
 | `title` | `text` | un titre, affiché dans la fiche |
 
 Une compétence ne peut être débloquée que par **un seul** succès, et seulement par un succès réservé à sa classe (ou ouvert à toutes). Le jeu vérifie tout cela au chargement.
@@ -174,9 +174,19 @@ et sur l'écran de fin ; il reste acquis pour toujours (même si on réinitialis
 
 ---
 
-## 5. Pour la suite : le farm automatique
+## 5. Les expéditions (le côté « idle ») — `src/core/expeditions.js`
 
-La fonction `autoFarm` existe déjà comme **récompense de succès** (« Équipé pour la gloire » : niveau d'équipement 12) et l'accueil affiche où en est le personnage.
-Le farm lui-même est une machine à états 100 % JSON (`FARM_NEXT`, `FARM_STOP` et les actions de combat) : un robot peut donc la jouer sans écran
-(le robot des tests, `tests/bot.mjs`, fait exactement cela). Le farm automatique consistera à promouvoir ce robot dans `src/core/` et à lancer des sessions
-en arrière-plan jusqu'à remplir le coffre.
+Sur l'accueil, l'onglet **Expéditions** : on envoie un héros en mission, il revient au bout d'un temps **réel** (même jeu fermé) avec :
+
+* des **éclats** (entre `shards[0]` et `shards[1]`) ;
+* de l'**XP de rattrapage** (`xpFraction` × l'XP de son niveau suivant), seulement s'il est plus bas que ton meilleur héros, jamais au-delà (même règle qu'au farm) ;
+* avec la probabilité `itemChance`, un **objet** de niveau ≤ min(niveau du héros, `itemMaxLevel`), selon `rarityWeights` (jamais d'objet exclusif de donjon), directement dans le sac.
+
+Tout est dans `data/farm.json` > `expeditions` : `maxActive` (héros d'un même joueur en route à la fois, 3), puis la liste
+(`id`, `name`, `icon`, `minutes`, `minLevel`, `desc`, `rewards`, et `feature` pour une expédition débloquée par un succès).
+Aujourd'hui : **Patrouille** (30 min), **Chasse** (2 h, niveau 3) et **Grande expédition** (8 h, niveau 5, débloquée par le succès « Équipé pour la gloire »).
+
+* Un héros en expédition ne part **ni en donjon, ni au farm, ni dans un salon** ; on peut le **rappeler** à tout moment, mais il revient les mains vides.
+* L'expédition est enregistrée sur le personnage (`personnage.expedition = { id, start, end }`). L'heure vient de l'appelant :
+  en ligne c'est l'horloge du **serveur** (impossible d'avancer sa montre pour tricher), hors ligne celle du navigateur.
+* Actions : `CHAR_EXPEDITION_START { expeditionId }`, `CHAR_EXPEDITION_CLAIM` (refusée avant l'heure), `CHAR_EXPEDITION_CANCEL`.

@@ -179,7 +179,7 @@ export class GameService {
       const content = this.content();
       const chars = this.loadCharacters(userId);
       const res = applyCharacterAction(content, chars, action, {
-        newId: () => this.newCharId(), locked: this.lockedCharIds(userId), maxCharacters: this.config.maxCharacters
+        newId: () => this.newCharId(), locked: this.lockedCharIds(userId), maxCharacters: this.config.maxCharacters, now: Date.now()
       });
       if (!res.ok) return { ok: false, error: res.error };
       const now = Date.now();
@@ -187,7 +187,7 @@ export class GameService {
       else if (action.type === 'CHAR_DELETE') this.store.deleteCharacter(userId, res.deletedId);
       else this.store.saveCharacter(userId, res.character, now);
       return {
-        ok: true, character: res.character ?? null, deletedId: res.deletedId ?? null, picked: res.picked ?? null,
+        ok: true, character: res.character ?? null, deletedId: res.deletedId ?? null, picked: res.picked ?? null, claim: res.claim ?? null,
         shards: res.shards ?? null, salvaged: res.salvaged ?? null, crafted: res.crafted ?? null,
         unlocked: res.unlocked.map((a) => a.id)
       };

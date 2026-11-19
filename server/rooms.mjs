@@ -153,6 +153,7 @@ export class RoomService {
   hero(userId, charId) {
     const hero = typeof charId === 'string' ? this.game.loadCharacter(userId, charId) : null;
     if (!hero) throw new HttpError(404, 'Héros introuvable.');
+    if (hero.expedition) throw new HttpError(409, `${hero.name} est en expédition : attends son retour (ou rappelle-le).`);
     return hero;
   }
 

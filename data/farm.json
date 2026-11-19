@@ -39,5 +39,27 @@
         ]
       }
     }
+  },
+
+  "expeditions": {
+    "_note": "EXPÉDITIONS (le côté « idle ») : on envoie un héros, il revient au bout de 'minutes' (temps réel) avec des éclats (entre shards[0] et shards[1]), de l'XP de RATTRAPAGE (xpFraction × l'XP de son niveau suivant, seulement s'il est plus bas que ton meilleur héros, et jamais au-delà) et, avec la probabilité itemChance, un objet de niveau <= min(niveau du héros, itemMaxLevel), selon rarityWeights (jamais d'objet exclusif de donjon). maxActive : nombre de héros d'un même joueur en expédition à la fois. minLevel : niveau requis. feature : une fonction débloquée par un succès (achievements.json).",
+    "maxActive": 3,
+    "list": [
+      {
+        "id": "patrouille", "name": "Patrouille dans les Terriers", "icon": "beast", "minutes": 30, "minLevel": 1,
+        "desc": "Une petite ronde pour garder les rats à distance. Courte, sans danger.",
+        "rewards": { "shards": [2, 4], "xpFraction": 0.15, "itemChance": 0.3, "itemMaxLevel": 4, "rarityWeights": { "common": 70, "uncommon": 28, "rare": 2 } }
+      },
+      {
+        "id": "chasse", "name": "Chasse dans les cavernes", "icon": "target", "minutes": 120, "minLevel": 3,
+        "desc": "Traquer les bêtes des cavernes humides pendant deux heures.",
+        "rewards": { "shards": [6, 10], "xpFraction": 0.45, "itemChance": 0.7, "itemMaxLevel": 8, "rarityWeights": { "common": 30, "uncommon": 55, "rare": 15 } }
+      },
+      {
+        "id": "grande_expedition", "name": "Grande expédition", "icon": "boss", "minutes": 480, "minLevel": 5, "feature": "grandesExpeditions",
+        "desc": "Une nuit entière au-delà des Profondeurs. Réservée aux héros bien équipés.",
+        "rewards": { "shards": [18, 26], "xpFraction": 1.2, "itemChance": 1, "itemMaxLevel": 8, "rarityWeights": { "uncommon": 50, "rare": 50 } }
+      }
+    ]
   }
 }

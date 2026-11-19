@@ -6,7 +6,7 @@
 //     à droite   ② le donjon et sa difficulté (ou la zone, en farm solo)
 // La barre du bas résume le choix (qui, où) et lance la partie.
 // Tant qu'on n'a aucun héros, la page ne propose qu'une seule chose : en créer un.
-// Les deux façons de jouer (donjon en équipe / farm solo) sont deux onglets ; les héros sont les mêmes dans les deux.
+// Trois onglets (donjon en équipe / farm solo / expéditions) ; les héros sont les mêmes partout.
 // En LIGNE, le donjon se joue à plusieurs dans un salon, avec UN seul héros par joueur : l'onglet « Donjon en équipe » devient
 // « choisis ton héros, crée un salon (ou rejoins celui d'un ami) ». Une équipe de 1 à 4 héros du même joueur n'existe qu'en jeu local.
 
@@ -23,7 +23,8 @@ import { openSoundLab } from './sound-lab.js';
 import { dungeonPicker, dungeonBrief, comingSoonNote, selectedDungeon } from './dungeons.js';
 import {
   availableTranches, catchUpLevel, canStartFarm, gearLevel, hasFeature, achievementForFeature,
-  achievementProgress, skillPointsToSpend, pendingChoices
+  achievementProgress, skillPointsToSpend, pendingChoices,
+  expeditionRules, expeditionOf, expeditionLeft, expeditionSlots, canStartExpedition, durationText
 } from '../../core/index.js';
 
 const SAMPLE_NAMES = ['Aldric', 'Maeve', 'Borin', 'Lysa', 'Thorne', 'Elwen', 'Kael', 'Nyra', 'Gundar', 'Selene'];
@@ -68,11 +69,12 @@ export function renderMenu(root) {
   }
 
   // 'dungeon' : une équipe de 1 à 4 héros (jeu local) · 'room' : un seul héros, dans un salon (en ligne) · 'farm' : un seul héros, seul
-  const view = ui.view === 'farm' ? 'farm' : online ? 'room' : 'dungeon';
-  const plan = view === 'farm' ? farmPlan(chars, saved) : view === 'room' ? roomPlan(chars) : dungeonPlan(chars, saved);
+  const view = ui.view === 'farm' ? 'farm' : ui.view === 'expeditions' ? 'expeditions' : online ? 'room' : 'dungeon';
+  const plan = view === 'farm' ? farmPlan(chars, saved) : view === 'expeditions' ? expeditionPlan(chars) : view === 'room' ? roomPlan(chars) : dungeonPlan(chars, saved);
+  watchExpeditions();
   root.append(h('div', { class: 'menu' },
     ...top,
-    viewTabs(view === 'farm' ? 'farm' : 'dungeon'),
+    viewTabs(view === 'room' ? 'dungeon' : view),
     h('div', { class: 'home-grid' }, heroesPanel(chars, view), h('div', { class: 'home-right' }, plan.panel)),
     footNote(),
     plan.bar));
@@ -184,7 +186,8 @@ function viewTabs(view) {
       online
         ? ['dungeon', 'Donjon à plusieurs', 'boss', "Jusqu'à 4 joueurs, un héros chacun, explorent un donjon jusqu'au boss."]
         : ['dungeon', 'Donjon en équipe', 'boss', "Jusqu'à 4 héros explorent un donjon jusqu'au boss."],
-      ['farm', 'Zone de farm solo', 'treasure', 'Un seul héros enchaîne des vagues : des éclats, un objet au choix, et de l\'XP pour rattraper tes autres héros.']
+      ['farm', 'Zone de farm solo', 'treasure', 'Un seul héros enchaîne des vagues : des éclats, un objet au choix, et de l\'XP pour rattraper tes autres héros.'],
+      ['expeditions', 'Expéditions', 'timer', 'Envoie un héros en mission : il revient plus tard, même jeu fermé, avec des éclats, de l\'XP et parfois un objet.']
     ].map(([id, label, ic, hint]) =>
       h('button', {
         class: `view-tab ${view === id ? 'on' : ''}`, role: 'tab', 'aria-selected': view === id, 'data-view': id,
@@ -199,6 +202,7 @@ function viewTabs(view) {
 function heroesPanel(chars, view) {
   const farm = view === 'farm';
   const room = view === 'room';
+  const exped = view === 'expeditions';
   const locks = lockedCharIds();
   const cards = chars.map((ch) => heroCard(ch, view, locks));
   const slots = heroSlots();
@@ -208,8 +212,8 @@ function heroesPanel(chars, view) {
     : h('button', { class: 'char-card new-card', type: 'button', onClick: () => openCreateModal() }, icon('plus', 22), h('span', null, 'Nouveau héros'), h('small', { class: 'muted' }, `${app.profile.characters.length} / ${slots} places`));
   const count = app.ui.team.length;
   return h('section', { class: 'panel home-heroes' },
-    h('h2', null, h('span', { class: 'step' }, '1'), farm || room ? 'Ton héros' : 'Tes héros',
-      h('small', { class: 'muted' }, farm ? 'Un seul part au farm : clique pour le choisir.' : room ? 'Un seul héros par joueur : tes amis amènent le leur.' : count ? `${count} sur 4 dans l'équipe` : "Clique pour les ajouter à l'équipe (4 au maximum).")),
+    h('h2', null, h('span', { class: 'step' }, '1'), farm || room || exped ? 'Ton héros' : 'Tes héros',
+      h('small', { class: 'muted' }, exped ? 'Choisis qui part en expédition.' : farm ? 'Un seul part au farm : clique pour le choisir.' : room ? 'Un seul héros par joueur : tes amis amènent le leur.' : count ? `${count} sur 4 dans l'équipe` : "Clique pour les ajouter à l'équipe (4 au maximum).")),
     h('div', { class: 'hero-list' }, cards, newTile));
 }
 
@@ -227,6 +231,7 @@ function heroCard(ch, view, locks) {
       profile.settings.farmChar = ch.id;
       persistProfile();
     } else if (selected) ui.team.splice(idx, 1);
+    else if (ch.expedition) return toast(`${ch.name} est en expédition : attends son retour (onglet Expéditions).`, 'bad');
     else if (ui.team.length >= 4) return toast('Une équipe compte 4 héros au maximum.', 'bad');
     else ui.team.push(ch.id);
     play('click');
@@ -256,6 +261,13 @@ function heroCard(ch, view, locks) {
           class: 'hero-tag loot-btn has-items', type: 'button', title: 'La récompense de ta dernière session de farm : choisis un objet parmi ' + loot,
           onClick: (e) => { e.stopPropagation(); openLootModal(ch.id); }
         }, icon('treasure', 14), 'Récompense à choisir')
+      : null,
+    ch.expedition
+      ? h('button', {
+          class: `hero-tag exp-tag ${expeditionLeft(ch, Date.now()) ? '' : 'is-back'}`, type: 'button',
+          title: expeditionLeft(ch, Date.now()) ? `En expédition : ${expeditionOf(content, ch.expedition.id)?.name || ''}` : 'De retour : récupère ses récompenses',
+          onClick: (e) => { e.stopPropagation(); if (!expeditionLeft(ch, Date.now())) claimFor(ch); else { app.ui.view = 'expeditions'; redraw(); } }
+        }, icon('timer', 13), expeditionLeft(ch, Date.now()) ? `En expédition · ${durationText(expeditionLeft(ch, Date.now()))}` : 'De retour !')
       : null,
     locks.has(ch.id)
       ? h('span', { class: 'hero-tag hero-tag-bad', title: 'Ce héros est dans la partie en cours : reprends-la ou abandonne-la pour le modifier.' }, icon('lock', 13), 'Partie en cours')
@@ -439,6 +451,120 @@ function launchBar({ heroes, who, empty, where, fit = null, label, ic, id = null
 }
 
 // ============================================================
+//  ② Les expéditions (le côté « idle »)
+// ============================================================
+
+/** Récupère les récompenses d'un héros revenu d'expédition, et les annonce. */
+async function claimFor(ch) {
+  const res = await characterAction({ type: 'CHAR_EXPEDITION_CLAIM', charId: ch.id });
+  if (!res.ok) return;
+  const c = res.claim;
+  const bits = [`+${c.shards} éclats`];
+  if (c.xp) bits.push(`+${c.xp} XP${c.levels ? ` (niveau ${res.character.level} !)` : ''}`);
+  if (c.item) bits.push(app.content.items[c.item.id].name);
+  play(c.item ? 'crit' : 'coins');
+  toast(`${ch.name} est de retour : ${bits.join(' · ')}.`, 'good');
+  redraw();
+}
+
+/** Tant qu'un héros est en expédition, l'accueil se redessine régulièrement (le temps restant, puis « De retour ! »). */
+let expTimer = null;
+function watchExpeditions() {
+  const any = app.profile.characters.some((ch) => ch.expedition);
+  if (any && !expTimer) {
+    expTimer = setInterval(() => {
+      if (!app.profile.characters.some((ch) => ch.expedition)) { clearInterval(expTimer); expTimer = null; return; }
+      if (app.screen === 'menu' && !app.modal && !document.querySelector('.confirm-layer')) redraw();
+    }, 20000);
+  }
+}
+
+function expeditionPlan(chars) {
+  const { content } = app;
+  const ui = app.ui;
+  const rules = expeditionRules(content);
+  const now = Date.now();
+  const selected = chars.find((c) => c.id === ui.farmChar) || null;
+  const slots = expeditionSlots(content, chars);
+  const away = chars.filter((c) => c.expedition);
+  const rarName = (id) => content.rarities.find((x) => x.id === id)?.name.toLowerCase() || id;
+  const cap = selected ? catchUpLevel(content, chars, selected) : 0;
+
+  // ---- En route
+  const awayList = away.length
+    ? h('div', { class: 'exp-away' }, away.map((ch) => {
+        const exp = expeditionOf(content, ch.expedition.id);
+        const left = expeditionLeft(ch, now);
+        const total = ch.expedition.end - ch.expedition.start;
+        return h('div', { class: `exp-row ${left ? '' : 'is-back'}`, dataset: { char: ch.id } },
+          portrait(ch.classId, 40),
+          h('div', { class: 'exp-row-main' },
+            h('b', null, ch.name), h('span', { class: 'muted small' }, ` · ${exp?.name || 'Expédition'}`),
+            progressBar(total - left, total, left ? `${Math.round((100 * (total - left)) / total)} %` : "De retour !")),
+          left
+            ? h('div', { class: 'exp-row-act' },
+                h('span', { class: 'exp-left' }, icon('timer', 14), durationText(left)),
+                h('button', {
+                  class: 'btn btn-small btn-ghost exp-cancel', title: 'Le rappeler tout de suite (il ne rapporte rien)',
+                  onClick: async () => {
+                    if (!(await confirmBox({ title: `Rappeler ${ch.name} ?`, text: 'Il revient tout de suite, mais sans aucune récompense.', okLabel: 'Rappeler', danger: true }))) return;
+                    const res = await characterAction({ type: 'CHAR_EXPEDITION_CANCEL', charId: ch.id });
+                    if (res.ok) redraw();
+                  }
+                }, 'Rappeler'))
+            : h('button', { class: 'btn btn-primary btn-small exp-claim', onClick: () => claimFor(ch) }, icon('gift', 14), 'Récupérer'));
+      }))
+    : h('p', { class: 'muted' }, 'Personne n\'est en expédition pour l\'instant.');
+
+  // ---- Les expéditions proposées
+  const card = (exp) => {
+    const r = exp.rewards;
+    const check = selected ? canStartExpedition(content, chars, selected, exp.id) : { ok: false, reason: 'Choisis un héros.' };
+    const locked = exp.feature && selected && !hasFeature(content, selected, exp.feature);
+    const ach = locked ? achievementForFeature(content, selected, exp.feature) : null;
+    const best = Object.keys(r.rarityWeights).sort((a, b) => content.rarityIndex[b] - content.rarityIndex[a])[0];
+    return h('div', { class: `exp-card ${check.ok ? '' : 'is-off'}`, dataset: { exp: exp.id } },
+      h('div', { class: 'exp-icon' }, icon(exp.icon || 'timer', 30)),
+      h('div', { class: 'exp-body' },
+        h('div', { class: 'exp-head' }, h('b', null, exp.name), h('span', { class: 'chip' }, icon('timer', 13), durationText(exp.minutes * 60000)), exp.minLevel > 1 ? h('span', { class: 'muted small' }, `niv. ${exp.minLevel}+`) : null),
+        h('p', { class: 'muted small' }, exp.desc),
+        h('div', { class: 'zone-chips' },
+          h('span', { class: 'zone-chip' }, icon('flame', 14), `${r.shards[0]} à ${r.shards[1]} éclats`),
+          h('span', { class: 'zone-chip', title: 'Seulement pour un héros plus bas que ton meilleur héros' }, icon('star', 14), `XP de rattrapage : ${Math.round(r.xpFraction * 100)} % d'un niveau`),
+          h('span', { class: 'zone-chip' }, icon('treasure', 14), r.itemChance >= 1 ? `Un objet (jusqu'à ${rarName(best)})` : `${Math.round(r.itemChance * 100)} % : un objet (jusqu'à ${rarName(best)})`)),
+        ach ? h('div', { class: 'exp-lock' },
+          h('span', { class: 'muted small' }, icon('lock', 12), ` Succès « ${ach.name} » : ${ach.desc}`),
+          (() => { const prog = achievementProgress(content, selected, ach); return progressBar(prog.raw, prog.target); })()) : null),
+      h('button', {
+        class: 'btn btn-primary exp-go', disabled: !check.ok, title: check.ok ? '' : check.reason,
+        onClick: async () => {
+          const res = await characterAction({ type: 'CHAR_EXPEDITION_START', charId: selected.id, expeditionId: exp.id });
+          if (res.ok) { play('click'); toast(`${selected.name} part : ${exp.name} (retour dans ${durationText(exp.minutes * 60000)}).`, 'good'); redraw(); }
+        }
+      }, selected ? `Envoyer ${selected.name}` : 'Envoyer'));
+  };
+
+  const notes = [];
+  if (selected) {
+    if (selected.expedition) notes.push(['info', `${selected.name} est déjà en expédition.`]);
+    else notes.push(cap
+      ? ['good', `Rattrapage : ${selected.name} gagnera de l'XP en expédition, jusqu'au niveau ${cap} (celui de ton meilleur héros).`]
+      : ['info', `${selected.name} n'est en retard sur aucun de tes héros : ses expéditions rapportent des éclats et des objets, pas d'XP.`]);
+  }
+
+  const panel = h('section', { class: 'panel home-plan exp-plan' },
+    h('h2', null, h('span', { class: 'step' }, '2'), 'Expéditions',
+      h('small', { class: 'muted' }, `${slots.used} / ${slots.max} héros en route · ils avancent même jeu fermé`)),
+    h('h3', { class: 'sub' }, 'En route'),
+    awayList,
+    h('h3', { class: 'sub' }, 'Partir'),
+    notes.map(([tone, text]) => h('div', { class: `farm-alert tone-${tone}` }, text)),
+    h('div', { class: 'exp-list' }, rules.list.map(card)),
+    h('p', { class: 'muted small' }, 'Un héros en expédition ne peut pas partir en donjon ni au farm. Tu peux le rappeler à tout moment, mais il revient alors les mains vides.'));
+  return { panel, bar: null };
+}
+
+// ============================================================
 //  ② La zone de farm solo
 // ============================================================
 
@@ -471,22 +597,6 @@ function farmPlan(chars, saved) {
   const stats = selected?.stats;
   const chip = (ic, text) => h('span', { class: 'zone-chip' }, icon(ic, 15), text);
 
-  // ---- Le farm automatique (il arrive plus tard : ici on montre seulement où en est le héros)
-  const autoAch = selected ? achievementForFeature(content, selected, 'autoFarm') : null;
-  let autoBody;
-  if (!selected) autoBody = h('p', { class: 'muted' }, 'Choisis un héros.');
-  else if (hasFeature(content, selected, 'autoFarm')) {
-    autoBody = h('div', { class: 'auto-card unlocked' }, icon('check', 22),
-      h('div', null, h('b', null, 'Débloqué !'), h('div', { class: 'muted small' }, `${selected.name} pourra bientôt farmer tout seul, même quand tu n'es pas là (cette fonction arrive à l'étape suivante).`)));
-  } else if (autoAch) {
-    const prog = achievementProgress(content, selected, autoAch);
-    autoBody = h('div', { class: 'auto-card' }, icon('lock', 22),
-      h('div', { class: 'auto-body' },
-        h('b', null, `Verrouillé — succès « ${autoAch.name} »`),
-        h('div', { class: 'muted small' }, autoAch.desc),
-        progressBar(prog.raw, prog.target)));
-  } else autoBody = h('p', { class: 'muted' }, 'Aucun succès ne débloque cette fonction.');
-
   const panel = h('section', { class: 'panel home-plan' },
     h('h2', null, h('span', { class: 'step' }, '2'), 'La zone'),
     h('div', { class: 'zone-card' },
@@ -501,9 +611,7 @@ function farmPlan(chars, saved) {
           chip('star', 'XP de rattrapage')),
         h('details', { class: 'zone-more' }, h('summary', null, 'Comment ça marche ?'), h('ul', { class: 'zone-facts' }, facts.map((f) => h('li', null, f)))),
         stats ? h('div', { class: 'zone-record' }, icon('star', 16), `Record de ${selected.name} : ${stats.farmBest} vague${plural(stats.farmBest, '', 's')} · ${stats.farmWaves} vague${plural(stats.farmWaves, '', 's')} vaincue${plural(stats.farmWaves, '', 's')} au total`) : null)),
-    alerts.map(([tone, text]) => h('div', { class: `farm-alert tone-${tone}` }, text)),
-    h('h3', { class: 'sub' }, 'Farm automatique ', h('small', { class: 'muted' }, '(à débloquer : on ne démarre pas en roulant sur tout)')),
-    autoBody);
+    alerts.map(([tone, text]) => h('div', { class: `farm-alert tone-${tone}` }, text)));
 
   // ---- Lancement
   const check = selected ? canStartFarm(content, selected) : { ok: false, reason: '' };

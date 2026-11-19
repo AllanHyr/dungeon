@@ -27,6 +27,7 @@ export function createCharacter(content, { id, name, classId }) {
     equipment,
     shards: 0, // les éclats de la forge (en démantelant des objets)
     locked: [], // les objets protégés (cadenas) : on ne peut pas les démanteler
+    expedition: null, // { id, start, end } : le héros est en expédition (voir expeditions.js)
     lootChoice: [], // la récompense du farm en attente : 3 objets, on en garde un (voir farm.js)
     achievements: {}, // succès débloqués par CE personnage : { id: true }
     stats: newCharacterStats()
@@ -42,6 +43,7 @@ export function newCharacterStats() {
     farmRuns: 0, // sessions de farm terminées
     farmWaves: 0, // vagues de farm vaincues, au total
     farmBest: 0, // record : vagues vaincues dans une même session
+    expeditions: 0, // expéditions terminées
     dungeons: {}, // donjons terminés, un par un : { "gouffre_aux_ogres": 2 }
     bestiary: {}, // monstres vaincus : { "rat_geant": 14 }
     found: {}, // objets exclusifs déjà rapportés : { "massue_de_gromm": true }

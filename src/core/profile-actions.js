@@ -2,7 +2,7 @@
 //  profile-actions.js — Tout ce qu'on peut faire à un personnage HORS d'une partie
 // ============================================================
 // Créer, supprimer, équiper, retirer un objet, apprendre une compétence, réinitialiser les compétences, choisir sa spécialisation
-// et son deck de sorts, choisir la récompense du farm ; démanteler, protéger, améliorer et forger des objets (voir forge.js).
+// et son deck de sorts, choisir la récompense du farm, partir en expédition et en revenir ; démanteler, protéger, améliorer et forger des objets (voir forge.js).
 //
 // C'est le MÊME code qui s'exécute :
 //   - dans le navigateur, quand on joue seul (la démo publiée) : les personnages sont dans le navigateur ;
@@ -19,13 +19,14 @@
 import { createCharacter, learnSkill, resetSkills, setSpec, setDeck } from './progression.js';
 import { equipFromBag, unequipToBag } from './items.js';
 import { pickLoot } from './farm.js';
+import { startExpedition, claimExpedition, cancelExpedition } from './expeditions.js';
 import { salvageValue, canUpgrade, craftableItems, bulkSalvageList, ownedItems, forgeRules } from './forge.js';
 import { checkAchievements } from './achievements.js';
 import { EQUIP_SLOTS } from './content.js';
 import { GameError, assert } from './util.js';
 
 /** Les actions acceptées (le champ `type` d'une demande). */
-export const CHARACTER_ACTIONS = ['CHAR_CREATE', 'CHAR_DELETE', 'CHAR_EQUIP', 'CHAR_UNEQUIP', 'CHAR_LEARN', 'CHAR_RESET_SKILLS', 'CHAR_SET_SPEC', 'CHAR_SET_DECK', 'CHAR_PICK_LOOT',
+export const CHARACTER_ACTIONS = ['CHAR_CREATE', 'CHAR_DELETE', 'CHAR_EQUIP', 'CHAR_UNEQUIP', 'CHAR_LEARN', 'CHAR_RESET_SKILLS', 'CHAR_SET_SPEC', 'CHAR_SET_DECK', 'CHAR_PICK_LOOT', 'CHAR_EXPEDITION_START', 'CHAR_EXPEDITION_CLAIM', 'CHAR_EXPEDITION_CANCEL',
   'CHAR_SALVAGE', 'CHAR_SALVAGE_BULK', 'CHAR_LOCK', 'CHAR_UPGRADE', 'CHAR_CRAFT'];
 
 /** Combien de personnages au maximum (une limite de sécurité pour une base de données partagée). */
@@ -52,7 +53,9 @@ export function cleanName(name) {
  * @param action      { type: 'CHAR_...', charId?, ... }
  * @param ctx         { newId: () => string  (obligatoire pour créer),
  *                      locked?: Set<string>  (personnages engagés dans une partie : on n'y touche pas),
- *                      maxCharacters?: number }
+ *                      maxCharacters?: number,
+ *                      now?: number  (l'heure, en ms : celle du SERVEUR en ligne — les expéditions en dépendent),
+ *                      rand?: () => number  (le hasard des récompenses d'expédition ; Math.random par défaut) }
  * @returns { ok:true, character?, deletedId?, unlocked:[succès débloqués], picked?, shards? }
  *       ou { ok:false, error:"..." } (rien n'a été modifié)
  */
@@ -170,6 +173,20 @@ export function applyCharacterAction(content, characters, action, ctx = {}) {
         ch.inventory.push(inst);
         return { ok: true, character: ch, crafted: inst, unlocked: checkAchievements(content, ch) };
       }
+      case 'CHAR_EXPEDITION_START': {
+        // Envoyer le héros en expédition : il revient au bout du temps prévu (temps réel)
+        assert(typeof action.expeditionId === 'string', 'Expédition invalide.');
+        startExpedition(content, characters, ch, action.expeditionId, ctx.now ?? Date.now());
+        break;
+      }
+      case 'CHAR_EXPEDITION_CLAIM': {
+        // Le héros est revenu : on récupère ses récompenses (éclats, XP de rattrapage, parfois un objet)
+        const claim = claimExpedition(content, characters, ch, ctx.now ?? Date.now(), ctx.rand || Math.random);
+        return { ok: true, character: ch, claim: { expeditionId: claim.expedition?.id ?? null, shards: claim.shards, xp: claim.xp, levels: claim.levels, item: claim.item }, unlocked: checkAchievements(content, ch) };
+      }
+      case 'CHAR_EXPEDITION_CANCEL':
+        cancelExpedition(ch);
+        break;
       default:
         throw new GameError(`Action inconnue : ${action.type}`);
     }

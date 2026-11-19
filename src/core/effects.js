@@ -256,7 +256,8 @@ export function applyEffect(state, caster, e, targets, ctx) {
     case 'damage': {
       const enrage = caster.kind === 'monster' ? enrageFactor(state) : 1;
       // Puissance : fixe, plus (facultatif) un bonus par % de PV MANQUANTS du lanceur (ex. la Punition du Sacrieur), calculé au moment du coup.
-      const basePower = (e.power ?? 1) + (e.powerPerMissingHp ? e.powerPerMissingHp * missingHpPct(state, caster) : 0);
+      // ... et (facultatif) un bonus par point de ressource DÉPENSÉ par la compétence (`powerPerSpent`, avec `spend.all` : la Déflagration du Mage).
+      const basePower = (e.power ?? 1) + (e.powerPerMissingHp ? e.powerPerMissingHp * missingHpPct(state, caster) : 0) + (e.powerPerSpent ? e.powerPerSpent * (ctx.spent || 0) : 0);
       for (const hit of units) {
         const u = redirectedTarget(state, caster, hit);
         if (!u.alive) continue;
@@ -572,8 +573,9 @@ export function castSkill(state, caster, sk, pickedId, opts = {}) {
 
   // 1) Paiement
   if (inCombat) caster.pa -= skillPaCost(caster, sk, state); // (0 pour la 1re utilisation d'une compétence `freeFirst`, ou sans marque pour `freeIfNoMark`)
-  const spent = sk.spend ? sk.spend.amount : 0;
-  if (sk.spend) caster.resources[sk.spend.id] = (caster.resources[sk.spend.id] || 0) - sk.spend.amount;
+  // `spend.all` : la compétence dépense TOUTE la ressource (au moins `amount`) ; ses effets peuvent grandir avec ce qui a été dépensé (`powerPerSpent`).
+  const spent = sk.spend ? (sk.spend.all ? Math.max(sk.spend.amount, caster.resources[sk.spend.id] || 0) : sk.spend.amount) : 0;
+  if (sk.spend) caster.resources[sk.spend.id] = (caster.resources[sk.spend.id] || 0) - spent;
   if (sk.cooldown) caster.cooldowns[sk.id] = sk.cooldown;
   if (sk.oncePerDungeon) caster.usedOnce[sk.id] = true;
   if (sk.perCombat || sk.freeFirst) caster.combatUses[sk.id] = (caster.combatUses[sk.id] || 0) + 1;
@@ -594,7 +596,7 @@ export function castSkill(state, caster, sk, pickedId, opts = {}) {
   log(state, `${caster.name} utilise ${sk.name}${on}${total !== null ? ` (D20 : ${total})` : ''}.`, 'combat');
   emit(state, { type: 'skill', unitId: caster.id, skillId: sk.id, outcome, total, targets: targets.map((t) => t.id) });
 
-  const ctx = { skill: sk, outcome, modeId: opts.modeId };
+  const ctx = { skill: sk, outcome, modeId: opts.modeId, spent };
 
   // 4) Échec critique : la compétence ne fait rien (et peut avoir un prix)
   if (outcome === 'fumble') {

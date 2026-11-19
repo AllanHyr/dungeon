@@ -109,12 +109,14 @@ function scoreSkill(state, me, s) {
       const per = (aim.length ? aim : [null]).map((t) => {
         const tm = t ? Math.max(0, (1 - hpRatio(state, t)) * 100) : 0;
         let pw = (e.power ?? 1) + (e.powerPerMissingHp || 0) * missing + (e.powerPerTargetMissingHp || 0) * tm;
+        if (e.powerPerSpent && sk.spend) pw += e.powerPerSpent * (sk.spend.all ? me.resources?.[sk.spend.id] || 0 : sk.spend.amount); // (la Déflagration du Mage : plus de charges, plus fort)
         for (const b of e.bonus || []) if (t && (!b.ifTarget || okTarget(b.ifTarget, t))) pw += b.power;
         if (e.ifTarget && t && !okTarget(e.ifTarget, t)) return 0;
         return pw * (t ? 1 + targetDamagePct(state, me, t) : 1);
       });
       const total = sk.target === 'enemies' ? per.reduce((a, b) => a + b, 0) : per[0] * nTargets;
       score += total * ev * 10;
+      if (sk.spend?.all && (me.resources?.[sk.spend.id] || 0) < 3) score *= 0.5; // (tout dépenser avec peu de charges : du gâchis, on attend)
       if (e.lifesteal) score += 2;
     } else if (e.type === 'heal' || e.type === 'hot' || e.type === 'shield') {
       // On n'empile pas deux fois le même soin sur la durée / un gros bouclier sur celui qui en a déjà un.

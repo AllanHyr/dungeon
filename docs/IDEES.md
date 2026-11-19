@@ -206,13 +206,21 @@ Dans `data/classes.json` (id `barde`). Le **soutien** du groupe, au rang arrièr
   ⚠ Troubadour et Skald un peu au-dessus de leurs équivalents ; leviers : les chants (aura), la Strophe, la relance du Tempo. Les robots donnent le Tempo à l'allié qui frappe le plus fort ; un joueur pourra faire mieux (rejouer un soigneur au bon moment).
 - ❓ **Questions** : le Tempo « tour de plus » est-il trop fort (le limiter à une fois par combat ?) ; faut-il un 4e chant (vitesse : initiative) ?
 
-### Mage *(nouveau)* — dégâts à distance / zone
-- **Écoles de magie** = spécialisations (feu, givre, arcanes, etc.).
-- **Nécromancien** : idée de l'intégrer **comme école du mage**.
-  - ⚠ **Invoquer des créatures n'existe pas dans le moteur** (les unités ne sont créées qu'au début du combat). 🔴
-  - Version simple : « familiers » = un état + des attaques automatiques liées au mage (pas de vraie unité). 🟡
-  - Version complète : de vraies unités alliées créées en cours de combat (frise d'initiative, ciblage, IA des familiers, interface, serveur). 🔴
-  - Une école nécro **sans** invocation est possible tout de suite (drains de vie, malédictions, `dot`, `drain`).
+### Mage ✅ *(écrit — premier jet, valeurs à régler en jouant)*
+Dans `data/classes.json` (id `mage`). Les **dégâts à distance et en zone**, au rang arrière, fragile (PV 38, attaque 7,0, défense 2,2, initiative 9).
+
+- **Ressource : charges arcaniques** (max 5). Le passif *Flux arcanique* en donne 1 au début de chaque combat ; ses sorts ordinaires en donnent +1 ; les grands sorts en dépensent (Boule de feu 2, Météore 3).
+- **Sort de classe : Déflagration** : il libère **toutes** ses charges sur un ennemi (puissance 0,5 + 0,45 par charge : 2,75 avec 5 charges). Nouvelles briques du moteur : `"spend": { "id": ..., "amount": 1, "all": true }` et `"powerPerSpent"` sur un effet de dégâts.
+- **Les éléments** : le **feu fait brûler** (un `dot` de clé `brulure`), le **givre engourdit** (−15 % de dégâts infligés). Nouvelle condition : **`targetKey`** (« la cible porte CE statut précis », ex. `{ "targetKey": "brulure" }`).
+- **Sorts de base** : Trait de feu, Éclair de givre, Projectiles arcaniques (tous rangs, 2 PA), Barrière de mana (deck de départ) ; Nova de givre (L3), Boule de feu (L4), Évocation (L5, +2 charges), Météore (L6).
+- **Écoles (spécialisations)** :
+  | | Idée | Palier 4 (automatique) | Palier 8 (1 parmi 3) | Ultime 20 *(annoncé)* |
+  | --- | --- | --- | --- | --- |
+  | **Pyromancien** (Dégâts) | Tout brûle | Combustion (brûlures +40 %, +15 % contre ce qui brûle), Embrasement (+0,8 si la cible brûle), Trait ardent, Pyroclasme | Phénix (renaît une fois) · Mur de flammes · Feu intérieur (+20 % à 3 charges) | Cataclysme |
+  | **Cryomancien** (Contrôle) | Gèle et se protège | Cœur de glace (−10 % de dégâts reçus, boucliers +25 %, +30 % contre un ennemi gelé), Prison de glace (fait sauter un tour), Éclair glacial, Armure de givre | Blizzard · Bloc de glace · Hiver éternel | Ère glaciaire |
+  | **Arcaniste** (Dégâts) | Les charges, l'explosif | Maîtrise arcanique (+2 charges au départ, +8 %), Surcharge (+2 charges), Missiles arcaniques, Évocation supérieure | Distorsion temporelle (+2 PA) · Écho arcanique · Puissance brute | Singularité |
+- **Équilibrage (robots ; `node tests/mage-sim.mjs 40`, Guerrier + Prêtre + dps)** : Profondeurs niv. 8 : Assassin ~88 % · Skald ~98 % · **Pyromancien ~98 %** · **Cryomancien ~100 %** (moins de dégâts, mais le contrôle protège le groupe) · **Arcaniste ~100 %** (le plus de dégâts). Sans spécialisation ~75 %. **Seul** (Crypte niv. 6) : 3 à 25 %, comme l'Assassin.
+- **Plus tard** : le **Nécromancien** comme 4e école, quand le moteur saura créer de vraies créatures alliées en combat (l'effet `summon` n'existe que pour les monstres).
 
 ---
 

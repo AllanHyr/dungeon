@@ -595,5 +595,48 @@ ${notes}
   return wrap(u, { defs, inner, bg: ['#1c2650', '#06070f', '#9ab8ff'], at: [32, 36], halo: 0.34 });
 }
 
+/** Le Mage : capuche pointue violet profond brodée de runes d'or, barbe courte, yeux qui brillent d'un bleu arcanique, une flamme dans une main, un éclat de givre dans l'autre, des runes qui flottent. */
+function mage(u) {
+  const defs = [
+    lin(`${u}skin`, [[0, '#f0d0b2'], [0.55, '#c4946e'], [1, '#6a4430']]),
+    lin(`${u}skinD`, [[0, '#a3775a'], [1, '#4a3020']], [0, 0, 0, 1]),
+    lin(`${u}robe`, [[0, '#5a3aa0'], [0.55, '#2e1a66'], [1, '#100828']]),
+    lin(`${u}robeD`, [[0, '#3a2478'], [1, '#0c0620']], [0, 0, 0, 1]),
+    lin(`${u}gold`, [[0, '#fff0b8'], [0.5, '#d9a441'], [1, '#7c5518']]),
+    lin(`${u}beard`, [[0, '#d8d0c4'], [1, '#7a7268']], [0, 0, 0, 1]),
+    lin(`${u}fire`, [[0, '#fff2a0'], [0.4, '#ff9a2a'], [1, '#c0200a']], [0, 1, 0, 0]),
+    lin(`${u}ice`, [[0, '#ffffff'], [0.5, '#9fe0ff'], [1, '#2a6ab0']], [0, 0, 1, 1]),
+    glow(u, 'eye', '#8fd8ff', 0.85),
+    glow(u, 'flame', '#ff9a2a', 0.6),
+    glow(u, 'frost', '#9fe0ff', 0.6)
+  ].join('');
+  const runes = [[14, 26], [86, 22], [90, 56], [10, 60]].map(([x, y], i) => `<g transform="translate(${x} ${y})" stroke="url(#${u}gold)" stroke-width="1.1" fill="none" opacity="${0.55 + i * 0.1}" stroke-linecap="round"><path d="${['M-3 -4 L0 4 L3 -4 M-2 0 H2', 'M-3 -4 V4 M-3 0 L3 -4 M-3 0 L3 4', 'M0 -4 V4 M-3 -2 L3 2 M3 -2 L-3 2', 'M-3 4 L0 -4 L3 4 Z'][i]}"/></g>`).join('');
+  const inner = `
+${runes}
+<!-- robe et épaules -->
+<path d="M3 100 L9 84 C18 73 32 69 40 69 L60 69 C68 69 82 73 91 84 L97 100 Z" fill="url(#${u}robe)"/>
+<path d="M44 70 L56 70 L54 100 L46 100 Z" fill="url(#${u}robeD)"/>
+<path d="M40 70 C44 76 47 84 48 100 M60 70 C56 76 53 84 52 100" fill="none" stroke="url(#${u}gold)" stroke-width="1.6"/>
+<!-- flamme (main droite du dessin) et éclat de givre (main gauche) -->
+<g filter="url(#${u}flame)"><path d="M80 92 C72 86 74 76 80 70 C80 76 84 77 84 72 C90 78 90 88 80 92 Z" fill="url(#${u}fire)"/></g>
+<g filter="url(#${u}frost)"><path d="M20 70 L24 80 L20 92 L16 80 Z M12 78 L28 82 M12 84 L28 78" fill="url(#${u}ice)" stroke="#dff6ff" stroke-width=".8"/></g>
+<!-- cou et visage -->
+<path d="M43 56 L43 70 C47 73 53 73 57 70 L57 56 Z" fill="url(#${u}skinD)"/>
+<ellipse cx="50" cy="47" rx="13.600" ry="16" fill="url(#${u}skin)"/>
+<!-- yeux arcaniques -->
+<g filter="url(#${u}eye)"><ellipse cx="44" cy="45.200" rx="3" ry="1.700" fill="#bdf0ff"/><ellipse cx="56" cy="45.200" rx="3" ry="1.700" fill="#bdf0ff"/></g>
+<circle cx="44" cy="45.200" r="1" fill="#1a4a8a"/><circle cx="56" cy="45.200" r="1" fill="#1a4a8a"/>
+<path d="M39.500 41.600 L47.500 42.400 M52.500 42.400 L60.500 41.600" stroke="#5a4a40" stroke-width="1.400" stroke-linecap="round"/>
+<!-- nez, barbe courte -->
+<path d="M49 45.500 L47.800 52 C49.400 53 50.600 53 52.200 52 L51 45.500 Z" fill="#a8775a" opacity=".8"/>
+<path d="M38 52 C38 62 43 68 50 69 C57 68 62 62 62 52 C58 56 54 57 50 57 C46 57 42 56 38 52 Z" fill="url(#${u}beard)"/>
+<path d="M45 59 C48 60.400 52 60.400 55 59" fill="none" stroke="#5a5048" stroke-width="1" stroke-linecap="round"/>
+<!-- capuche pointue -->
+<path d="M30 60 C26 44 30 26 42 16 C48 10 56 4 66 2 C60 10 62 16 66 24 C72 34 74 48 70 60 C68 50 64 40 50 36 C38 38 33 48 30 60 Z" fill="url(#${u}robe)"/>
+<path d="M33 52 C36 42 42 36 50 34.500 C58 36 64 42 67 52" fill="none" stroke="url(#${u}gold)" stroke-width="1.6"/>
+<circle cx="66" cy="3" r="2" fill="url(#${u}gold)"/>`;
+  return wrap(u, { defs, inner, bg: ['#24164a', '#06040f', '#a88aff'], at: [50, 30], halo: 0.36 });
+}
+
 // (les quatre premières classes, retirées du jeu, restent dessinées : les tests s'en servent encore ; l'ancien Druide s'appelle druide_ancien)
-export const HEROES = { berserker, veilleur, druide, druide_ancien: druideAncien, duelliste, sacrieur, assassin, templier, pretre, guerrier, barde };
+export const HEROES = { berserker, veilleur, druide, druide_ancien: druideAncien, duelliste, sacrieur, assassin, templier, pretre, guerrier, barde, mage };

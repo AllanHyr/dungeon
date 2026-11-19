@@ -70,9 +70,9 @@ function takeTurnOf(state, id) {
 }
 
 console.log('\n● Contenu (données JSON)');
-test('le contenu se charge : 7 classes jouables (+ 4 classes de test), 3 tranches jouables', () => {
-  eq(Object.keys(loadContent({ legacy: false }).classes).sort(), ['assassin', 'barde', 'druide', 'guerrier', 'pretre', 'sacrieur', 'templier']);
-  eq(Object.keys(content.classes).sort(), ['assassin', 'barde', 'berserker', 'druide', 'druide_ancien', 'duelliste', 'guerrier', 'pretre', 'sacrieur', 'templier', 'veilleur']);
+test('le contenu se charge : 8 classes jouables (+ 4 classes de test), 3 tranches jouables', () => {
+  eq(Object.keys(loadContent({ legacy: false }).classes).sort(), ['assassin', 'barde', 'druide', 'guerrier', 'mage', 'pretre', 'sacrieur', 'templier']);
+  eq(Object.keys(content.classes).sort(), ['assassin', 'barde', 'berserker', 'druide', 'druide_ancien', 'duelliste', 'guerrier', 'mage', 'pretre', 'sacrieur', 'templier', 'veilleur']);
   eq(availableTranches(content).map((t) => t.id), [1, 4, 8]);
 });
 test('une faute dans un JSON donne une erreur claire (monstre inconnu)', () => {
@@ -4120,6 +4120,76 @@ test('forge : un objet légendaire ne se forge qu\'après avoir terminé son don
   assert(applyCharacterAction(content, chars, { type: 'CHAR_CRAFT', charId: 'f', itemId: leg.id }).ok, 'après le Stasis : oui');
   eq(sanitizeCharacter(content, JSON.parse(JSON.stringify(ch))).stats.stasisClears, { caves_humides: 1 }, 'sauvegardé');
 });
+
+console.log('\n● Mage : charges arcaniques, Déflagration, brûlure, givre');
+{
+  const fight = (spec = null, level = 8) => {
+    const t = training([{ classId: 'mage', level, spec }, { classId: 'guerrier', level }], { count: 2 });
+    takeTurnOf(t, 'p1');
+    return t;
+  };
+  const dmgOf = (t, id) => { const m = t.combat.monsters[0]; const before = m.hp; m.hp = m.hpMax = 100000; m.base.hp = 100000; const h0 = m.hp; cast(t, 'p1', id, m.id); return h0 - m.hp; };
+
+  test('le Mage : dps au rang arrière, charges arcaniques (max 5), 1 charge au début du combat ; Déflagration en sort de classe', () => {
+    const cls = content.classes.mage;
+    eq([cls.startRow, cls.role, cls.classSkill, cls.resource.id, cls.resource.max], ['back', 'damage', 'mage_deflagration', 'arcane', 5]);
+    const ch = createCharacter(content, { id: 'm', name: 'M', classId: 'mage' });
+    fillDeck(content, ch);
+    eq(ch.deck, ['mage_trait_feu', 'mage_eclair_givre', 'mage_projectiles', 'mage_barriere']);
+    const t = fight();
+    eq(t.players[0].resources.arcane, 1, 'Flux arcanique : 1 charge au début du combat');
+    for (const spec of ['pyromancien', 'cryomancien', 'arcaniste']) eq(cls.skills.filter((x) => x.spec === spec && x.level === 8).length, 3, `${spec} : 3 choix au palier 8`);
+  });
+
+  test('Déflagration : dépense TOUTES les charges, et frappe plus fort avec chacune (spend.all + powerPerSpent)', () => {
+    const t = fight();
+    const p = t.players[0];
+    p.resources.arcane = 0;
+    assert(!checkUsable(t, p, content.skills.mage_deflagration).ok, 'il faut au moins 1 charge');
+    p.resources.arcane = 1; p.pa = 12;
+    const one = dmgOf(t, 'mage_deflagration');
+    eq(p.resources.arcane, 0);
+    const t5 = fight();
+    t5.players[0].resources.arcane = 5; t5.players[0].pa = 12;
+    const five = dmgOf(t5, 'mage_deflagration');
+    eq(t5.players[0].resources.arcane, 0, 'tout est dépensé');
+    assert(five > one * 2, `5 charges frappent bien plus fort qu'une (${one} → ${five})`);
+  });
+
+  test('le feu fait BRÛLER (clé « brulure ») ; le Pyromancien frappe plus fort ce qui brûle (condition targetKey) ; le givre engourdit', () => {
+    const t = fight();
+    const [p] = t.players;
+    const m = t.combat.monsters[0];
+    p.pa = 12;
+    assert(cast(t, p.id, 'mage_trait_feu', m.id).ok);
+    assert(m.statuses.some((st) => st.id === 'dot' && st.key === 'brulure'), 'la cible brûle');
+    eq(p.resources.arcane, 2, '+1 charge');
+    assert(cast(t, p.id, 'mage_eclair_givre', t.combat.monsters[1].id).ok);
+    assert(t.combat.monsters[1].statuses.some((st) => st.id === 'mod' && st.stat === 'damage' && st.pct === -0.15), 'engourdi : −15 % de dégâts');
+    // Embrasement : +0,8 de puissance sur une cible qui brûle
+    const py = fight('pyromancien');
+    const [q] = py.players;
+    q.pa = 12;
+    const [a, b] = py.combat.monsters;
+    for (const x of [a, b]) { x.hp = x.hpMax = 100000; x.base.hp = 100000; x.base.def = 0; }
+    a.statuses.push({ id: 'dot', key: 'brulure', amount: 1, turns: 3, label: 'brûle' });
+    const ha = a.hp; cast(py, q.id, 'mage_embrasement', a.id); const onBurning = ha - a.hp;
+    q.cooldowns = {}; q.pa = 12;
+    const hb = b.hp; cast(py, q.id, 'mage_embrasement', b.id); const onCold = hb - b.hp;
+    assert(onBurning > onCold * 1.5, `plus fort sur ce qui brûle (${onCold} → ${onBurning})`);
+  });
+
+  test('Cryomancien : la Prison de glace fait sauter un tour (2 charges) ; Arcaniste : 3 charges au début du combat', () => {
+    const t = fight('cryomancien');
+    const [p] = t.players;
+    p.resources.arcane = 2; p.pa = 12;
+    const m = t.combat.monsters[0];
+    assert(cast(t, p.id, 'mage_prison', m.id).ok);
+    assert(m.statuses.some((st) => st.id === 'stun'), 'gelé');
+    eq(p.resources.arcane, 0);
+    eq(fight('arcaniste').players[0].resources.arcane, 3, 'Flux (1) + Maîtrise arcanique (2)');
+  });
+}
 
 console.log(`\n${failed ? '❌' : '✅'} ${passed} tests réussis, ${failed} échoués\n`);
 process.exit(failed ? 1 : 0);

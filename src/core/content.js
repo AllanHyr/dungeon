@@ -43,7 +43,7 @@ export const TRIGGER_EVENTS = ['combatStart', 'turnStart', 'turnEnd', 'dealDamag
 export const SKILL_TARGETS = ['enemy', 'enemies', 'ally', 'allies', 'self', 'deadAlly', 'lowestAlly'];
 export const MODIFIER_STATS = ['hp', 'atk', 'def', 'heal', 'save', 'luck', 'ini', 'pa', 'damage', 'dot', 'taken', 'healPower', 'critShift', 'fumbleShift', 'overhealShield', 'healTaken'];
 export const SCALINGS = ['missingHpPct', 'hpPct', 'alliesAlive', 'enemiesAlive'];
-export const CONDITIONS = ['hpPctBelow', 'hpPctAbove', 'row', 'resourceAtLeast', 'targetHpPctBelow', 'targetMarked', 'targetStatus', 'alliesAliveAtLeast', 'mode', 'spec', 'roundAtMost', 'notAfflicted'];
+export const CONDITIONS = ['hpPctBelow', 'hpPctAbove', 'row', 'resourceAtLeast', 'targetHpPctBelow', 'targetMarked', 'targetStatus', 'targetKey', 'alliesAliveAtLeast', 'mode', 'spec', 'roundAtMost', 'notAfflicted'];
 const CLASS_STATS = ['hp', 'atk', 'def', 'heal', 'save', 'luck', 'ini'];
 // Le champ facultatif `fx` d'une compétence : comment la MONTRER (voir docs/ECRIRE-UNE-CLASSE.md et src/ui/fx-plan.js). Rien n'est obligatoire :
 // sans `fx`, le jeu déduit le geste de la portée, de la cible et des effets de la compétence.
@@ -87,6 +87,7 @@ function checkCondition(cond, where) {
   if (cond.spec !== undefined && typeof cond.spec !== 'string') fail(`${where} : la condition 'spec' doit être l'identifiant d'une spécialisation de la classe (texte).`);
   if (cond.targetMarked !== undefined && typeof cond.targetMarked !== 'boolean') fail(`${where} : la condition 'targetMarked' doit valoir true ou false (la cible est marquée par le lanceur).`);
   if (cond.targetStatus !== undefined && typeof cond.targetStatus !== 'string') fail(`${where} : la condition 'targetStatus' doit être l'identifiant d'un statut (« dot », « poison », « mark »...).`);
+  if (cond.targetKey !== undefined && typeof cond.targetKey !== 'string') fail(`${where} : la condition 'targetKey' doit être la clé d'un statut précis (la « key » d'un dot, ex. « brulure »).`);
 }
 
 function checkScaling(obj, where) {
@@ -202,7 +203,8 @@ function checkSkill(sk, where, rows) {
   if (sk.needsMark !== undefined && typeof sk.needsMark !== 'boolean') fail(`${label} : 'needsMark' doit valoir true ou false (inutilisable tant que le lanceur n'a marqué personne).`);
   if (sk.freeIfNoMark !== undefined && typeof sk.freeIfNoMark !== 'boolean') fail(`${label} : 'freeIfNoMark' doit valoir true ou false (gratuite tant que le lanceur n'a aucune cible marquée).`);
   if (sk.freeFirst !== undefined && typeof sk.freeFirst !== 'boolean') fail(`${label} : 'freeFirst' doit valoir true ou false (première utilisation du combat gratuite en PA).`);
-  if (sk.spend && (typeof sk.spend.id !== 'string' || !(sk.spend.amount > 0))) fail(`${label} : 'spend' doit être { "id": ..., "amount": ... }.`);
+  if (sk.spend && (typeof sk.spend.id !== 'string' || !(sk.spend.amount > 0))) fail(`${label} : 'spend' doit être { "id": ..., "amount": ... } (avec "all": true pour tout dépenser, au moins "amount").`);
+  if (sk.spend?.all !== undefined && typeof sk.spend.all !== 'boolean') fail(`${label} : 'spend.all' doit valoir true ou false.`);
   if (sk.fx !== undefined) checkFx(sk.fx, label);
 }
 

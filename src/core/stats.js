@@ -159,6 +159,10 @@ export function evalCondition(state, unit, cond, ctx = {}) {
     const t = ctx.target;
     if (!t || !t.statuses.some((st) => st.id === cond.targetStatus)) return false;
   }
+  if (cond.targetKey !== undefined) { // un statut PRÉCIS (sa « key », ex. la brûlure du Mage, pas n'importe quel saignement)
+    const t = ctx.target;
+    if (!t || !t.statuses.some((st) => st.key === cond.targetKey)) return false;
+  }
   if (cond.targetHpPctBelow !== undefined) {
     const t = ctx.target;
     if (!t) return false;

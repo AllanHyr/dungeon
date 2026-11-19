@@ -267,8 +267,8 @@ Un lanceur n'a **qu'une marque à la fois** (`"max": 2` pour en garder deux : la
 Sur la compétence : `"freeIfNoMark": true` (**coût 0 tant que le lanceur n'a marqué personne**, `pa` ensuite : « gratuite, puis 1 PA pour changer de cible ») et `"needsMark": true`
 (inutilisable tant qu'il n'a marqué personne). Le coût affiché suit.
 
-**Conditions sur la cible.** Deux conditions décrivent la cible visée : `{ "targetMarked": true }` (marquée par le lanceur) et `{ "targetStatus": "dot" }` (porte ce statut :
-`dot`, `poison`, `mark`, `stun`...), en plus de `targetHpPctBelow`. Elles s'écrivent à trois endroits :
+**Conditions sur la cible.** Des conditions décrivent la cible visée : `{ "targetMarked": true }` (marquée par le lanceur), `{ "targetStatus": "dot" }` (porte ce statut :
+`dot`, `poison`, `mark`, `stun`...) et `{ "targetKey": "brulure" }` (porte CE statut précis : la `key` d'un `dot`, ex. la brûlure du Mage, pas n'importe quel saignement), en plus de `targetHpPctBelow`. Elles s'écrivent à trois endroits :
 
 * **`ifTarget` sur un effet** : `{ "type": "stun", "turns": 1, "ifTarget": { "targetMarked": true } }`. L'effet qui vise la cible n'agit que sur celles qui remplissent la condition (utile
   dans une zone : `{ "type": "damage", "power": 2.0, "ifTarget": { "targetMarked": true } }` ne frappe que les ennemis marqués) ; un effet qui vise **autre chose** (`"to": "self"`)
@@ -313,6 +313,8 @@ La stat `dot` (`{ "stat": "dot", "pct": 0.25 }` dans une passive) augmente les d
 **La condition `spec`** : `{ "spec": "gardien" }` est vraie si le héros a choisi cette spécialisation. Elle marche dans tous les `if` (modificateurs, déclencheurs, effets) : le jeu vérifie que la spécialisation existe.
 
 **Dépenser une ressource.** `"spend": { "id": "sacre", "amount": 3 }` sur une active (voir §9) : elle n'est lançable que s'il y en a assez, et la dépense est payée avant les effets.
+Avec **`"all": true`**, elle dépense **toute** la ressource (au moins `amount`), et un effet de dégâts peut grandir avec ce qui a été dépensé : **`"powerPerSpent": 0.45`**
+(puissance en plus par point dépensé : la Déflagration du Mage, `{ "type": "damage", "power": 0.5, "powerPerSpent": 0.45 }`).
 Le déclencheur **`spend`** (`{ "on": "spend", "effect": ... }`) réagit à toute dépense de ressource, **avant** les effets du sort : c'est ce qui permet à *Sainte colère* de donner « +20 % de dégâts pendant 2 tours »
 *dès le coup qui dépense* (un sort qui rate par échec critique ne le déclenche pas). Pour **gagner** de la ressource, un sort a un effet `{ "type": "resource", "id": "sacre", "amount": 1, "to": "self" }` (sans `"to": "self"` la ressource irait à la cible).
 Le Templier s'en sert en grand : des sorts à 3 PA donnent +1, à 5 PA +2, et les très gros sorts en dépensent 3 ou 5.

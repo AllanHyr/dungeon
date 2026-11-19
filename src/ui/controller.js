@@ -73,6 +73,8 @@ export async function startFarm(charId, zoneId = app.profile.settings.farmZone) 
     app.profile.settings.farmChar = charId;
     app.profile.settings.farmZone = res.run.farm?.zoneId || null;
     app.profile.settings.view = 'farm';
+    app.profile.settings.place = 'aventure';
+    app.ui.place = 'aventure';
     persistProfile();
     go('run');
   } finally {

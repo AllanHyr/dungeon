@@ -1952,3 +1952,133 @@ html.fx-playing .run { pointer-events: none; } /* (le temps d'une animation : un
 .camp-act:hover:not(:disabled) { border-color: var(--lantern); box-shadow: 0 0 18px rgba(245, 168, 59, 0.2); }
 .camp-act:disabled { opacity: 0.5; cursor: default; }
 .camp-act svg { color: var(--brass-4); }
+
+
+/* ============================================================
+   Les LIEUX de l'accueil (places.js) : la barre de navigation à gauche, le lieu à droite ; en bas sur téléphone
+   ============================================================ */
+.app-shell { display: grid; grid-template-columns: 228px minmax(0, 1fr); gap: 22px; align-items: start; padding-bottom: 24px; }
+.place-nav { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 4px; min-height: calc(100vh - 32px); padding: 14px 10px; border-radius: var(--radius); border: 1px solid var(--line); background: linear-gradient(180deg, var(--ink-3), var(--ink-2)); }
+.nav-brand { display: flex; align-items: center; gap: 10px; padding: 2px 8px 14px; }
+.nav-brand-mark { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; color: var(--lantern-ink); background: radial-gradient(circle at 40% 35%, #f7c56a, #8a5a1a); }
+.nav-brand b { font-family: var(--serif); font-size: 1.3rem; letter-spacing: 0.12em; color: var(--brass-4); }
+.nav-place { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid transparent; background: none; color: var(--muted); text-align: left; cursor: pointer; }
+.nav-place:hover { background: var(--ink-4); color: var(--text); }
+.nav-place.on { background: linear-gradient(90deg, rgba(245, 168, 59, 0.16), rgba(245, 168, 59, 0.03)); border-color: rgba(245, 168, 59, 0.35); color: var(--brass-4); }
+.nav-place-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.nav-place-text b { font-family: var(--serif); letter-spacing: 0.06em; font-size: 0.98rem; }
+.nav-place-text small { font-size: 0.76rem; color: var(--faint); }
+.nav-badge { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; display: grid; place-items: center; border-radius: 999px; background: var(--lantern); color: var(--lantern-ink); font-weight: 700; font-size: 0.78rem; }
+.nav-foot { margin-top: auto; display: flex; flex-direction: column; gap: 2px; padding-top: 10px; border-top: 1px solid var(--line); }
+.nav-foot-btn { display: flex; align-items: center; gap: 10px; padding: 7px 12px; border: none; border-radius: 8px; background: none; color: var(--faint); font-size: 0.9rem; text-align: left; cursor: pointer; }
+.nav-foot-btn:hover { background: var(--ink-4); color: var(--text); }
+.place-main { min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+.place-main > .banner { margin: 0; }
+.place-head h1 { margin: 2px 0 4px; font-size: 1.8rem; color: var(--brass-4); letter-spacing: 0.04em; }
+.place-head p { margin: 0; max-width: 70ch; }
+.eyebrow { font-size: 0.78rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--brass-3); }
+.app-shell .launch-bar { position: sticky; left: auto; right: auto; bottom: 0; border-radius: var(--radius) var(--radius) 0 0; border: 1px solid var(--brass-2); border-bottom: none; }
+.app-shell .view-switch { margin-bottom: 0; }
+.app-shell .foot { margin-top: 4px; }
+
+/* ---- Le Camp */
+.todo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.todo-card { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 12px; align-items: start; padding: 14px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--ink-4); }
+.todo-ic { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; color: var(--lantern); background: rgba(245, 168, 59, 0.12); }
+.todo-card.tone-good .todo-ic { color: var(--good); background: rgba(106, 166, 83, 0.14); }
+.todo-card.tone-violet .todo-ic { color: var(--violet); background: rgba(182, 147, 245, 0.14); }
+.todo-card.tone-info .todo-ic { color: var(--info); background: rgba(124, 196, 245, 0.12); }
+.todo-body { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.todo-body p { margin: 0 0 4px; color: var(--muted); font-size: 0.93rem; }
+.camp-next { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 20px; align-items: center; border-color: rgba(245, 168, 59, 0.4); }
+.camp-next-art { width: 170px; max-width: 100%; aspect-ratio: 1; border-radius: 12px; overflow: hidden; border: 2px solid var(--brass); background: var(--ink-0); }
+.camp-next-art .portrait { width: 100%; height: 100%; border: none; border-radius: 0; }
+.camp-next-body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.camp-next-body h3 { margin: 0; font-size: 1.35rem; color: var(--brass-4); }
+.camp-next-body p { margin: 0; }
+.camp-next-desc { color: var(--text-2); max-width: 70ch; }
+.camp-bottom { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.camp-hero-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.camp-hero { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--ink-4); color: var(--text); text-align: left; cursor: pointer; }
+.camp-hero:hover { border-color: var(--brass); }
+.camp-hero-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.camp-hero-top b { font-family: var(--serif); letter-spacing: 0.03em; overflow-wrap: anywhere; }
+.status-chip { align-self: flex-start; padding: 0 9px; border-radius: 999px; border: 1px solid var(--line-2); font-size: 0.8rem; color: var(--muted); }
+.status-chip.tone-good { color: var(--good); border-color: rgba(106, 166, 83, 0.5); }
+.status-chip.tone-gold { color: var(--lantern); border-color: rgba(245, 168, 59, 0.5); }
+.status-chip.tone-violet { color: var(--violet); border-color: rgba(182, 147, 245, 0.5); }
+.status-chip.tone-info { color: var(--info); border-color: rgba(124, 196, 245, 0.45); }
+.journey { display: flex; list-style: none; margin: 4px 0 10px; padding: 0; }
+.journey-step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; position: relative; }
+.journey-step::before { content: ""; position: absolute; top: 15px; right: 50%; width: 100%; height: 2px; background: var(--line-2); }
+.journey-step:first-child::before { display: none; }
+.journey-step.done::before, .journey-step.now::before { background: var(--brass); }
+.journey-dot { position: relative; z-index: 1; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--line-3); background: var(--ink-3); font-weight: 700; font-size: 0.85rem; }
+.journey-step.done .journey-dot { border-color: var(--good); color: var(--good); }
+.journey-step.now .journey-dot { border-color: var(--lantern); color: var(--lantern); box-shadow: 0 0 0 4px rgba(245, 168, 59, 0.18); }
+.journey-step b { font-size: 0.88rem; }
+.journey-step small { color: var(--muted); font-size: 0.78rem; }
+
+/* ---- Héros (la fiche en page) */
+.heroes-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 18px; align-items: start; }
+.hero-list-side { display: flex; flex-direction: column; gap: 4px; position: sticky; top: 12px; }
+.hero-side { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 8px; border-radius: 10px; border: 1px solid transparent; background: none; color: var(--text); text-align: left; cursor: pointer; }
+.hero-side:hover { background: var(--ink-4); }
+.hero-side.on { border-color: var(--brass); background: var(--ink-4); }
+.hero-side-text { display: flex; flex-direction: column; min-width: 0; }
+.hero-side-text b { font-family: var(--serif); letter-spacing: 0.03em; overflow-wrap: anywhere; }
+.hero-side-dot { width: 9px; height: 9px; margin-left: auto; flex: none; border-radius: 50%; background: var(--lantern); box-shadow: 0 0 8px var(--lantern); }
+.hero-side-new { justify-content: center; border: 1px dashed var(--line-2); color: var(--muted); margin-top: 6px; }
+.hero-side-new:disabled { opacity: 0.6; cursor: not-allowed; }
+.hero-sheet { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.hero-sheet .tab-body { max-height: none; overflow: visible; }
+
+/* ---- Forge */
+.forge-who { display: flex; flex-wrap: wrap; gap: 8px; }
+.forge-who-btn { display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--ink-4); color: var(--text); cursor: pointer; }
+.forge-who-btn.on { border-color: var(--lantern); background: rgba(245, 168, 59, 0.1); }
+
+/* ---- Grimoire */
+.grimoire-tabs { border-bottom: 1px solid var(--line); }
+.grimoire-dungeons { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; }
+.grimoire-dungeon { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--ink-4); color: var(--text); text-align: left; cursor: pointer; }
+.grimoire-dungeon:hover { border-color: var(--brass); }
+.grimoire-dungeon.is-done { border-color: rgba(106, 166, 83, 0.45); }
+.gd-art { width: 64px; height: 64px; border-radius: 10px; overflow: hidden; background: var(--ink-0); }
+.gd-art .portrait { width: 100%; height: 100%; border-radius: 0; border: none; }
+.gd-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.gd-body b { font-family: var(--serif); letter-spacing: 0.03em; }
+.gd-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 3px; }
+.chip-good { color: var(--good); border-color: rgba(106, 166, 83, 0.5); }
+.bestiary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.bestiary-entry { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--ink-4); text-align: center; }
+.bestiary-entry.is-boss { border-color: rgba(226, 88, 62, 0.5); }
+.be-art { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; }
+.be-art .portrait { width: 100%; height: 100%; }
+.bestiary-entry.is-unknown .be-art { filter: brightness(0) opacity(0.55); }
+.bestiary-entry.is-unknown b { color: var(--faint); }
+.grimoire-rules .help { max-width: 80ch; }
+
+/* ---- Téléphone et petite tablette : la barre passe en bas */
+@media (max-width: 860px) {
+  .app-shell { grid-template-columns: minmax(0, 1fr); gap: 14px; padding-bottom: 84px; }
+  .place-nav { position: fixed; inset: auto 0 0 0; top: auto; z-index: 30; min-height: 0; flex-direction: row; justify-content: space-around; gap: 0; padding: 4px max(4px, env(safe-area-inset-right, 0px)) calc(4px + env(safe-area-inset-bottom, 0px)) max(4px, env(safe-area-inset-left, 0px)); border-radius: 0; border: none; border-top: 1px solid var(--line-2); }
+  .nav-brand, .nav-foot, .nav-place-text small { display: none; }
+  .nav-place { flex: 1; flex-direction: column; justify-content: center; gap: 2px; padding: 6px 2px; }
+  .nav-place-text b { font-size: 0.68rem; letter-spacing: 0.02em; }
+  .nav-badge { position: absolute; top: 1px; right: 14%; min-width: 17px; height: 17px; font-size: 0.68rem; }
+  .app-shell .launch-bar { bottom: calc(58px + env(safe-area-inset-bottom, 0px)); }
+  .place-head h1 { font-size: 1.4rem; }
+  .place-head p { font-size: 0.92rem; }
+  .place-aventure .place-head { display: none; } /* (la barre du bas dit déjà où l'on est : on garde la place pour les héros et le donjon) */
+  .camp-next { grid-template-columns: 90px minmax(0, 1fr); gap: 12px; }
+  .camp-next-art { width: 90px; }
+  .camp-bottom, .heroes-layout { grid-template-columns: minmax(0, 1fr); }
+  .camp-hero-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .todo-grid { grid-template-columns: minmax(0, 1fr); }
+  .hero-list-side { position: static; flex-direction: row; overflow-x: auto; padding-bottom: 4px; }
+  .hero-side { flex: none; width: auto; }
+  .hero-side-text small { display: none; }
+  .grimoire-dungeons { grid-template-columns: minmax(0, 1fr); }
+  .bestiary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

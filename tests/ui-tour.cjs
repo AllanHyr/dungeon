@@ -6,7 +6,7 @@ const out = process.argv[3] || '/tmp/shots';
 
 // Profil de test injecté dans le localStorage (4 personnages bien différents).
 const profile = {
-  version: 1, nextCharNumber: 5, settings: { sound: false }, lastTeam: ['c1', 'c2', 'c4'], lastSetup: { tranche: 4, mode: 'tranche', stasisLevel: 1 },
+  version: 1, nextCharNumber: 5, settings: { sound: false, place: 'aventure' }, lastTeam: ['c1', 'c2', 'c4'], lastSetup: { tranche: 4, mode: 'tranche', stasisLevel: 1 },
   characters: [
     { id: 'c1', name: 'Thorne', classId: 'sacrieur', level: 8, xp: 300, skills: [],
       inventory: [{ uid: 'i1', id: 'potion_mineure' }, { uid: 'i2', id: 'lame_cryptique' }, { uid: 'i3', id: 'couronne_dechue' }, { uid: 'i4', id: 'sceau_veilleur' }],
@@ -62,9 +62,12 @@ const profile = {
   await page.click('text=Sauvegarde');
   await shot('25-sauvegarde');
   await page.keyboard.press('Escape');
-  await page.click('text=Règles');
+  await page.click('.nav-place[data-place="grimoire"]');
+  await page.click('.grimoire-tabs .tab[data-tab="regles"]');
+  await page.waitForSelector('.grimoire-rules .help');
   await shot('26-regles');
-  await page.keyboard.press('Escape');
+  await page.click('.nav-place[data-place="aventure"]');
+  await page.waitForSelector('.home-grid');
 
   // ----- Lancer la run (tranche 4, Thorne niv 8 / Maeve niv 5 / Kael niv 3 => niveaux effectifs)
   await page.click('.char-card:has-text("Kael")');

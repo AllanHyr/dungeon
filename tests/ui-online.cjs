@@ -60,6 +60,8 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
 
   console.log('\n● Personnages sur le serveur');
   await page.click('text=Créer 3 héros d\'exemple');
+  await page.waitForSelector('.place-nav');
+  await page.click('.nav-place[data-place="aventure"]'); // (le lieu choisi est gardé dans les préférences du compte)
   await page.waitForFunction(() => document.querySelectorAll('.char-card:not(.new-card)').length === 3);
   const profile = await apiGet(page, 'api/profile');
   check(profile.characters.length === 3, `les 3 héros sont enregistrés sur le serveur (${profile.characters.map((c) => c.name).join(', ')})`);
@@ -176,19 +178,17 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await phone.fill('#auth-name', 'Alice');
   await phone.fill('#auth-password', 'nouveau-secret');
   await phone.click('#auth-submit');
-  await phone.waitForSelector('.menu');
-  const names = await phone.$$eval('.char-card:not(.new-card) .char-name', (els) => els.map((e) => e.textContent));
-  check(names.length === 3, `sur un deuxième appareil : les mêmes personnages (${names.join(', ')})`);
+  await phone.waitForSelector('.place-nav');
+  // (les préférences, dont le lieu, restent propres à chaque appareil : le téléphone arrive au Camp)
+  const names = await phone.$$eval('.camp-hero b', (els) => els.map((e) => e.textContent));
+  check(names.length === 3, `sur un deuxième appareil : les mêmes personnages, au Camp (${names.join(', ')})`);
   check(await phone.evaluate(async () => { const { app } = await import('/src/ui/state.js'); return app.profile.characters.find((c) => c.spec === 'bastion')?.equipment.mainHand?.id === 'dague_os'; }), 'avec leur équipement et leur spécialisation');
   check((await phone.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) === 0, 'accueil sur téléphone : pas de débordement');
   await phone.screenshot({ path: `${out}/104-accueil-tel.png` });
 
   console.log('\n● Session expirée');
   app.db.prepare('DELETE FROM sessions').run(); // (le serveur oublie toutes les sessions, comme après 30 jours)
-  await phone.click('[data-view="farm"]');
-  await phone.click('.char-card:not(.new-card) .btn >> nth=0').catch(() => {});
-  await sleep(300);
-  await phone.evaluate(async () => { const { characterAction } = await import('/src/ui/controller.js'); await characterAction({ type: 'CHAR_RESET_SKILLS', charId: 'x' }); });
+  await phone.click('.nav-place[data-place="aventure"]'); // (changer de lieu enregistre la préférence : le serveur répond 401)
   await phone.waitForSelector('.auth', { timeout: 5000 });
   check(true, 'quand le serveur ne reconnaît plus la session, on revient à l\'écran de connexion (au lieu de planter)');
 

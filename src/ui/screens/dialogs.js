@@ -416,7 +416,13 @@ export function openHelpModal() {
   openModal({
     title: 'Comment jouer',
     wide: true,
-    render: () => [
+    render: () => helpContent()
+  });
+}
+
+/** Les règles du jeu (la fenêtre « Comment jouer », et l'onglet Règles du Grimoire). */
+export function helpContent() {
+  return [
       h('div', { class: 'help' },
         h('h3', null, 'Le principe'),
         h('p', null, 'Votre groupe (1 à 4 personnages) explore un donjon case par case jusqu\'au boss final. À chaque tour, UN joueur est « sous les projecteurs » : il avance, lance le D20 et c\'est LUI qui décide quoi faire du résultat.'),
@@ -463,6 +469,5 @@ export function openHelpModal() {
         app.gateway.canExport
           ? h('p', null, 'Vos personnages sont enregistrés dans ce navigateur. Utilisez « Sauvegarde » pour exporter un code et le retrouver ailleurs.')
           : h('p', null, 'Vos personnages et votre partie en cours sont enregistrés sur le serveur, avec votre compte : vous les retrouvez sur tous vos appareils, et vous pouvez reprendre une partie là où vous l\'avez laissée. Le bouton de votre pseudo (en haut à droite de l\'accueil) permet de changer de mot de passe ou de se déconnecter.'))
-    ]
-  });
+  ];
 }

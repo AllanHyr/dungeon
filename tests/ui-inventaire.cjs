@@ -5,7 +5,7 @@ const url = process.argv[2] || 'http://localhost:8765/';
 const out = process.argv[3] || '/tmp/shots';
 
 const profile = {
-  version: 1, nextCharNumber: 4, settings: { sound: false }, lastTeam: ['c1', 'c2'], lastSetup: { tranche: 4, mode: 'basic', stasisLevel: 1 },
+  version: 1, nextCharNumber: 4, settings: { sound: false, place: 'aventure' }, lastTeam: ['c1', 'c2'], lastSetup: { tranche: 4, mode: 'basic', stasisLevel: 1 },
   characters: [
     { id: 'c1', name: 'Thorne', classId: 'sacrieur', level: 8, xp: 0, skills: [],
       inventory: [{ uid: 'i1', id: 'couronne_dechue' }, { uid: 'i2', id: 'sceau_veilleur' }, { uid: 'i3', id: 'anneau_sang' }, { uid: 'i4', id: 'anneau_rubis' }, { uid: 'i5', id: 'potion_mineure' }, { uid: 'i6', id: 'dague_os' }],

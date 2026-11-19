@@ -21,6 +21,8 @@ const out = process.argv[3] || '/tmp/shots';
 
   // Équipe d'exemple
   await page.click("text=Créer 3 héros d'exemple");
+  await page.waitForSelector('.place-nav .nav-place.on[data-place="camp"]'); // (on arrive au Camp)
+  await page.click('.nav-place[data-place="aventure"]');
   await page.waitForSelector('.char-card.selected');
   await page.screenshot({ path: `${out}/02-menu-equipe.png`, fullPage: true });
 

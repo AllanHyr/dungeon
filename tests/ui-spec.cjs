@@ -7,7 +7,7 @@ const out = process.argv[3] || '/tmp/shots';
 
 // Une Assassin niveau 8, sans deck enregistré (ancienne sauvegarde) : elle sert aussi à vérifier la migration.
 const profile = {
-  version: 1, nextCharNumber: 2, settings: { sound: false }, lastTeam: ['c1'], lastSetup: { tranche: 4, mode: 'tranche', stasisLevel: 1 },
+  version: 1, nextCharNumber: 2, settings: { sound: false, place: 'aventure' }, lastTeam: ['c1'], lastSetup: { tranche: 4, mode: 'tranche', stasisLevel: 1 },
   characters: [
     { id: 'c1', name: 'Dora', classId: 'assassin', level: 8, xp: 0, skills: [], inventory: [], equipment: {}, stats: { runs: 0, wins: 0, deaths: 0 } },
     { id: 'c2', name: 'Novice', classId: 'assassin', level: 3, xp: 0, skills: [], inventory: [], equipment: {}, stats: { runs: 0, wins: 0, deaths: 0 } }

@@ -6,7 +6,7 @@ const url = process.argv[2] || 'http://localhost:8765/';
 const out = process.argv[3] || '/tmp/shots';
 
 const profile = {
-  version: 1, nextCharNumber: 3, settings: { sound: false }, lastTeam: ['c1'], lastSetup: { tranche: 1, mode: 'tranche', stasisLevel: 1 },
+  version: 1, nextCharNumber: 3, settings: { sound: false, place: 'aventure' }, lastTeam: ['c1'], lastSetup: { tranche: 1, mode: 'tranche', stasisLevel: 1 },
   characters: [
     { id: 'c1', name: 'Thorne', classId: 'sacrieur', level: 2, xp: 30, skills: [], inventory: [{ uid: 'p1', id: 'potion_mineure' }],
       chest: [{ uid: 'k1', id: 'piece_percee' }, { uid: 'k2', id: 'dague_os' }, { uid: 'k3', id: 'epee_veilleur' }],
@@ -176,7 +176,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
 
   console.log('\n● Téléphone');
   const phone = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
-  await phone.addInitScript((p) => { if (!localStorage.getItem('donjon.profile.v1')) localStorage.setItem('donjon.profile.v1', JSON.stringify(p)); }, { ...profile, settings: { sound: false, view: 'farm', farmChar: 'c1' } });
+  await phone.addInitScript((p) => { if (!localStorage.getItem('donjon.profile.v1')) localStorage.setItem('donjon.profile.v1', JSON.stringify(p)); }, { ...profile, settings: { sound: false, place: 'aventure', view: 'farm', farmChar: 'c1' } });
   const m = await phone.newPage();
   m.on('pageerror', (e) => errors.push('mobile pageerror: ' + e.message));
   const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

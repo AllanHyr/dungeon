@@ -1,5 +1,5 @@
 {
-  "_note": "MODES DE JEU. Basic = tout est permis mais récompenses réduites. Tranche = limité au niveau du donjon. Stasis = comme Tranche mais difficulté très élevée et butin de bien meilleure QUALITÉ (jamais de meilleur niveau). 'monsterHp' / 'monsterAtk' multiplient les stats des monstres ; 'xp', 'gold' les récompenses ; 'dropChance' la chance qu'un combat donne un objet ; 'rarityBoost' (>1 = raretés plus hautes, <1 = plus basses). Valeurs PROVISOIRES.",
+  "_note": "MODES DE JEU. Basic = tout est permis mais récompenses réduites. Tranche = limité au niveau du donjon. Stasis = comme Tranche mais difficulté très élevée et butin de bien meilleure QUALITÉ (jamais de meilleur niveau). 'monsterHp' / 'monsterAtk' multiplient les stats des monstres ; 'xp', 'gold' les récompenses ; 'dropChance' la chance qu'un combat donne un objet ; 'rarityBoost' (>1 = raretés plus hautes, <1 = plus basses). 'maxRarity' : la meilleure rareté qui peut tomber dans ce mode ; 'rarityWeights' : multiplie le poids de certaines raretés (ex. l'épique très rare hors Stasis). 'minPlayers' : nombre de JOUEURS différents (en ligne, dans un salon) qu'exige ce mode : le Stasis ne se joue qu'à plusieurs. Valeurs PROVISOIRES.",
   "modes": {
     "basic": {
       "name": "Basic",
@@ -11,6 +11,8 @@
       "gold": 0.5,
       "dropChance": 0.5,
       "rarityBoost": 0.7,
+      "maxRarity": "epic",
+      "rarityWeights": { "epic": 0.25 },
       "trapDcBonus": 0
     },
     "tranche": {
@@ -23,12 +25,16 @@
       "gold": 1.0,
       "dropChance": 1.0,
       "rarityBoost": 1.0,
+      "maxRarity": "epic",
+      "rarityWeights": { "epic": 0.25 },
       "trapDcBonus": 0
     },
     "stasis": {
       "name": "Stasis",
-      "short": "Comme Tranche, mais monstres bien plus coriaces. Butin et XP bien meilleurs.",
+      "short": "À plusieurs seulement (2 joueurs ou plus, en ligne). Comme Tranche, mais monstres bien plus coriaces. Butin et XP bien meilleurs : le seul mode où tombent les objets légendaires.",
       "restrict": true,
+      "minPlayers": 2,
+      "maxRarity": "legendary",
       "levels": [
         { "level": 1, "monsterHp": 1.5, "monsterAtk": 1.25, "xp": 1.8, "gold": 1.5, "dropChance": 1.4, "rarityBoost": 1.5, "trapDcBonus": 2 },
         { "level": 2, "monsterHp": 2.0, "monsterAtk": 1.5, "xp": 2.6, "gold": 2.0, "dropChance": 1.7, "rarityBoost": 1.9, "trapDcBonus": 3 },

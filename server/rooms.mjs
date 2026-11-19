@@ -297,6 +297,9 @@ export class RoomService {
       const members = this.store.members(room.id);
       const waiting = members.filter((m) => m.user_id !== room.host_id && !m.ready).map((m) => m.name);
       if (waiting.length) throw new HttpError(409, `${waiting.join(', ')} ${waiting.length > 1 ? "ne sont pas prêts" : "n'est pas prêt"}.`);
+      const need = this.game.content().modes[JSON.parse(room.setup).mode]?.minPlayers || 1;
+      const players = new Set(members.map((m) => m.user_id)).size;
+      if (players < need) throw new HttpError(409, `Le Stasis se joue à plusieurs : il faut au moins ${need} joueurs dans le salon (vous êtes ${players}).`);
       const heroes = members.map((m) => {
         const hero = this.game.loadCharacter(m.user_id, m.char_id);
         if (!hero) throw new HttpError(409, `${m.name} n'a plus son héros : il doit en choisir un autre.`);

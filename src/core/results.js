@@ -125,6 +125,7 @@ export function applyRunResult(content, characters, state) {
     // ... et quel donjon précisément (pour l'encyclopédie : « terminé 3 fois »).
     const did = dungeonIdOf(content, state.setup);
     if (did) { if (!ch.stats.dungeons) ch.stats.dungeons = {}; ch.stats.dungeons[did] = (ch.stats.dungeons[did] || 0) + 1; }
+    if (did && state.setup.mode === 'stasis') { if (!ch.stats.stasisClears) ch.stats.stasisClears = {}; ch.stats.stasisClears[did] = (ch.stats.stasisClears[did] || 0) + 1; }
     // ... et les objets EXCLUSIFS qu'il a rapportés (la collection de l'encyclopédie).
     if (!ch.stats.found) ch.stats.found = {};
     for (const it of newItemsOf(p)) if (content.itemDungeon?.[it.id]) ch.stats.found[it.id] = true;

@@ -165,6 +165,7 @@ export function applyCharacterAction(content, characters, action, ctx = {}) {
         assert(typeof action.itemId === 'string', 'Objet invalide.');
         const entry = craftableItems(content, ch).find((x) => x.id === action.itemId);
         assert(entry, 'Termine d\'abord le donjon où tombe cet objet pour pouvoir le forger.');
+        assert(!entry.locked, 'Un objet légendaire ne se forge qu\'après avoir terminé ce donjon en Stasis (à plusieurs).');
         assert((ch.shards || 0) >= entry.cost, `${entry.cost} éclats requis (tu en as ${ch.shards || 0}).`);
         const cap = forgeRules(content).bagMax;
         assert(ch.inventory.length < cap, `Ton sac est plein (${cap} objets) : démantèle quelque chose d'abord.`);

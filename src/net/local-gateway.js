@@ -85,6 +85,7 @@ export function createLocalGateway({ content, dataUrl, storage }) {
     },
 
     async startDungeon(setup, charIds) {
+      if (gw.content.modes[setup.mode]?.minPlayers > 1) return { ok: false, error: 'Le Stasis se joue à plusieurs : en ligne, dans un salon d\'au moins 2 joueurs.' };
       const chars = charIds.map((id) => profile.characters.find((c) => c.id === id)).filter(Boolean);
       let run;
       try {

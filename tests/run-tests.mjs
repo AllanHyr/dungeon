@@ -4091,5 +4091,35 @@ test('en ligne, les préférences gardent l\'onglet Expéditions et la zone de f
   eq(applyPrefs(emptyProfile(), { settings: { view: 'nimporte' } }).settings.view, 'dungeon');
 });
 
+console.log('\n● Raretés par mode ; le Stasis à plusieurs');
+test('hors Stasis : jamais de légendaire, l\'épique très rare ; en Stasis, le légendaire tombe (y compris les exclusifs)', () => {
+  const party = makeParty(content, ['guerrier', 'pretre', 'assassin'], 8, 'none', 1);
+  const count = (mode) => {
+    const st = createRun(content, { tranche: 8, dungeon: 'gouffre_aux_ogres', mode, stasisLevel: 3 }, party, 11);
+    const seen = {};
+    for (let i = 0; i < 3000; i++) { const it = rollItem(st, { boost: 1 }); seen[content.items[it.id].rarity] = (seen[content.items[it.id].rarity] || 0) + 1; }
+    for (let i = 0; i < 300; i++) { const it = rollItem(st, { boost: 1.5, exclusiveOnly: true, minRarity: 'uncommon' }); seen[content.items[it.id].rarity] = (seen[content.items[it.id].rarity] || 0) + 1; }
+    return seen;
+  };
+  const normal = count('tranche'), basic = count('basic'), stasis = count('stasis');
+  assert(!normal.legendary && !basic.legendary, `jamais de légendaire hors Stasis : ${JSON.stringify(normal)}`);
+  assert(normal.epic > 0 && normal.epic < 3300 * 0.03, `épique possible mais très rare : ${normal.epic}`);
+  assert(stasis.legendary > 0, `légendaire en Stasis : ${JSON.stringify(stasis)}`);
+  eq([content.modes.stasis.minPlayers, content.modes.tranche.maxRarity, content.modes.stasis.maxRarity], [2, 'epic', 'legendary']);
+});
+test('forge : un objet légendaire ne se forge qu\'après avoir terminé son donjon en Stasis', () => {
+  const ch = createCharacter(content, { id: 'f', name: 'F', classId: 'guerrier' });
+  ch.shards = 1000;
+  ch.stats.dungeons = { caves_humides: 1 };
+  const chars = [ch];
+  const leg = craftableItems(content, ch).find((x) => x.def.rarity === 'legendary');
+  assert(leg && leg.locked, 'listé, mais verrouillé');
+  const r = applyCharacterAction(content, chars, { type: 'CHAR_CRAFT', charId: 'f', itemId: leg.id });
+  assert(!r.ok && /Stasis/.test(r.error), r.error);
+  ch.stats.stasisClears = { caves_humides: 1 };
+  assert(applyCharacterAction(content, chars, { type: 'CHAR_CRAFT', charId: 'f', itemId: leg.id }).ok, 'après le Stasis : oui');
+  eq(sanitizeCharacter(content, JSON.parse(JSON.stringify(ch))).stats.stasisClears, { caves_humides: 1 }, 'sauvegardé');
+});
+
 console.log(`\n${failed ? '❌' : '✅'} ${passed} tests réussis, ${failed} échoués\n`);
 process.exit(failed ? 1 : 0);

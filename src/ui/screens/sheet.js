@@ -255,17 +255,18 @@ function forgeTab(ch, api, state, locked) {
   const full = ch.inventory.length >= f.bagMax;
   const craftRow = (x) => {
     const rarity = rarityOf(content, x.def);
-    const can = !locked && shards >= x.cost && !full;
+    const can = !locked && !x.locked && shards >= x.cost && !full;
     return h('div', { class: `forge-row r-${rarity.id}`, style: { '--rar': rarity.color }, dataset: { craft: x.id } },
       h('div', { class: 'bag-icon' }, icon(x.def.slot, 22)),
       h('div', { class: 'bag-main' },
         h('div', { class: 'bag-line1' }, h('b', { class: 'bag-name' }, x.def.name), h('span', { class: 'rarity-pill' }, rarity.name), h('span', { class: 'bag-meta' }, `niveau ${x.def.level}`)),
         statPills(content, x.def),
-        x.def.effect ? h('div', { class: 'gear-effect' }, icon('star', 12), x.def.effect) : null),
+        x.def.effect ? h('div', { class: 'gear-effect' }, icon('star', 12), x.def.effect) : null,
+        x.locked ? h('div', { class: 'item-warn forge-stasis' }, icon('lock', 12), ' Légendaire : termine ce donjon en Stasis (à plusieurs) pour pouvoir le forger.') : null),
       h('div', { class: 'bag-act' },
         h('button', {
           type: 'button', class: 'btn btn-small forge-craft', disabled: !can,
-          title: locked ? lockTitle : full ? 'Ton sac est plein.' : shards < x.cost ? `${x.cost} éclats requis (tu en as ${shards}).` : `Forger pour ${x.cost} éclats`,
+          title: locked ? lockTitle : x.locked ? 'Termine ce donjon en Stasis pour le forger.' : full ? 'Ton sac est plein.' : shards < x.cost ? `${x.cost} éclats requis (tu en as ${shards}).` : `Forger pour ${x.cost} éclats`,
           onClick: () => act({ type: 'CHAR_CRAFT', itemId: x.id }, () => { play('crit'); toast(`${x.def.name} forgé : il est dans ton sac.`, 'good'); })
         }, `Forger · ${x.cost}`)));
   };

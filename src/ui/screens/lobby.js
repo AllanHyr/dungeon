@@ -36,6 +36,10 @@ export function renderLobby(root) {
   const verdict = assess(heroes, tranche, setup.mode);
   const waiting = room.members.filter((m) => !m.ready);
   const everyoneReady = waiting.length === 0;
+  // Le Stasis ne se joue qu'à plusieurs (minPlayers) : il faut assez de joueurs DIFFÉRENTS dans le salon
+  const needPlayers = content.modes[room.setup.mode]?.minPlayers || 1;
+  const players = new Set(room.members.map((m) => m.userId)).size;
+  const tooFew = players < needPlayers;
 
   // ---------------- En-tête ----------------
   const copyCode = async () => {
@@ -129,7 +133,8 @@ export function renderLobby(root) {
               }, l.level)))
             : null,
           h('p', { class: 'mode-desc' }, content.modes[setup.mode].short),
-          h('p', { class: 'muted small' }, 'Effets : ' + modeEffects(setup))),
+          h('p', { class: 'muted small' }, 'Effets : ' + modeEffects(setup)),
+          tooFew ? h('div', { class: 'farm-alert tone-bad lobby-stasis-note' }, `Le Stasis se joue à plusieurs : il faut au moins ${needPlayers} joueurs dans le salon (vous êtes ${players}).`) : null),
         h('h3', { class: 'sub' }, 'Durée d\'un tour', h('small', { class: 'muted' }, 'au bout de ce temps, le pilote automatique joue à la place d\'un joueur qui ne répond pas')),
         h('div', { class: 'mode-switch turn-switch', role: 'group', 'aria-label': 'Durée d\'un tour' }, TURN_CHOICES.map(([secs, label]) => h('button', {
           class: `mode-opt ${setup.turnSeconds === secs ? 'on' : ''}`, type: 'button', 'aria-pressed': setup.turnSeconds === secs, dataset: { turn: secs },
@@ -169,7 +174,8 @@ export function renderLobby(root) {
           h('div', { class: 'launch-who' }, everyoneReady ? `${room.members.length} joueur${plural(room.members.length, '', 's')} prêt${plural(room.members.length, '', 's')}` : `En attente ${deNom(listFr(names))}`),
           h('div', { class: 'launch-where muted small' }, `${dungeon ? dungeon.name : tranche.name} · mode ${modeName}`, heroes.length ? h('span', { class: `fit fit-${verdict.level}` }, icon(VERDICT[verdict.level].ic, 14), VERDICT[verdict.level].label) : null))),
       h('button', {
-        class: 'btn btn-primary btn-xl', id: 'lobby-start', disabled: !everyoneReady, title: everyoneReady ? '' : `Il faut attendre ${listFr(names)}`,
+        class: 'btn btn-primary btn-xl', id: 'lobby-start', disabled: !everyoneReady || tooFew,
+        title: tooFew ? `Le Stasis se joue à ${needPlayers} joueurs au moins.` : everyoneReady ? '' : `Il faut attendre ${listFr(names)}`,
         onClick: () => { play('click'); startRoom(); }
       }, icon('d20', 22), 'Lancer la partie'));
   } else {

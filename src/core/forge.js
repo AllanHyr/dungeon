@@ -83,7 +83,8 @@ export function canUpgrade(content, ch, inst) {
 
 /**
  * Les objets qu'on peut FORGER : ceux de la table de butin d'un donjon que ce personnage a déjà terminé, avec leur prix.
- * Renvoie [{ id, dungeonId, cost, def }].
+ * Un légendaire est listé, mais verrouillé (`locked`) tant que ce donjon n'a pas été terminé en Stasis.
+ * Renvoie [{ id, dungeonId, cost, def, needStasis, locked }].
  */
 export function craftableItems(content, ch) {
   const f = forgeRules(content);
@@ -91,7 +92,10 @@ export function craftableItems(content, ch) {
   for (const [id, did] of Object.entries(content.itemDungeon || {})) {
     if (!(ch.stats?.dungeons?.[did] > 0)) continue;
     const def = content.items[id];
-    if (def) out.push({ id, dungeonId: did, cost: f.craftCost[def.rarity] ?? 30, def });
+    if (!def) continue;
+    // Le légendaire ne se trouve qu'en Stasis (à plusieurs) : il ne se forge qu'après avoir terminé CE donjon en Stasis.
+    const needStasis = def.rarity === 'legendary';
+    out.push({ id, dungeonId: did, cost: f.craftCost[def.rarity] ?? 30, def, needStasis, locked: needStasis && !(ch.stats?.stasisClears?.[did] > 0) });
   }
   return out.sort((a, b) => a.def.level - b.def.level || a.cost - b.cost);
 }

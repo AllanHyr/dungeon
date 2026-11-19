@@ -525,7 +525,7 @@ Les réponses sont toujours `{ ok: true, … }` ou `{ ok: false, error: "un mess
 | --- | --- |
 | `users` | Les comptes : pseudo, hachage du mot de passe, dates. |
 | `sessions` | Les connexions ouvertes (empreinte du jeton, expiration). |
-| `characters` | Les personnages, un par ligne, en **JSON** (c'est exactement le format du jeu : niveau, XP, équipement, sac, coffre, compétences, succès). |
+| `characters` | Les personnages, un par ligne, en **JSON** (c'est exactement le format du jeu : niveau, XP, équipement, sac, éclats, récompense à choisir, compétences, succès). |
 | `runs` | Les parties en cours : l'état complet du jeu, en JSON, et son numéro de version (`rev`, qui augmente à chaque action). |
 | `run_players` | Qui joue quel héros dans quelle partie : une ligne par joueur. Un joueur qui part en pleine partie voit sa ligne supprimée (son héros reste, joué par le pilote automatique). |
 | `rooms` | Les salons : code, hôte, réglages (JSON), « en attente » ou « en cours » (et la partie liée). |

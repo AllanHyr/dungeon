@@ -10,7 +10,7 @@ import { portrait, previewStats, statsLine } from '../components.js';
 import { itemCard, skillIconName } from '../format.js';
 import { firstKeys } from '../keys.js';
 import { openSheet } from './sheet.js';
-import { chestInfo, levelCap, specsOf, characterSlots } from '../../core/index.js';
+import { salvageValue, levelCap, specsOf, characterSlots } from '../../core/index.js';
 import { exportCode, importCode, addImported } from '../../storage/profile.js';
 import { play } from '../sound.js';
 
@@ -133,7 +133,7 @@ export function openDeleteCharacter(charId, onDone = null) {
   if (!ch) return;
   if (lockedCharIds().has(ch.id)) return toast(`${ch.name} est dans la partie en cours : reprends-la ou abandonne-la d'abord.`, 'bad');
   const cls = content.classes[ch.classId];
-  const items = Object.values(ch.equipment || {}).filter(Boolean).length + (ch.inventory || []).length + (ch.chest || []).length;
+  const items = Object.values(ch.equipment || {}).filter(Boolean).length + (ch.inventory || []).length + (ch.lootChoice || []).length;
   const state = { typed: '', busy: false };
   const same = (a, b) => a.trim().toLocaleLowerCase('fr') === b.trim().toLocaleLowerCase('fr');
   openModal({
@@ -159,7 +159,7 @@ export function openDeleteCharacter(charId, onDone = null) {
       return [
         h('div', { class: 'delete-who' }, portrait(ch.classId, 56),
           h('div', null, h('b', null, ch.name), h('div', { class: 'muted small' }, `${cls.name} · niveau ${ch.level}${items ? ` · ${items} objet${items > 1 ? 's' : ''}` : ''}`))),
-        h('p', null, 'Ce personnage, son équipement, son sac et son coffre seront ', h('b', null, 'définitivement perdus'), '.',
+        h('p', null, 'Ce personnage, son équipement, son sac et ses éclats seront ', h('b', null, 'définitivement perdus'), '.',
           app.gateway.canExport ? ' Si tu veux le garder, copie d\'abord son code (fiche > Infos, ou « Sauvegarde »).' : ''),
         h('label', { class: 'field' }, h('span', null, `Pour confirmer, écris son nom : « ${ch.name} »`),
           h('input', { type: 'text', class: 'input', id: 'delete-confirm-name', autocomplete: 'off', value: state.typed,
@@ -349,65 +349,62 @@ export function openTrainingModal() {
 }
 
 
-// ---------------- Coffre d'un personnage ----------------
+// ---------------- La récompense du farm : 1 objet parmi 3 ----------------
 
 /**
- * Le coffre : les objets gagnés au farm y attendent. On l'ouvre en un clic : tout passe dans l'inventaire,
- * et les objets se révèlent un par un, du moins rare au plus rare (le meilleur arrive en dernier).
+ * La récompense d'une session de farm attend sur le personnage (`lootChoice`) : on garde UN objet (il va dans le sac),
+ * les autres sont démantelés en éclats pour la forge. `onDone` : appelé une fois le choix fait.
  */
-export function openChestModal(charId) {
-  const state = { revealed: null };
+export function openLootModal(charId, onDone = null) {
+  const state = { picked: null };
   openModal({
-    title: 'Coffre',
-    onClose: () => redraw(),
+    title: 'Choisis ta récompense',
+    wide: true,
+    className: 'loot-modal',
+    onClose: () => { redraw(); if (state.picked && onDone) onDone(); },
     render: (api) => {
       const content = app.content;
       const ch = app.profile.characters.find((c) => c.id === charId);
       if (!ch) return h('p', null, 'Personnage introuvable.');
-      const info = chestInfo(content, ch);
       const locked = lockedCharIds().has(ch.id);
       const head = h('div', { class: 'sheet-head' },
         portrait(ch.classId, 52),
-        h('div', null, h('h3', null, `Coffre de ${ch.name}`), h('div', { class: 'muted' }, `${info.count} / ${info.capacity} objets`)));
+        h('div', null, h('h3', null, `Récompense de ${ch.name}`), h('div', { class: 'muted' }, 'Un objet à garder ; les autres deviennent des éclats pour la forge.')));
 
-      if (state.revealed) {
+      if (state.picked) {
+        const { picked, shards } = state.picked;
         return [
           head,
-          h('p', { class: 'muted' }, `Tu reçois ${state.revealed.length} objet${state.revealed.length > 1 ? 's' : ''}. Ils sont maintenant dans ton inventaire.`),
-          h('div', { class: 'reveal-grid' }, state.revealed.map((inst, i) =>
-            h('div', { class: 'reveal-item', style: { '--i': i } }, itemCard(content, inst, { realLevel: ch.level })))),
+          h('div', { class: 'reveal-grid' }, h('div', { class: 'reveal-item', style: { '--i': 0 } }, itemCard(content, picked, { realLevel: ch.level }))),
+          h('p', { class: 'loot-done' }, `${content.items[picked.id].name} est dans ton sac.`, shards ? ` Les autres objets donnent ${shards} éclats (tu en as ${ch.shards || 0}).` : ''),
           h('div', { class: 'row end gap' },
             h('button', { class: 'btn', onClick: () => { api.close(); openSheet(ch.id); } }, 'Voir ma fiche & équiper'),
-            h('button', { class: 'btn btn-primary', onClick: () => api.close() }, 'Fermer'))
+            h('button', { class: 'btn btn-primary', id: 'loot-close', onClick: () => api.close() }, 'Fermer'))
         ];
       }
-      if (!info.count) {
-        return [
-          head,
-          h('div', { class: 'chest-empty' }, icon('treasure', 56), h('p', { class: 'muted' }, 'Le coffre est vide. Les objets gagnés dans la zone de farm arrivent ici.')),
-          h('div', { class: 'row end' }, h('button', { class: 'btn', onClick: () => api.close() }, 'Fermer'))
-        ];
+      const list = ch.lootChoice || [];
+      if (!list.length) {
+        return [head, h('p', { class: 'muted' }, 'Aucune récompense à choisir. Termine une session de farm pour en gagner une.'),
+          h('div', { class: 'row end' }, h('button', { class: 'btn', onClick: () => api.close() }, 'Fermer'))];
       }
-      const open = async () => {
-        const res = await characterAction({ type: 'CHAR_OPEN_CHEST', charId: ch.id });
+      const pick = async (inst) => {
+        const res = await characterAction({ type: 'CHAR_PICK_LOOT', charId: ch.id, uid: inst.uid });
         if (!res.ok) return;
-        // Du moins rare au plus rare : le meilleur objet se dévoile en dernier.
-        const rank = (inst) => content.rarityIndex[content.items[inst.id].rarity] * 100 + content.items[inst.id].level;
-        state.revealed = res.opened.slice().sort((a, b) => rank(a) - rank(b));
-        const best = content.rarityIndex[content.items[state.revealed[state.revealed.length - 1].id].rarity];
-        play(best >= content.rarityIndex.rare ? 'crit' : 'heal');
+        state.picked = { picked: res.picked, shards: res.shards };
+        play(content.rarityIndex[content.items[res.picked.id].rarity] >= content.rarityIndex.rare ? 'crit' : 'heal');
         api.refresh();
       };
       return [
         head,
-        h('div', { class: 'chest-closed' },
-          h('div', { class: 'chest-icon' }, icon('treasure', 72)),
-          h('div', { class: 'chest-slots', 'aria-hidden': 'true' }, Array.from({ length: info.count }, () => h('span', { class: 'chest-slot' }, '?'))),
-          h('p', null, `${info.count} objet${info.count > 1 ? 's' : ''} t'attendent. Ouvre le coffre pour tout ranger dans ton inventaire.`)),
-        locked ? h('p', { class: 'tone-bad small' }, 'Ce personnage est dans une partie en cours : termine-la ou abandonne-la avant d\'ouvrir son coffre.') : null,
-        h('div', { class: 'row end gap' },
-          h('button', { class: 'btn', onClick: () => api.close() }, 'Plus tard'),
-          h('button', { class: 'btn btn-primary btn-xl', id: 'chest-open', disabled: locked, onClick: open }, icon('treasure', 20), 'Ouvrir le coffre'))
+        h('div', { class: 'loot-choices' }, list.map((inst, i) => {
+          const others = list.filter((x) => x !== inst).reduce((t, x) => t + salvageValue(content, x), 0);
+          return h('div', { class: 'loot-choice reveal-item', style: { '--i': i }, dataset: { uid: inst.uid, item: inst.id } },
+            itemCard(content, inst, { realLevel: ch.level }),
+            h('button', { class: 'btn btn-primary loot-pick', disabled: locked, title: locked ? 'Ce personnage est dans une partie en cours.' : `Garder cet objet (les autres : +${others} éclats)`, onClick: () => pick(inst) },
+              icon('check', 16), 'Garder', h('small', null, ` · +${others} éclats`)));
+        })),
+        locked ? h('p', { class: 'tone-bad small' }, 'Ce personnage est dans une partie en cours : termine-la ou abandonne-la avant de choisir.') : null,
+        h('div', { class: 'row end gap' }, h('button', { class: 'btn', onClick: () => api.close() }, 'Plus tard'))
       ];
     }
   });
@@ -447,7 +444,7 @@ export function openHelpModal() {
           h('li', null, h('b', null, 'Au clavier'), ` : les touches de la rangée du haut (${firstKeys(4)} ...) lancent les compétences dans l'ordre, comme la barre d'action d'un MMORPG. Échap annule le choix d'une cible. Sur téléphone : un premier toucher montre la compétence, le second la lance.`),
           h('li', null, h('b', null, 'Les boucliers'), " absorbent les dégâts avant les PV, mais ne comptent pas comme des PV (ils n'enlèvent pas la force d'un Berserker blessé).")),
         h('h3', null, 'La zone de farm (solo)'),
-        h('p', null, "Un seul personnage affronte des vagues de monstres de plus en plus fortes, avec un boss régulier. Après chaque vague tu choisis : continuer ou partir avec ton coffre. Si tu tombes, tu ne perds que la vague en cours. Les récompenses sont modestes (de l'XP de début de jeu, des objets communs ou inhabituels, rarement rares) : le meilleur équipement vient des donjons en équipe. Ton coffre se vide dans l'inventaire quand tu l'ouvres."),
+        h('p', null, "Un seul personnage affronte des vagues de monstres de plus en plus fortes, avec un boss régulier. Après chaque vague tu choisis : continuer ou t'arrêter. Si tu tombes, tu ne perds que la vague en cours. Chaque vague donne des éclats pour la forge ; à la fin, tu gardes 1 objet parmi 3, d'autant meilleurs que tu as tenu longtemps (les autres deviennent des éclats). L'XP du farm sert à rattraper : seul un héros plus bas que ton meilleur héros en gagne. Le meilleur équipement vient des donjons en équipe."),
         h('h3', null, 'Les succès'),
         h('p', null, "Chaque personnage a ses succès (fiche > Succès) : finir un donjon en équipe, vaincre des vagues, atteindre un niveau d'équipement... Ils débloquent des compétences, des fonctions du jeu (le farm automatique) ou des titres, pour ce personnage-là."),
         h('h3', null, 'Mort et fantômes'),

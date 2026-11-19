@@ -5,7 +5,7 @@
 // et les règles s'exécutent dans la page. C'est exactement le comportement d'avant l'arrivée du serveur.
 
 import {
-  createRun, createFarm, dispatch, restoreState, attachContent, STATE_VERSION, applyCharacterAction, settleRun, checkAchievements
+  createRun, createFarm, catchUpLevel, dispatch, restoreState, attachContent, STATE_VERSION, applyCharacterAction, settleRun, checkAchievements
 } from '../core/index.js';
 import { createStore, loadProfile, saveProfile, newCharacterId, saveRun, loadRunText, clearRun } from '../storage/profile.js';
 import { loadContent } from '../data-loader.js';
@@ -100,9 +100,9 @@ export function createLocalGateway({ content, dataUrl, storage }) {
       if (!ch) return { ok: false, error: 'Personnage introuvable.' };
       let run;
       try {
-        run = createFarm(gw.content, ch);
+        run = createFarm(gw.content, ch, { xpCap: catchUpLevel(gw.content, profile.characters, ch) });
       } catch (e) {
-        return { ok: false, error: e.message }; // ex. coffre plein
+        return { ok: false, error: e.message }; // ex. récompense pas encore choisie
       }
       saveRun(run, store);
       return { ok: true, run };

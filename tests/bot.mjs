@@ -307,7 +307,7 @@ export function checkInvariants(state) {
   if (state.farm) {
     const f = state.farm;
     if (f.cleared > f.wave || f.cleared < f.wave - 1) throw new Error(`farm : vagues incohérentes (vague ${f.wave}, vaincues ${f.cleared})`);
-    if (f.items.length > f.chestFree) throw new Error('farm : plus d\'objets que de place dans le coffre');
+    if (!Number.isFinite(f.shards) || f.shards < f.cleared) throw new Error('farm : éclats invalides');
     if (f.xp < 0 || !Number.isFinite(f.xp)) throw new Error('farm : XP invalide');
     if (state.pending?.kind === 'farm' && state.combat) throw new Error('farm : entre deux vagues il ne peut pas y avoir de combat');
   }
@@ -335,7 +335,7 @@ export function playRun(content, setup, characters, seed, botSeed = seed + 7, ma
 
 /** Joue une session de farm complète (jusqu'à l'arrêt ou la mort). opts : { zoneId, stopBelow, maxWaves, combatMode } */
 export function playFarm(content, character, seed, botSeed = seed + 7, opts = {}, maxActions = 6000) {
-  const state = createFarm(content, character, { zoneId: opts.zoneId, seed });
+  const state = createFarm(content, character, { zoneId: opts.zoneId, seed, xpCap: opts.xpCap || 0 });
   const rand = makeRand(botSeed);
   let actions = 0;
   while (state.phase !== 'ended') {

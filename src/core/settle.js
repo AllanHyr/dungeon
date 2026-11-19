@@ -2,7 +2,7 @@
 //  settle.js — Régler la fin d'une partie : les récompenses vont aux personnages sauvegardés
 // ============================================================
 // Quand une partie se termine (victoire, défaite, abandon, fin d'une session de farm), le bilan est calculé par le moteur
-// (state.result) puis APPLIQUÉ aux personnages : XP, butin, coffre, compteurs, succès débloqués.
+// (state.result) puis APPLIQUÉ aux personnages : XP, butin, éclats, compteurs, succès débloqués.
 // Cette étape est faite exactement une fois (le bilan porte un drapeau `applied`) :
 //   - en local, par le navigateur ;
 //   - en ligne, par le serveur (le navigateur reçoit les personnages à jour).

@@ -1,4 +1,5 @@
-// Test de la zone de farm solo dans un vrai navigateur : onglet, coffre, vagues, succès, mort, reprise, téléphone.
+// Test de la zone de farm solo dans un vrai navigateur : onglet, XP de rattrapage, vagues et éclats, 1 objet au choix parmi 3,
+// succès, mort, reprise, téléphone ; un ancien coffre passe dans le sac.
 // Usage : node tests/ui-farm.cjs [url] [dossier_captures]    (le jeu doit tourner : PORT=8765 node serve.mjs)
 const { chromium } = require('playwright');
 const url = process.argv[2] || 'http://localhost:8765/';
@@ -54,25 +55,14 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await page.click('[data-view="farm"]');
   await page.waitForSelector('.zone-card');
   check((await page.textContent('.zone-card')).includes('Les Terriers'), 'la zone « Les Terriers » est présentée');
-  check((await page.textContent('.zone-card')).includes('niveau 4'), 'la zone annonce le plafond d\'XP (niveau 4)');
-  check((await page.textContent('.zone-card')).includes('Jamais d\'objet épique ni légendaire'), "la zone annonce qu'il n'y a jamais d'épique ni de légendaire");
+  check((await page.textContent('.zone-card')).includes('1 objet au choix parmi 3'), 'la zone annonce la récompense au choix');
+  check(/Rattrapage.*niveau 4/.test(await page.textContent('.home-plan')), 'Thorne (niv. 2) rattrape Maeve (niv. 4) : XP jusqu\'au niveau 4');
   check(await page.$eval('#farm-launch', (b) => !b.disabled), 'on peut entrer dans la zone');
   await page.screenshot({ path: `${out}/70-farm-menu.png`, fullPage: true });
 
-  console.log('\n● Le coffre');
-  await page.click('.char-card.selected .chest-btn');
-  await page.waitForSelector('#chest-open');
-  check((await page.$$('.chest-slot')).length === 3, 'le coffre fermé montre 3 emplacements');
-  await page.click('#chest-open');
-  await page.waitForSelector('.reveal-item');
-  await sleep(900);
-  check((await page.$$('.reveal-item')).length === 3, 'les 3 objets sont révélés');
-  const colors = await page.$$eval('.reveal-item .item-card', (els) => [...new Set(els.map((e) => getComputedStyle(e).borderLeftColor))]);
-  check(colors.length >= 3, `les 3 raretés ont 3 couleurs différentes (${colors.length})`);
-  await page.keyboard.press('Escape');
-  await sleep(200);
-  check((await page.textContent('.char-card.selected .chest-btn')).includes('0/24'), 'le coffre est vide après ouverture');
-  check(await page.evaluate(() => JSON.parse(localStorage.getItem('donjon.profile.v1')).characters[0].inventory.length) === 4, "les objets sont dans l'inventaire sauvegardé");
+  console.log('\n● L\'ancien coffre');
+  check(await page.$('.chest-btn, .loot-btn') === null, 'plus de coffre : rien à choisir pour l\'instant');
+  check(await page.evaluate(() => JSON.parse(localStorage.getItem('donjon.profile.v1')).characters[0].inventory.length) === 4, "les objets de l'ancien coffre sont dans le sac");
 
   console.log('\n● Une session : 3 vagues, un succès, on part');
   await page.click('#farm-launch');
@@ -98,7 +88,16 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('donjon.profile.v1')).characters[0]);
   check(saved.stats.farmWaves === 3 && saved.stats.farmBest === 3 && saved.stats.farmRuns === 1, 'les compteurs de farm sont sauvegardés');
   check(saved.achievements.premier_sang === true, 'le succès est sauvegardé pour CE personnage');
-  check(saved.xp > 30 || saved.level > 2, "l'XP a été gagnée");
+  check(saved.xp > 30 || saved.level > 2, "l'XP de rattrapage a été gagnée");
+  check(saved.shards === 3 && saved.lootChoice.length === 3, `3 éclats et 3 objets au choix (${saved.shards}, ${saved.lootChoice.length})`);
+  check(await page.$eval('#farm-again', (b) => b.disabled), 'on ne repart pas sans avoir choisi sa récompense');
+  check((await page.$$('.farm-loot .loot-choice')).length === 3, 'les 3 objets au choix sont sur l\'écran de fin');
+  const pickedId = await page.$eval('.farm-loot .loot-choice', (e) => e.dataset.item);
+  await page.click('.farm-loot .loot-choice .loot-pick');
+  await sleep(500);
+  const after = await page.evaluate(() => JSON.parse(localStorage.getItem('donjon.profile.v1')).characters[0]);
+  check(after.inventory.some((i) => i.id === pickedId) && after.lootChoice.length === 0 && after.shards > 3, `l'objet choisi est dans le sac, les deux autres en éclats (${after.shards})`);
+  check(/Récompense choisie/.test(await page.textContent('.farm-loot')), 'l\'écran dit que la récompense est choisie');
   check(await page.evaluate(() => localStorage.getItem('donjon.run.v1')) === null, 'la partie sauvegardée est effacée à la fin de session');
 
   console.log('\n● Mort : on garde les vagues précédentes');
@@ -125,6 +124,18 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await page.screenshot({ path: `${out}/73-farm-mort.png`, fullPage: true });
   await page.click('#farm-menu');
   await page.waitForSelector('.zone-card');
+  // La récompense n'a pas été choisie : l'accueil la rappelle (étiquette du héros + bouton dans la zone)
+  check(await page.$('.char-card.selected .loot-btn') !== null, 'le héros porte l\'étiquette « Récompense à choisir »');
+  check(await page.$eval('#farm-launch', (b) => b.disabled), 'on ne relance pas une session avant de choisir');
+  await page.click('#farm-pick-loot');
+  await page.waitForSelector('.loot-modal .loot-pick');
+  check((await page.$$('.loot-modal .loot-choice')).length === 3, 'la fenêtre propose 3 objets');
+  await page.screenshot({ path: `${out}/73b-farm-choix.png` });
+  await page.click('.loot-modal .loot-choice:nth-child(2) .loot-pick');
+  await page.waitForSelector('#loot-close');
+  await page.click('#loot-close');
+  await sleep(300);
+  check(await page.$('.char-card.selected .loot-btn') === null && await page.$eval('#farm-launch', (b) => !b.disabled), 'récompense choisie : on peut repartir');
 
   console.log('\n● Fiche : onglet Succès');
   await page.click('.char-card.selected >> text=Fiche');
@@ -145,10 +156,6 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await page.click('.char-card.selected >> text=Fiche');
   await page.waitForSelector('.farm-alert');
   check(await page.$$eval('.modal .btn-small.btn-primary', (b) => b.every((x) => x.disabled)), "les boutons « Équiper » sont bloqués");
-  await page.keyboard.press('Escape');
-  await page.click('.char-card.selected .chest-btn');
-  await page.waitForSelector('.modal');
-  check((await page.$('#chest-open')) === null || (await page.$eval('#chest-open', (b) => b.disabled)), "l'ouverture du coffre est bloquée");
   await page.keyboard.press('Escape');
   await page.click('text=Reprendre');
   await page.waitForSelector('.farm-bar');
@@ -176,6 +183,8 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await m.click('#farm-stop');
   await m.waitForSelector('.farm-end', { timeout: 8000 });
   check((await overflow(m)) === 0, 'fin de session : pas de débordement horizontal');
+  check((await m.$$('.farm-loot .loot-choice')).length === 3, 'téléphone : les 3 objets au choix');
+  await m.screenshot({ path: `${out}/75-mobile-choix.png`, fullPage: true });
 
   check(errors.length === 0, errors.length ? 'erreurs JavaScript : ' + errors.join(' | ') : 'aucune erreur JavaScript');
   await browser.close();

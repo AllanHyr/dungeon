@@ -68,7 +68,7 @@ export async function startFarm(charId) {
   app.busy = true;
   try {
     const res = await app.gateway.startFarm(charId, { replace: !!savedRunInfo() });
-    if (!res.ok) return toast(res.error, 'bad'); // ex. coffre plein
+    if (!res.ok) return toast(res.error, 'bad'); // ex. récompense pas encore choisie
     app.run = res.run;
     app.profile.settings.farmChar = charId;
     app.profile.settings.view = 'farm';

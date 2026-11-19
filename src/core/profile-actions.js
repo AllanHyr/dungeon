@@ -2,7 +2,7 @@
 //  profile-actions.js — Tout ce qu'on peut faire à un personnage HORS d'une partie
 // ============================================================
 // Créer, supprimer, équiper, retirer un objet, apprendre une compétence, réinitialiser les compétences, choisir sa spécialisation
-// et son deck de sorts, ouvrir le coffre ; démanteler, protéger, améliorer et forger des objets (voir forge.js).
+// et son deck de sorts, choisir la récompense du farm ; démanteler, protéger, améliorer et forger des objets (voir forge.js).
 //
 // C'est le MÊME code qui s'exécute :
 //   - dans le navigateur, quand on joue seul (la démo publiée) : les personnages sont dans le navigateur ;
@@ -18,14 +18,14 @@
 
 import { createCharacter, learnSkill, resetSkills, setSpec, setDeck } from './progression.js';
 import { equipFromBag, unequipToBag } from './items.js';
-import { openChest } from './farm.js';
+import { pickLoot } from './farm.js';
 import { salvageValue, canUpgrade, craftableItems, bulkSalvageList, ownedItems, forgeRules } from './forge.js';
 import { checkAchievements } from './achievements.js';
 import { EQUIP_SLOTS } from './content.js';
 import { GameError, assert } from './util.js';
 
 /** Les actions acceptées (le champ `type` d'une demande). */
-export const CHARACTER_ACTIONS = ['CHAR_CREATE', 'CHAR_DELETE', 'CHAR_EQUIP', 'CHAR_UNEQUIP', 'CHAR_LEARN', 'CHAR_RESET_SKILLS', 'CHAR_SET_SPEC', 'CHAR_SET_DECK', 'CHAR_OPEN_CHEST',
+export const CHARACTER_ACTIONS = ['CHAR_CREATE', 'CHAR_DELETE', 'CHAR_EQUIP', 'CHAR_UNEQUIP', 'CHAR_LEARN', 'CHAR_RESET_SKILLS', 'CHAR_SET_SPEC', 'CHAR_SET_DECK', 'CHAR_PICK_LOOT',
   'CHAR_SALVAGE', 'CHAR_SALVAGE_BULK', 'CHAR_LOCK', 'CHAR_UPGRADE', 'CHAR_CRAFT'];
 
 /** Combien de personnages au maximum (une limite de sécurité pour une base de données partagée). */
@@ -53,7 +53,7 @@ export function cleanName(name) {
  * @param ctx         { newId: () => string  (obligatoire pour créer),
  *                      locked?: Set<string>  (personnages engagés dans une partie : on n'y touche pas),
  *                      maxCharacters?: number }
- * @returns { ok:true, character?, deletedId?, unlocked:[succès débloqués], opened?:[objets du coffre] }
+ * @returns { ok:true, character?, deletedId?, unlocked:[succès débloqués], picked?, shards? }
  *       ou { ok:false, error:"..." } (rien n'a été modifié)
  */
 export function applyCharacterAction(content, characters, action, ctx = {}) {
@@ -107,10 +107,12 @@ export function applyCharacterAction(content, characters, action, ctx = {}) {
         assert(res.ok, res.reason);
         break;
       }
-      case 'CHAR_OPEN_CHEST': {
-        assert(ch.chest.length > 0, 'Le coffre est vide.');
-        const opened = openChest(content, ch);
-        return { ok: true, character: ch, opened, unlocked: checkAchievements(content, ch) };
+      case 'CHAR_PICK_LOOT': {
+        // La récompense d'une session de farm : on garde un objet, les autres sont démantelés en éclats.
+        assert(typeof action.uid === 'string', 'Objet invalide.');
+        assert(ch.lootChoice?.length, 'Aucune récompense à choisir.');
+        const res = pickLoot(content, ch, action.uid);
+        return { ok: true, character: ch, picked: res.picked, shards: res.shards, unlocked: checkAchievements(content, ch) };
       }
       case 'CHAR_SALVAGE': {
         // Démanteler un objet DU SAC (pas un objet porté, pas un objet protégé, pas une potion) : il devient des éclats.

@@ -271,7 +271,7 @@ export function equipmentView({ content, holder, view, tranche = null, actions, 
           h('div', { class: 'bag-list' }, list.map(bagRow)))))
       : h('p', { class: 'muted empty-note' }, items.length
           ? (view.sel ? 'Rien dans le sac pour cet emplacement.' : 'Rien de ce type dans le sac.')
-          : 'Ton sac est vide. Les objets trouvés en donjon et dans le coffre arrivent ici.'));
+          : 'Ton sac est vide. Les objets trouvés en donjon et au farm arrivent ici.'));
 
   // ---- l'assemblage
   const total = EQUIP_SLOTS.length;

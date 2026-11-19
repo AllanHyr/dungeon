@@ -13,7 +13,7 @@ import { readFileSync, statSync } from 'node:fs';
 import { createHash, randomBytes, randomInt } from 'node:crypto';
 import { join } from 'node:path';
 import {
-  buildContent, DATA_FILES, createFarm, dispatch, restoreState, applyCharacterAction, settleRun, afkAction, turnKey
+  buildContent, DATA_FILES, createFarm, catchUpLevel, dispatch, restoreState, applyCharacterAction, settleRun, afkAction, turnKey
 } from '../src/core/index.js';
 import { GameError, log } from '../src/core/util.js';
 import { sanitizeCharacter } from '../src/storage/profile.js';
@@ -187,7 +187,7 @@ export class GameService {
       else if (action.type === 'CHAR_DELETE') this.store.deleteCharacter(userId, res.deletedId);
       else this.store.saveCharacter(userId, res.character, now);
       return {
-        ok: true, character: res.character ?? null, deletedId: res.deletedId ?? null, opened: res.opened ?? null,
+        ok: true, character: res.character ?? null, deletedId: res.deletedId ?? null, picked: res.picked ?? null,
         shards: res.shards ?? null, salvaged: res.salvaged ?? null, crafted: res.crafted ?? null,
         unlocked: res.unlocked.map((a) => a.id)
       };
@@ -300,12 +300,13 @@ export class GameService {
         throw new HttpError(400, req.kind === 'dungeon' ? 'Les donjons se jouent dans un salon : un héros par joueur. Crée un salon ou rejoins celui d\'un ami.' : 'Type de partie inconnu.');
       }
       const content = this.content();
-      const ch = typeof req.charId === 'string' ? this.loadCharacters(userId).find((c) => c.id === req.charId) : null;
+      const chars = this.loadCharacters(userId);
+      const ch = typeof req.charId === 'string' ? chars.find((c) => c.id === req.charId) : null;
       if (!ch) throw new HttpError(404, 'Personnage introuvable.');
       let state;
       try {
         const zoneId = typeof req.zoneId === 'string' ? req.zoneId : undefined;
-        state = createFarm(content, ch, { zoneId, seed: randomSeed() });
+        state = createFarm(content, ch, { zoneId, seed: randomSeed(), xpCap: catchUpLevel(content, chars, ch) });
       } catch (e) {
         if (e instanceof GameError) throw new HttpError(400, e.message);
         throw e;

@@ -67,7 +67,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await page.waitForSelector('.sheet-modal');
   check(!!(await page.$('.sheet-modal .tab.on[data-tab="skills"]')), 'cliquer dessus ouvre sa fiche directement sur les compétences');
   await page.keyboard.press('Escape');
-  check((await page.$$('.chest-btn')).length === 0, 'pas de coffre affiché tant qu\'il est vide (il apparaît dans l\'onglet farm, ou dès qu\'il contient quelque chose)');
+  check((await page.$$('.loot-btn')).length === 0, 'pas d\'étiquette « Récompense à choisir » tant qu\'aucune session de farm n\'en a laissé une');
 
   console.log('\n● L\'équipe et le verdict de chaque donjon');
   for (const [classId, name] of [['sacrieur', 'Thorne'], ['pretre', 'Kael']]) {
@@ -133,7 +133,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   check(/Ton héros/.test(await page.textContent('.home-heroes h2')) && (await page.$$('.hero-card.selected')).length === 1, 'un seul héros à la fois');
   await page.click('.hero-card:has-text("Kael")');
   check(!!(await page.$('.hero-card.selected:has-text("Kael")')) && (await page.$$('.hero-card.selected')).length === 1, 'en choisir un autre déplace le choix');
-  check((await page.$$('.chest-btn')).length === 5, 'chaque héros montre son coffre');
+  check((await page.$$('.loot-btn')).length === 0, 'aucune récompense en attente : pas d\'étiquette au farm non plus');
   check((await page.$$('.zone-chip')).length === 4 && !(await page.$eval('.zone-more', (d) => d.open)), 'la zone tient en quatre puces ; le détail se déplie à la demande');
   await page.click('.zone-more summary');
   check(await page.$eval('.zone-more', (d) => d.open), '« Comment ça marche ? » déplie les règles de la zone');

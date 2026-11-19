@@ -1,15 +1,16 @@
 // ============================================================
-//  farm.js — La zone de farm solo : vagues, récompenses limitées, coffre
+//  farm.js — La zone de farm solo : vagues, éclats, un objet au choix, XP de rattrapage
 // ============================================================
 // Un SEUL personnage affronte des vagues de monstres dans une petite zone (data/farm.json).
-//   - Après chaque vague vaincue, il choisit : vague suivante, ou partir avec son coffre.
+//   - Après chaque vague vaincue, il choisit : vague suivante, ou s'arrêter.
 //   - Plus il tient, plus les vagues sont dures (PV et attaque des monstres), avec un boss régulier.
 //   - Ce qu'il a gagné dans les vagues PRÉCÉDENTES est gardé. S'il meurt, il ne perd que la vague en cours.
-//   - Les récompenses sont volontairement restreintes : de l'XP jusqu'à un niveau plafond, et des objets
-//     communs ou inhabituels (rarement rares). Le meilleur équipement vient des donjons à plusieurs.
+//   - Chaque vague donne des ÉCLATS (la forge). En fin de session : 1 objet AU CHOIX parmi 3, d'autant meilleurs
+//     qu'on a tenu longtemps ; les deux autres sont démantelés en éclats. Le choix attend sur le personnage (`lootChoice`).
+//   - L'XP sert à RATTRAPER : seul un héros plus bas que le meilleur héros du joueur en gagne, jusqu'à son niveau.
 //
-// Le farm réutilise tout le combat (PA, rangs, frise...). Il ajoute seulement l'enchaînement des vagues,
-// le calcul du butin, et le coffre du personnage. Comme le reste du moteur, il est 100 % JSON et ne
+// Le farm réutilise tout le combat (PA, rangs, frise...). Il ajoute seulement l'enchaînement des vagues
+// et le calcul des récompenses. Comme le reste du moteur, il est 100 % JSON et ne
 // touche à aucun affichage : plus tard, un robot pourra le jouer tout seul (farm automatique).
 
 import { nextFloat, weightedPick } from './rng.js';
@@ -17,7 +18,8 @@ import { log, headline, assert, emit } from './util.js';
 import { unitStats } from './stats.js';
 import { makeMonster, startCombat } from './combat.js';
 import { newItem } from './items.js';
-import { addXpCapped, previewXpCapped } from './progression.js';
+import { addXpCapped, previewXpCapped, levelCap } from './progression.js';
+import { salvageValue } from './forge.js';
 import { EQUIP_SLOTS } from './content.js';
 
 export const farmZone = (state) => state.content.farm.zones[state.farm.zoneId];
@@ -78,28 +80,44 @@ export function startFarmWave(state) {
 }
 
 // ============================================================
-//  Le butin (restreint)
+//  Le butin : un objet au choix parmi 3
 // ============================================================
 
-/**
- * Tire UN objet du farm : seules les raretés de `rarityWeights` peuvent tomber (pas d'épique ni de
- * légendaire), à un niveau <= itemMaxLevel. `minRarity` : le boss donne au moins cette rareté.
- */
-export function rollFarmItem(state, zone, { minRarity = null } = {}) {
+/** Le palier de récompense atteint après `waves` vagues vaincues (le dernier de choiceTiers dont `waves` est atteint), ou null. */
+export function choiceTier(zone, waves) {
+  let tier = null;
+  for (const t of zone.rewards.choiceTiers) if (waves >= t.waves) tier = t;
+  return tier;
+}
+
+/** Tire UN objet de farm selon des poids de rareté (niveau <= itemMaxLevel, jamais une potion ni un objet exclusif de donjon). */
+export function rollFarmItem(state, zone, rarityWeights, exclude = new Set()) {
   const c = state.content;
   const r = zone.rewards;
-  if (!minRarity && nextFloat(state) < r.potionChance) {
-    const potions = c.itemList.filter((i) => i.slot === 'consumable' && i.level <= r.itemMaxLevel);
-    if (potions.length) return newItem(state, weightedPick(state, potions, (i) => i.weight ?? 1).id);
+  const [rarity] = weightedPick(state, Object.entries(rarityWeights), ([, weight]) => weight);
+  const all = c.itemList.filter((i) => i.rarity === rarity && i.level <= r.itemMaxLevel && i.slot !== 'consumable' && !c.itemDungeon?.[i.id]);
+  const pool = all.filter((i) => !exclude.has(i.id));
+  return newItem(state, weightedPick(state, pool.length ? pool : all, (i) => i.weight ?? 1).id);
+}
+
+/** Les objets proposés en fin de session (trois objets différents), ou [] si aucune vague n'a été vaincue. */
+export function rollChoices(state, zone, waves) {
+  const tier = choiceTier(zone, waves);
+  if (!tier) return [];
+  const out = [];
+  const seen = new Set();
+  for (let i = 0; i < zone.rewards.choiceCount; i++) {
+    const it = rollFarmItem(state, zone, tier.rarityWeights, seen);
+    seen.add(it.id);
+    out.push(it);
   }
-  let entries = Object.entries(r.rarityWeights);
-  if (minRarity) {
-    const better = entries.filter(([id]) => c.rarityIndex[id] >= c.rarityIndex[minRarity]);
-    if (better.length) entries = better;
-  }
-  const [rarity] = weightedPick(state, entries, ([, weight]) => weight);
-  const pool = c.itemList.filter((i) => i.rarity === rarity && i.level <= r.itemMaxLevel && i.slot !== 'consumable' && !c.itemDungeon?.[i.id]); // (jamais d'objet exclusif à un donjon)
-  return newItem(state, weightedPick(state, pool, (i) => i.weight ?? 1).id);
+  return out;
+}
+
+/** Le niveau jusqu'auquel le farm donne de l'XP à ce personnage : celui de ton meilleur AUTRE héros (0 si aucun n'est plus haut). */
+export function catchUpLevel(content, characters, ch) {
+  const best = Math.max(0, ...characters.filter((x) => x.id !== ch.id).map((x) => x.level || 1));
+  return best > ch.level ? Math.min(best, levelCap(content)) : 0;
 }
 
 /** Appelée par le combat quand tous les monstres de la vague sont morts. */
@@ -115,24 +133,16 @@ export function endFarmWave(state) {
   f.kills += c.monsters.length;
   f.cleared++;
 
+  // L'XP : seulement pour rattraper ton meilleur héros (voir catchUpLevel)
+  const catchUp = (f.xpCap || 0) > p.realLevel;
   const xpBase = c.monsters.reduce((sum, m) => sum + m.xp, 0);
-  const xp = Math.round(xpBase * r.xpMult * (1 + r.xpPerWave * (f.wave - 1)));
-  const drops = [];
-  if (c.boss) for (let i = 0; i < r.bossItems; i++) drops.push(rollFarmItem(state, zone, { minRarity: r.bossMinRarity }));
-  else if (nextFloat(state) < r.lootChance) drops.push(rollFarmItem(state, zone));
-
-  // Le coffre a une capacité : ce qui dépasse est perdu.
-  const kept = [];
-  let lost = 0;
-  for (const it of drops) {
-    if (f.items.length < f.chestFree) {
-      f.items.push(it);
-      kept.push(it);
-    } else lost++;
-  }
-  f.lostItems += lost;
+  const xp = catchUp ? Math.round(xpBase * r.xpMult * r.catchUpXpMult * (1 + r.xpPerWave * (f.wave - 1))) : 0;
+  const shards = r.shardsPerWave + (c.boss ? r.bossShards : 0);
   f.xp += xp;
-  f.last = { wave: f.wave, xp, items: kept.map((it) => ({ ...it })), lost, boss: !!c.boss };
+  f.shards = (f.shards || 0) + shards;
+  const tierBefore = choiceTier(zone, f.cleared - 1);
+  const tier = choiceTier(zone, f.cleared);
+  f.last = { wave: f.wave, xp, shards, boss: !!c.boss, tierUp: tier !== tierBefore && !!tierBefore };
 
   const max = unitStats(state, p).hpMax;
   const before = p.hp;
@@ -140,7 +150,8 @@ export function endFarmWave(state) {
 
   state.phase = 'farm';
   state.pending = { kind: 'farm', actor: p.id };
-  log(state, `Vague ${f.wave} vaincue ! +${xp} XP${kept.length ? `, ${kept.length} objet${kept.length > 1 ? 's' : ''} dans le coffre` : ''}${lost ? ` (${lost} perdu${lost > 1 ? 's' : ''} : coffre plein)` : ''}.`, 'good');
+  log(state, `Vague ${f.wave} vaincue ! +${shards} éclat${shards > 1 ? 's' : ''}${xp ? `, +${xp} XP` : ''}.`, 'good');
+  if (f.last.tierUp) log(state, 'Ta récompense de fin de session s\'améliore !', 'good');
   if (p.hp > before) {
     log(state, `${p.name} reprend son souffle (+${p.hp - before} PV).`, 'info');
     emit(state, { type: 'heal', target: p.id, amount: p.hp - before, source: null, breath: true });
@@ -163,8 +174,8 @@ export function computeFarmResult(state, outcome) {
   const f = state.farm;
   const zone = farmZone(state);
   const p = state.players[0];
-  const cap = zone.rewards.xpMaxLevel;
-  const after = previewXpCapped(state.content, { level: p.realLevel, xp: p.xpStart }, f.xp, cap);
+  const cap = f.xpCap || 0;
+  const after = cap > p.realLevel ? previewXpCapped(state.content, { level: p.realLevel, xp: p.xpStart }, f.xp, cap) : { applied: 0, capped: false, level: p.realLevel };
   return {
     farm: true,
     outcome,
@@ -177,30 +188,30 @@ export function computeFarmResult(state, outcome) {
     waves: f.cleared, // vagues VAINCUES (la vague où l'on meurt ne compte pas)
     kills: f.kills,
     diedAtWave: outcome === 'defeat' ? f.wave : null,
-    xp: { earned: f.xp, applied: after.applied, capped: after.capped, maxLevel: cap, levelBefore: p.realLevel, levelAfter: after.level },
-    items: f.items.map((it) => ({ ...it })),
-    lostItems: f.lostItems,
+    xp: { earned: f.xp, applied: after.applied, capped: after.capped, maxLevel: cap, catchUp: cap > p.realLevel, levelBefore: p.realLevel, levelAfter: after.level },
+    shards: f.shards || 0,
+    choices: rollChoices(state, zone, f.cleared).map((it) => ({ uid: it.uid, id: it.id })),
     applied: false
   };
 }
 
 /**
- * Applique le bilan d'une session au personnage SAUVEGARDÉ : XP (plafonnée), objets dans le coffre,
- * compteurs, potions bues. À appeler une seule fois (protégé par `result.applied`).
+ * Applique le bilan d'une session au personnage SAUVEGARDÉ : XP de rattrapage, éclats, objets au choix (en attente sur le
+ * personnage : `lootChoice`), compteurs, potions bues. À appeler une seule fois (protégé par `result.applied`).
  * Renvoie { levels } ou null si déjà appliqué.
  */
 export function applyFarmResult(content, ch, state) {
   const res = state.result;
   if (!res || !res.farm || res.applied) return null;
-  const zone = content.farm.zones[res.zoneId];
   const p = state.players[0];
   const s = ch.stats;
   s.farmRuns++;
   s.farmWaves += res.waves;
   s.farmBest = Math.max(s.farmBest, res.waves);
 
-  const gain = addXpCapped(content, ch, res.xp.earned, zone.rewards.xpMaxLevel);
-  for (const it of res.items) if (ch.chest.length < content.farm.chestCapacity) ch.chest.push({ uid: it.uid, id: it.id });
+  const gain = res.xp.catchUp ? addXpCapped(content, ch, res.xp.earned, res.xp.maxLevel) : { levels: 0 };
+  ch.shards = (ch.shards || 0) + (res.shards || 0);
+  if (res.choices?.length) ch.lootChoice = res.choices.map((it) => ({ uid: it.uid, id: it.id }));
 
   // Les potions bues pendant la session disparaissent de l'inventaire (rien d'autre n'a pu changer : pas d'équipement en farm).
   const still = new Set([...p.bag.map((i) => i.uid), ...EQUIP_SLOTS.map((slot) => p.equipment[slot]?.uid).filter(Boolean)]);
@@ -212,25 +223,27 @@ export function applyFarmResult(content, ch, state) {
 }
 
 // ============================================================
-//  Le coffre du personnage
+//  La récompense au choix (en attente sur le personnage)
 // ============================================================
-
-/** { count, capacity, free, full } */
-export function chestInfo(content, ch) {
-  const count = ch.chest?.length || 0;
-  const capacity = content.farm.chestCapacity;
-  return { count, capacity, free: Math.max(0, capacity - count), full: count >= capacity };
-}
 
 /** Peut-on lancer une session de farm ? { ok, reason } */
 export function canStartFarm(content, ch) {
-  if (chestInfo(content, ch).full) return { ok: false, reason: 'Ton coffre est plein : ouvre-le avant de repartir.' };
+  if (ch.lootChoice?.length) return { ok: false, reason: 'Choisis d\'abord la récompense de ta dernière session.' };
   return { ok: true };
 }
 
-/** Ouvre le coffre : tout passe dans l'inventaire. Renvoie la liste des objets reçus. */
-export function openChest(content, ch) {
-  const items = ch.chest.splice(0, ch.chest.length);
-  ch.inventory.push(...items);
-  return items;
+/**
+ * Prend l'objet `uid` parmi les objets au choix : il va dans le sac, les autres sont démantelés en éclats.
+ * Renvoie { picked, shards } (le personnage est modifié).
+ */
+export function pickLoot(content, ch, uid) {
+  const list = ch.lootChoice || [];
+  const picked = list.find((it) => it.uid === uid);
+  assert(picked, 'Cet objet ne fait pas partie de ta récompense.');
+  let shards = 0;
+  for (const it of list) if (it !== picked) shards += salvageValue(content, it);
+  ch.inventory.push({ uid: picked.uid, id: picked.id });
+  ch.shards = (ch.shards || 0) + shards;
+  ch.lootChoice = [];
+  return { picked, shards };
 }

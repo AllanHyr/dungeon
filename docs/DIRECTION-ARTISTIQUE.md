@@ -59,7 +59,7 @@ Une nouvelle fonctionnalité doit **piocher dans cette liste** plutôt qu'invent
 | Ligne de sac | `.bag-row` + `.bag-cmp` (`.better/.worse/.mixed/.same`), regroupées en `.bag-sec` | un objet du sac et **ce qu'il change** par rapport à ce qu'il remplacerait |
 | Nœud de compétence | `.node` (`.is-active` carré / `.is-passive` rond · `.is-known/.is-ready/.is-locked` · `.kind-*`) | l'arbre de la fiche |
 | Panneau de détail | `.sd2` | la compétence choisie : description, dé, conditions (`.req-list`), bouton « Apprendre » |
-| Fiche de héros (accueil) | `.char-card.hero-card` (+ `.selected`) · `.pick-mark` (la case ronde en haut à droite) · `.hero-tag` (+ `-skill`, `-bad`, `.chest-btn`) | choisir un héros ; les étiquettes disent ce qu'il y a à faire (points de compétence, coffre, partie en cours) |
+| Fiche de héros (accueil) | `.char-card.hero-card` (+ `.selected`) · `.pick-mark` (la case ronde en haut à droite) · `.hero-tag` (+ `-skill`, `-bad`, `.loot-btn`) | choisir un héros ; les étiquettes disent ce qu'il y a à faire (points de compétence, récompense de farm à choisir, partie en cours) |
 | Carte de donjon | `.tranche-card` (+ `.selected`) · `.fit` (+ `-ok/-risky/-deadly`) | un donjon et son verdict pour l'équipe choisie |
 | Sélecteur | `.mode-switch` / `.mode-opt` (+ `.on`) | trois positions (la difficulté) |
 | Barre de lancement | `.launch-bar` (`.launch-recap`, `.launch-heroes`, `.launch-info`) | en bas de l'accueil : qui part, où, et le gros bouton |

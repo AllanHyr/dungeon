@@ -19,7 +19,7 @@ import { equipmentView, afterEquipRender, statPills, itemName, SLOT_ICON } from 
 import { play } from '../sound.js';
 import {
   skillRequirements, skillPointsToSpend, skillPointsSpent, availableTranches, achievementsFor, achievementProgress,
-  rewardTexts, titlesOf, chestInfo, gearLevel, deckSize, specLevel, specsOf, deckEligible, choiceMate, knownSkills, activeSets, canLearnSkill,
+  rewardTexts, titlesOf, gearLevel, deckSize, specLevel, specsOf, deckEligible, choiceMate, knownSkills, activeSets, canLearnSkill,
   itemView, salvageValue, canUpgrade, craftableItems, ownedItems, bulkSalvageList, forgeRules, rarityOf
 } from '../../core/index.js';
 import { EQUIP_SLOTS } from '../../core/content.js';
@@ -848,7 +848,6 @@ function achTab(ch) {
 
 function infoTab(ch, locked = false) {
   const content = app.content;
-  const chest = chestInfo(content, ch);
   return [
     h('div', { class: 'info-grid' },
       h('div', null, h('span', { class: 'muted' }, 'Parties jouées'), h('b', null, ch.stats.runs)),
@@ -857,7 +856,7 @@ function infoTab(ch, locked = false) {
       h('div', null, h('span', { class: 'muted' }, 'Sessions de farm'), h('b', null, ch.stats.farmRuns)),
       h('div', null, h('span', { class: 'muted' }, 'Vagues vaincues'), h('b', null, ch.stats.farmWaves)),
       h('div', null, h('span', { class: 'muted' }, 'Record de vagues'), h('b', null, ch.stats.farmBest))),
-    h('p', { class: 'muted small' }, `Coffre : ${chest.count} / ${chest.capacity} objets. Niveau d'équipement : ${gearLevel(content, ch)}.`),
+    h('p', { class: 'muted small' }, `Éclats : ${ch.shards || 0}. Niveau d'équipement : ${gearLevel(content, ch)}.`),
     h('div', { class: 'row gap wrap' },
       app.gateway.canExport ? h('button', {
         class: 'btn',

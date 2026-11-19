@@ -6,12 +6,12 @@
 
 import { h } from '../dom.js';
 import { icon } from '../icons.js';
-import { app } from '../state.js';
-import { go, startRun, startFarm } from '../controller.js';
+import { app, toast } from '../state.js';
+import { go, startRun, startFarm, characterAction, redraw } from '../controller.js';
+import { play } from '../sound.js';
 import { portrait, xpBar } from '../components.js';
 import { itemCard } from '../format.js';
-import { chestInfo, rewardTexts } from '../../core/index.js';
-import { openChestModal } from './dialogs.js';
+import { rewardTexts, salvageValue } from '../../core/index.js';
 import { inRoom, isMine, ownerOf } from '../turn.js';
 
 const CLASS_NAME = (id) => app.content.classes[id].name;
@@ -147,12 +147,11 @@ function renderFarmEnd(root, run) {
   const res = run.result;
   const c = app.content;
   const ch = app.profile.characters.find((x) => x.id === res.charId);
-  const chest = ch ? chestInfo(c, ch) : null;
-  const rank = (inst) => c.rarityIndex[c.items[inst.id].rarity] * 100 + c.items[inst.id].level;
+  const pending = ch?.lootChoice?.length ? ch.lootChoice : null;
 
   const title = { stop: 'SESSION TERMINÉE', defeat: 'TU ES TOMBÉ...', abandon: 'TU QUITTES LA ZONE' }[res.outcome] || 'SESSION TERMINÉE';
   const subtitle = {
-    stop: "Tu repars avec tout ce que tu as gagné. Il ne reste qu'à ouvrir ton coffre.",
+    stop: res.choices?.length ? 'Tu repars avec tes éclats. Choisis maintenant ton objet.' : 'Tu repars avec tout ce que tu as gagné.',
     defeat: `Tu es tombé dans la vague ${res.diedAtWave} : elle ne rapporte rien, mais tout le reste est à toi.`,
     abandon: 'Tu as quitté la zone : la vague en cours ne rapporte rien, tout le reste est à toi.'
   }[res.outcome];
@@ -162,7 +161,8 @@ function renderFarmEnd(root, run) {
     h('div', { class: 'end-facts' },
       h('span', null, icon('beast', 16), res.zoneName),
       h('span', null, icon('target', 16), `${res.waves} vague${res.waves > 1 ? 's' : ''} vaincue${res.waves > 1 ? 's' : ''}`),
-      h('span', null, icon('skull', 16), `${res.kills} monstre${res.kills > 1 ? 's' : ''} abattu${res.kills > 1 ? 's' : ''}`)));
+      h('span', null, icon('skull', 16), `${res.kills} monstre${res.kills > 1 ? 's' : ''} abattu${res.kills > 1 ? 's' : ''}`),
+      h('span', null, icon('flame', 16), `+${res.shards || 0} éclats`)));
 
   const x = res.xp;
   const xpCard = h('div', { class: 'card end-player' },
@@ -172,18 +172,32 @@ function renderFarmEnd(root, run) {
         h('div', { class: 'unit-name' }, res.name),
         h('div', { class: 'muted small' }, `${CLASS_NAME(res.classId)} · niv. ${x.levelAfter}`)),
       h('div', { class: 'xp-total' },
-        h('b', null, `+${x.applied} XP`),
+        x.catchUp ? h('b', null, `+${x.applied} XP`) : h('b', null, `+${res.shards || 0} éclats`),
         x.levelAfter > x.levelBefore ? h('div', { class: 'level-up' }, icon('star', 16), `Niveau ${x.levelBefore} → ${x.levelAfter} !`) : null)),
     ch ? xpBar(ch) : null,
-    x.capped ? h('p', { class: 'muted small' }, `Cette zone ne fait pas dépasser le niveau ${x.maxLevel} : ${x.earned - x.applied} XP en trop ne comptent pas.`) : null);
+    x.catchUp
+      ? h('p', { class: 'muted small' }, `XP de rattrapage, jusqu'au niveau ${x.maxLevel} (celui de ton meilleur héros).`)
+      : h('p', { class: 'muted small' }, 'C\'est ton héros le plus avancé : le farm ne lui donne pas d\'XP (il sert à faire rattraper les autres). Ses éclats vont à la forge.'));
 
-  const itemsCard = h('div', { class: 'card' },
-    h('h3', null, icon('treasure', 20), ` Butin de la session (${res.items.length})`),
-    res.items.length
-      ? h('div', { class: 'loot-grid' }, [...res.items].sort((a, b) => rank(b) - rank(a)).map((it) => itemCard(c, it, { compact: true })))
-      : h('p', { class: 'muted' }, "Aucun objet cette fois : ça arrive. La prochaine vague sera la bonne."),
-    res.lostItems ? h('p', { class: 'tone-bad small' }, `${res.lostItems} objet${res.lostItems > 1 ? 's' : ''} perdu${res.lostItems > 1 ? 's' : ''} : ton coffre était plein.`) : null,
-    chest ? h('p', { class: 'muted small' }, `Ton coffre contient maintenant ${chest.count} / ${chest.capacity} objets.`) : null);
+  // La récompense : 1 objet parmi 3, à choisir ici même
+  const lootCard = h('div', { class: 'card farm-loot' },
+    h('h3', null, icon('treasure', 20), ' Ta récompense'),
+    !res.choices?.length
+      ? h('p', { class: 'muted' }, 'Aucune vague vaincue : pas d\'objet cette fois.')
+      : pending
+        ? [
+            h('p', { class: 'muted small' }, 'Garde un objet ; les autres deviennent des éclats pour la forge.'),
+            h('div', { class: 'loot-choices' }, pending.map((inst, i) => {
+              const others = pending.filter((o) => o !== inst).reduce((t, o) => t + salvageValue(c, o), 0);
+              return h('div', { class: 'loot-choice reveal-item', style: { '--i': i }, dataset: { uid: inst.uid, item: inst.id } },
+                itemCard(c, inst, { realLevel: ch.level }),
+                h('button', { class: 'btn btn-primary loot-pick', onClick: async () => {
+                  const r = await characterAction({ type: 'CHAR_PICK_LOOT', charId: ch.id, uid: inst.uid });
+                  if (r.ok) { play('heal'); toast(`${c.items[r.picked.id].name} est dans ton sac${r.shards ? ` (+${r.shards} éclats)` : ''}.`, 'good'); redraw(); }
+                } }, icon('check', 16), 'Garder', h('small', null, ` · +${others} éclats`)));
+            }))
+          ]
+        : h('p', { class: 'tone-good' }, icon('check', 14), ' Récompense choisie : elle est dans ton sac.'));
 
   const unlocked = app.unlocked || [];
   const achCard = unlocked.length
@@ -197,13 +211,12 @@ function renderFarmEnd(root, run) {
   root.append(h('div', { class: 'end-screen farm-end' },
     banner,
     h('div', { class: 'end-actions' },
-      h('button', { class: 'btn btn-primary btn-xl', id: 'farm-open-chest', disabled: !ch || !chest?.count, onClick: () => ch && openChestModal(ch.id) }, icon('treasure', 22), 'Ouvrir mon coffre'),
       h('button', {
-        class: 'btn btn-xl', id: 'farm-again', disabled: !ch || chest?.full, title: chest?.full ? 'Ton coffre est plein : ouvre-le avant de repartir.' : '',
+        class: 'btn btn-primary btn-xl', id: 'farm-again', disabled: !ch || !!pending, title: pending ? 'Choisis d\'abord ta récompense.' : '',
         onClick: () => ch && startFarm(ch.id)
       }, icon('beast', 22), 'Rejouer une session'),
       h('button', { class: 'btn btn-xl', id: 'farm-menu', onClick: () => go('menu') }, 'Retour au menu')),
-    h('div', { class: 'end-players' }, xpCard, itemsCard),
+    h('div', { class: 'end-players' }, xpCard, lootCard),
     achCard,
     h('details', { class: 'full-log' },
       h('summary', null, 'Voir tout le journal de la session'),

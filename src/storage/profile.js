@@ -171,9 +171,15 @@ export function sanitizeCharacter(content, raw) {
     const clean = cleanItem(it);
     if (clean) ch.inventory.push(clean);
   }
+  // L'ancien coffre du farm (supprimé) : ce qu'il contenait passe dans le sac, rien ne se perd.
   for (const it of Array.isArray(raw.chest) ? raw.chest : []) {
     const clean = cleanItem(it);
-    if (clean && ch.chest.length < content.farm.chestCapacity) ch.chest.push(clean);
+    if (clean) ch.inventory.push(clean);
+  }
+  // La récompense du farm en attente (3 objets au plus)
+  for (const it of Array.isArray(raw.lootChoice) ? raw.lootChoice.slice(0, 3) : []) {
+    const clean = cleanItem(it);
+    if (clean && !content.items[clean.id].consumable) ch.lootChoice.push(clean);
   }
   // Équipement : les emplacements actuels, PUIS les clés d'un ancien format (weapon / armor / trinket...).
   // Chaque objet passe par le sac puis est équipé (au bon emplacement s'il est connu, sinon au premier emplacement possible) :

@@ -316,3 +316,10 @@ Changer une couleur de rareté = changer une ligne dans le JSON.
 | Rare | bleu |
 | Épique | violet |
 | Légendaire | orange |
+
+## Organisation en cinq lieux
+
+L'interface est rangée en cinq lieux (`src/ui/screens/places.js`) : **Camp** (quoi faire maintenant, donjon conseillé),
+**Aventure** (donjons, farm, expéditions), **Héros** (la fiche en pleine page), **Forge** et **Grimoire** (donjons, bestiaire, règles).
+Grand écran : barre latérale fixe de 228 px. Téléphone (≤ 860 px) : la barre passe en bas de l'écran, la barre de lancement se pose juste au-dessus.
+Une pastille sur un lieu signale qu'il y a quelque chose à faire. Prochaine passe prévue : la direction « Table pixel » (portraits en pixel art dessinés à la main).

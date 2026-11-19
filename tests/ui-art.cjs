@@ -9,7 +9,7 @@ const failures = [];
 const check = (cond, message) => { if (!cond) { failures.push(message); console.log('  ❌', message); } else console.log('  ✅', message); };
 
 const profile = {
-  version: 1, nextCharNumber: 5, settings: { sound: false, fx: 'min' }, lastTeam: ['c1', 'c2', 'c3', 'c4'], lastSetup: { tranche: 1, mode: 'tranche', stasisLevel: 1 },
+  version: 1, nextCharNumber: 5, settings: { sound: false, place: 'aventure', fx: 'min' }, lastTeam: ['c1', 'c2', 'c3', 'c4'], lastSetup: { tranche: 1, mode: 'tranche', stasisLevel: 1 },
   characters: ['sacrieur', 'pretre', 'guerrier', 'assassin'].map((classId, i) => ({
     id: `c${i + 1}`, name: ['Thorne', 'Maeve', 'Sylve', 'Gundar'][i], classId, level: 4, xp: 0, skills: [], inventory: [], equipment: {}, stats: { runs: 0, wins: 0, deaths: 0 }
   }))

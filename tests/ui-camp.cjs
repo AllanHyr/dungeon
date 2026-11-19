@@ -7,7 +7,7 @@ const out = process.argv[3] || '/tmp/shots';
 
 const hero = (id, name, classId, level) => ({ id, name, classId, level, xp: 0, skills: [], inventory: [], equipment: {}, stats: { runs: 0, wins: 0, deaths: 0 } });
 const profile = {
-  version: 1, nextCharNumber: 3, settings: { sound: false }, lastTeam: ['c1', 'c2'], lastSetup: { tranche: 4, mode: 'tranche', stasisLevel: 1 },
+  version: 1, nextCharNumber: 3, settings: { sound: false, place: 'aventure' }, lastTeam: ['c1', 'c2'], lastSetup: { tranche: 4, mode: 'tranche', stasisLevel: 1 },
   characters: [hero('c1', 'Brann', 'guerrier', 6), hero('c2', 'Aube', 'pretre', 6)]
 };
 

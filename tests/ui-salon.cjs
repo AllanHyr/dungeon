@@ -37,6 +37,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     await page.click('#auth-submit');
     await page.waitForSelector('.menu');
     await page.click("text=Créer 3 héros d'exemple");
+    await page.waitForSelector('.place-nav');
+    await page.click('.nav-place[data-place="aventure"]');
     await page.waitForFunction(() => document.querySelectorAll('.char-card:not(.new-card)').length === 3);
     const profile = await apiGet(page, 'api/profile');
     return { name, ctx, page, id: profile.user.id, heroes: profile.characters };

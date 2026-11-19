@@ -52,7 +52,12 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await page.waitForSelector('.class-showcase[data-class-id="assassin"]');
   await page.fill('#new-char-name', 'Zéphyr');
   await page.click('text=Créer le personnage');
+  await page.waitForSelector('.place-nav');
+  check(!!(await page.$('.nav-place.on[data-place="camp"]')) && (await page.$$('.nav-place')).length === 5, 'le premier héros créé : on arrive au Camp, avec la barre des cinq lieux');
+  check(!!(await page.$('.camp-next')) && /Caves/.test(await page.textContent('.camp-next')), 'le Camp conseille un premier donjon (les Caves humides)');
+  await page.click('#camp-go');
   await page.waitForSelector('.home-grid');
+  check(!!(await page.$('.nav-place.on[data-place="aventure"]')), '« Préparer l\'expédition » mène à l\'Aventure, donjon choisi');
   check((await page.$$('.hero-card')).length === 1 && !!(await page.$('.hero-card.selected')), 'le héros créé est tout de suite dans l\'équipe');
   check((await page.textContent('.hero-card .pick-mark')).trim() === '1', 'la case en haut à droite de la fiche porte son numéro dans l\'équipe');
   check((await page.textContent('.launch-who')).trim() === 'Zéphyr' && !(await page.$eval('.launch-bar .btn-primary', (b) => b.disabled)), 'la barre du bas dit qui part, et le bouton est prêt');
@@ -125,7 +130,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   check(heroesBox.x + heroesBox.width <= planBox.x + 1 && Math.abs(heroesBox.y - planBox.y) < 4, 'les héros à gauche, le donjon à droite, côte à côte');
   const launchBox = await (await page.$('.launch-bar .btn-primary')).boundingBox();
   check(launchBox.y >= 0 && launchBox.y + launchBox.height <= 900, 'le bouton de lancement est toujours visible, sans défiler');
-  check((await page.$$eval('.header-actions .btn-label', (els) => els.every((e) => e.offsetParent !== null))), 'dans l\'en-tête : icônes ET textes (Atelier, Règles, Sauvegarde)');
+  check((await page.$$eval('.nav-foot-btn > span:last-child', (els) => els.length === 3 && els.every((e) => e.offsetParent !== null))), 'en bas de la barre des lieux : Atelier, Sauvegarde et Sons, avec leur texte');
 
   console.log('\n● La zone de farm solo');
   await page.click('[data-view="farm"]');
@@ -155,6 +160,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await inGame(tablet, async (state, ctrl) => {
     for (const [name, classId] of [['Aldric', 'sacrieur'], ['Lysa', 'pretre'], ['Borin', 'assassin']]) await ctrl.characterAction({ type: 'CHAR_CREATE', name, classId });
     state.app.ui.team = state.app.profile.characters.map((c) => c.id);
+    state.app.ui.place = 'aventure';
     ctrl.redraw();
   });
   const tb1 = await (await tablet.$('.home-heroes')).boundingBox();
@@ -176,18 +182,20 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await phone.screenshot({ path: `${out}/124-accueil-bienvenue-tel.png`, fullPage: true });
   // Le vrai bouton, tout en bas de la page de bienvenue : on arrive ensuite sur l'accueil par le HAUT de la page.
   await phone.click("text=Créer 3 héros d'exemple");
-  await phone.waitForSelector('.home-grid');
+  await phone.waitForSelector('.place-nav');
   check((await phone.evaluate(() => window.scrollY)) === 0, 'passer de « Bienvenue » à l\'accueil remet la page en haut (même après avoir défilé jusqu\'au bouton)');
-  const head = await (await phone.$('.menu-header')).boundingBox();
-  check(head.height < 80, `l'en-tête tient sur une ligne (${Math.round(head.height)} px)`);
-  check(!(await phone.$eval('.tagline', (e) => e.offsetParent !== null)) && !(await phone.$eval('.header-actions .btn-label', (e) => e.offsetParent !== null)), 'seules les icônes restent dans l\'en-tête');
+  const nav = await (await phone.$('.place-nav')).boundingBox();
+  check(Math.abs(nav.y + nav.height - 844) < 2 && nav.height < 80, `sur téléphone, la barre des lieux est en bas de l'écran (${Math.round(nav.height)} px)`);
+  check((await overflowX(phone)) === 0, 'le Camp : pas de défilement horizontal');
+  await phone.click('.nav-place[data-place="aventure"]');
+  await phone.waitForSelector('.home-grid');
   const tabs = await phone.$$eval('.view-tab', (els) => els.map((e) => Math.round(e.getBoundingClientRect().y)));
   check(tabs.length === 3 && tabs.every((y) => y === tabs[0]), 'les trois onglets côte à côte');
   check(!(await phone.$eval('.hero-card .char-stats', (e) => e.offsetParent !== null)), 'les fiches de héros sont raccourcies (pas de ligne de stats)');
   const heroH = await phone.$$eval('.hero-card', (els) => Math.max(...els.map((e) => e.getBoundingClientRect().height)));
   check(heroH < 140, `une fiche de héros fait moins de 140 px de haut (${Math.round(heroH)} px)`);
   const bar = await (await phone.$('.launch-bar')).boundingBox();
-  check(Math.abs(bar.y + bar.height - 844) < 2, 'la barre de lancement est collée en bas de l\'écran');
+  check(Math.abs(bar.y + bar.height - nav.y) < 3, 'la barre de lancement est posée juste au-dessus de la barre des lieux');
   const total = await phone.evaluate(() => document.documentElement.scrollHeight);
   check(total < 2000, `toute la page tient en ${Math.round(total / 844 * 10) / 10} écrans (elle en faisait 3,3 avant)`);
   check((await overflowX(phone)) === 0, 'accueil : pas de défilement horizontal');

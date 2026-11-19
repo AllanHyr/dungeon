@@ -6,7 +6,7 @@ const url = process.argv[2] || 'http://localhost:8765/';
 const out = process.argv[3] || '/tmp/shots';
 
 const profile = {
-  version: 1, nextCharNumber: 2, settings: { sound: false }, lastTeam: ['c1'], lastSetup: { tranche: 1, mode: 'tranche', stasisLevel: 1 },
+  version: 1, nextCharNumber: 2, settings: { sound: false, place: 'aventure' }, lastTeam: ['c1'], lastSetup: { tranche: 1, mode: 'tranche', stasisLevel: 1 },
   characters: [{
     id: 'c1', name: 'Brunehilde', classId: 'guerrier', level: 3, xp: 0, skills: [], shards: 10,
     inventory: [

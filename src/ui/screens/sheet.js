@@ -50,10 +50,14 @@ function doneCount(content, ch) {
   return achievementsFor(content, ch).filter((a) => ch.achievements?.[a.id]).length;
 }
 
+/** L'état d'une fiche (onglet, compétence choisie, filtre du sac...) : gardé entre deux dessins. */
+export const newSheetState = (startTab = 'equip') => ({ tab: startTab, view: 'basic', sel: null, shownTab: null, gear: { sel: null, filter: 'all' } });
+
+/** La fiche dans une fenêtre (depuis le bouton « Fiche » d'un héros). */
 export function openSheet(charId, startTab = 'equip') {
   const first = app.profile.characters.find((c) => c.id === charId);
   // sel = la compétence affichée dans le panneau de l'arbre ; filter = le filtre du sac
-  const state = { tab: startTab, view: 'basic', sel: null, shownTab: null, gear: { sel: null, filter: 'all' } };
+  const state = newSheetState(startTab);
   // Si on tourne le téléphone, la mise en page change : on redessine la fiche.
   const mq = window.matchMedia ? window.matchMedia('(max-width: 760px)') : null;
   const onMq = () => app.modal && app.modal.api.refresh();
@@ -63,7 +67,15 @@ export function openSheet(charId, startTab = 'equip') {
     wide: true,
     className: 'sheet-modal',
     onClose: () => { if (mq && mq.removeEventListener) mq.removeEventListener('change', onMq); redraw(); },
-    render: (api) => {
+    render: (api) => sheetBody(charId, state, api)
+  });
+}
+
+/**
+ * Le contenu d'une fiche : l'en-tête (portrait, stats), les onglets et l'onglet choisi.
+ * `api` : { body (l'élément qui la contient), refresh() }. `opts.page` : affichée dans la page Héros (sans l'onglet Forge, qui a son propre lieu).
+ */
+export function sheetBody(charId, state, api, opts = {}) {
       const ch = app.profile.characters.find((c) => c.id === charId);
       if (!ch) return h('p', null, 'Personnage introuvable.');
       const content = app.content;
@@ -104,11 +116,12 @@ export function openSheet(charId, startTab = 'equip') {
 
       const free = skillPointsToSpend(content, ch);
       const tabs = h('div', { class: 'tabs', role: 'tablist' },
-        [['equip', 'Équipement', 'armor'], ['forge', `Forge ${ch.shards || 0}`, 'flame'], ['skills', 'Compétences', 'star'], ['ach', `Succès ${doneCount(content, ch)}/${achievementsFor(content, ch).length}`, 'check'], ['info', 'Infos', 'book']].map(([id, label, ic]) =>
+        [['equip', 'Équipement', 'armor'], opts.page ? null : ['forge', `Forge ${ch.shards || 0}`, 'flame'], ['skills', 'Compétences', 'star'], ['ach', `Succès ${doneCount(content, ch)}/${achievementsFor(content, ch).length}`, 'check'], ['info', 'Infos', 'book']].filter(Boolean).map(([id, label, ic]) =>
           h('button', { class: `tab ${state.tab === id ? 'on' : ''}`, role: 'tab', 'aria-selected': state.tab === id ? 'true' : 'false', 'data-tab': id, onClick: () => { state.tab = id; api.refresh(); } },
             icon(ic, 16), label,
             id === 'skills' && free > 0 ? h('span', { class: 'tab-badge', title: 'Points de compétence à dépenser' }, free) : null)));
 
+      if (opts.page && state.tab === 'forge') state.tab = 'equip';
       let body;
       if (state.tab === 'equip') body = equipTab(ch, api, state, tranche, locked);
       else if (state.tab === 'forge') body = forgeTab(ch, api, state, locked);
@@ -127,8 +140,6 @@ export function openSheet(charId, startTab = 'equip') {
         tabs,
         h('div', { class: 'tab-body' }, body)
       ];
-    }
-  });
 }
 
 // ============================================================
@@ -192,7 +203,7 @@ async function salvageOne(ch, inst, api) {
 //  Onglet Forge : les éclats (démanteler en masse, améliorer, forger)
 // ============================================================
 
-function forgeTab(ch, api, state, locked) {
+export function forgeTab(ch, api, state, locked) {
   const content = app.content;
   const f = forgeRules(content);
   const shards = ch.shards || 0;

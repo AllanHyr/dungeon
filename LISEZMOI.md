@@ -77,7 +77,19 @@ node server/server.mjs        # Node 22.13 ou plus récent, rien à installer ->
 
 ## 2. Comment jouer (en bref)
 
-1. **Crée ton héros** (sur l'accueil, clique sur la classe qui te plaît ; ou sur « Créer 3 héros d'exemple »), puis choisis ton **équipe** (1 à 4 héros, à gauche), un **donjon** et sa **difficulté** (à droite).
+**Se repérer** : le jeu est rangé en **cinq lieux**, toujours visibles à gauche (en bas sur téléphone) :
+
+| Lieu | Ce qu'on y trouve |
+| --- | --- |
+| **Le Camp** | la page d'arrivée : *que faire maintenant* (expédition revenue, objet à choisir, points de compétence, amélioration possible), le **donjon conseillé** pour ton équipe, tes héros et ta progression |
+| **Aventure** | lancer un **donjon**, la **zone de farm** solo, les **expéditions** |
+| **Héros** | la fiche complète d'un héros : équipement et sac, compétences, succès, infos |
+| **Forge** | démanteler, améliorer, forger (on choisit d'abord pour quel héros) |
+| **Grimoire** | les donjons, le bestiaire et les règles du jeu |
+
+En bas de la barre : l'Atelier de classes, la Sauvegarde (ou ton Compte en ligne) et le son. Le jeu retient le dernier lieu ouvert.
+
+1. **Crée ton héros** (au premier lancement, clique sur la classe qui te plaît ; ou sur « Créer 3 héros d'exemple »), puis, dans **Aventure**, choisis ton **équipe** (1 à 4 héros, à gauche), un **donjon** et sa **difficulté** (à droite).
    Chaque donjon dit tout de suite s'il convient à l'équipe : *Adapté*, *Risqué* ou *Très dangereux*. Les étiquettes sur un héros disent ce qu'il y a à faire (points de compétence à dépenser, récompense de farm à choisir).
    *(En ligne, chaque joueur amène UN héros dans un salon ; l'équipe de 1 à 4 héros sert à jouer seul, hors ligne.)*
 2. Chaque tour : le joueur sous les projecteurs clique **Avancer**, lance le **D20**, puis décide.
@@ -85,7 +97,7 @@ node server/server.mjs        # Node 22.13 ou plus récent, rien à installer ->
    **Le coup bas** : on peut jouer un sale tour à un allié (empoisonner, croche-pied, assommer, maudire un objet). S'il réussit, le saboteur **gagne** un petit bonus
    (+dégâts, PV, protection) ; mais le coup peut se retourner contre lui (5 ou moins au dé), et la **victime a un droit de réponse** : un jet d'esquive (14 ou plus).
    La même case propose aussi des **pactes** (un coût tout de suite, un bonus pour les prochains combats) : ils marchent seul, sans victime.
-   *(Ou, sur l'accueil, l'onglet **Zone de farm solo** : un seul personnage, des vagues de monstres, un objet au choix — voir §3.)*
+   *(Ou, dans Aventure, l'onglet **Zone de farm solo** : un seul personnage, des vagues de monstres, un objet au choix — voir §3.)*
 4. Un mort devient **fantôme** : il peut encore aider. Il peut être ressuscité (fontaine de vie ou compétence du Veilleur), **une seule fois par run**.
 5. **L'équipement** : 14 emplacements (tête, épaules, dos, torse, mains, ceinture, jambes, pieds, cou, 2 anneaux, relique, main droite et main gauche). Une arme à
    **deux mains** occupe les deux mains ; sinon, deux armes à une main, ou une arme et un bouclier. Détails : [`docs/EQUIPEMENT.md`](docs/EQUIPEMENT.md).
@@ -151,7 +163,7 @@ en Tranche et Stasis, c'est `min(niveau réel, tranche)`).
 
 ## 3. La zone de farm solo, la forge et les succès
 
-Sur l'accueil, l'onglet **Zone de farm solo** :
+Dans **Aventure**, l'onglet **Zone de farm solo** :
 
 * **Un seul personnage** enchaîne des **vagues** de monstres, de plus en plus fortes, avec un boss toutes les 5 vagues. Trois zones : **Les Terriers** (dès le niveau 1),
   **Les Fourrés de Grouinval** (niveau 4, tranche 4) et **Les Fosses aux ogres** (niveau 8, tranche 8) : plus haut, plus d'éclats et de meilleurs objets.
@@ -163,7 +175,7 @@ Sur l'accueil, l'onglet **Zone de farm solo** :
   atteindre un niveau d'équipement... Ils débloquent une **compétence** pour ce personnage, une **fonction** du jeu (le farm automatique,
   à l'étape suivante) ou un **titre**. Exemple fourni : le Veilleur ne peut apprendre *Cantique de hâte* qu'après avoir fini le premier donjon en groupe.
 
-**Les expéditions** (onglet de l'accueil) : quand tu n'as pas le temps de jouer, envoie un héros en mission (30 min, 2 h, une nuit).
+**Les expéditions** (onglet d'Aventure) : quand tu n'as pas le temps de jouer, envoie un héros en mission (30 min, 2 h, une nuit).
 Il revient, même jeu fermé, avec des éclats, de l'XP de rattrapage (s'il est en retard sur ton meilleur héros) et parfois un objet. Trois héros en route au plus.
 
 **La forge** (fiche du personnage) : le butin inutile n'est jamais perdu.
@@ -177,7 +189,7 @@ Tout est réglable en JSON : [`docs/FARM-ET-SUCCES.md`](docs/FARM-ET-SUCCES.md).
 
 ## 3 bis. L'Atelier de classes (le coin « laboratoire »)
 
-Sur l'accueil, bouton **Atelier de classes** : une salle d'entraînement pour tester vite.
+En bas de la barre des lieux, bouton **Atelier de classes** : une salle d'entraînement pour tester vite.
 
 * 1 à 4 personnages de test (classe + niveau), qui connaissent **toutes** les compétences de leur niveau ;
 * des **mannequins** qui ne meurent jamais (inertes ou agressifs, 1 à 3, force ×1 / ×2 / ×4) ;
@@ -213,7 +225,7 @@ Le guide complet (variables, briques réutilisables, règles de style, fonctionn
 
 ## 3 quater. Jouer à plusieurs (en ligne)
 
-1. **Sur l'accueil**, choisis **ton héros** (un seul : tes amis amènent le leur).
+1. **Dans Aventure**, choisis **ton héros** (un seul : tes amis amènent le leur).
 2. **Crée un salon** (tu en deviens l'hôte) ou **rejoins** celui d'un ami : avec son **code** de 5 caractères, ou depuis la liste des salons ouverts.
 3. **Salle d'attente** : chacun voit les autres arriver en direct, peut changer de héros et dire **« Je suis prêt »**. L'hôte choisit le donjon, la difficulté
    et la **durée d'un tour** (sans minuteur, 30 s, 60 s, 90 s, 2 min), peut retirer un joueur, et **lance** quand tout le monde est prêt.

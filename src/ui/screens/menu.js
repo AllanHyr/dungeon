@@ -1,6 +1,8 @@
 // ============================================================
-//  menu.js — L'écran d'accueil : qui part, où, et à quelle difficulté
+//  menu.js — L'écran d'accueil : la barre des lieux, et le lieu « Aventure » (qui part, où, à quelle difficulté)
 // ============================================================
+// L'accueil est fait de CINQ LIEUX (Camp, Aventure, Héros, Forge, Grimoire : voir places.js), choisis dans la barre de navigation.
+// Ce fichier dessine la page, la barre, et le lieu Aventure ; les autres lieux viennent de places.js.
 // Deux colonnes sur grand écran (une seule en dessous) :
 //     à gauche   ① les héros : on clique pour les choisir
 //     à droite   ② le donjon et sa difficulté (ou la zone, en farm solo)
@@ -21,6 +23,7 @@ import { openSaveModal, openHelpModal, openCreateModal, openTrainingModal, openL
 import { play, isSoundEnabled } from '../sound.js';
 import { openSoundLab } from './sound-lab.js';
 import { dungeonPicker, dungeonBrief, comingSoonNote, selectedDungeon } from './dungeons.js';
+import { navBar, placeContent, placeIds, claimExpedition } from './places.js';
 import {
   availableTranches, catchUpLevel, canStartFarm, gearLevel, hasFeature, achievementForFeature,
   achievementProgress, skillPointsToSpend, pendingChoices,
@@ -48,13 +51,14 @@ export function renderMenu(root) {
     if (!tranches.some((t) => t.id === ui.setup.tranche)) ui.setup.tranche = tranches[0].id;
     ui.view = profile.settings.view; // 'dungeon' (donjon en équipe) ou 'farm' (zone de farm solo)
     ui.farmChar = profile.settings.farmChar;
+    ui.place = placeIds.includes(profile.settings.place) ? profile.settings.place : 'camp'; // le lieu : le Camp au premier lancement
   }
   if (!chars.some((c) => c.id === ui.farmChar)) ui.farmChar = chars[0]?.id || null;
   ui.team = ui.team.filter((id) => chars.some((c) => c.id === id));
 
   const saved = savedRunInfo();
   const online = app.gateway.mode === 'online';
-  const top = [headerBar(), resumeBanner(saved), roomBanner()];
+  const top = [headerBar(), resumeBanner(saved), roomBanner()]; // (sans héros : l'en-tête ; sinon, la barre des lieux le remplace)
 
   // On passe de « Bienvenue » à l'accueil (ou l'inverse) : la page change complètement, on la reprend par le haut.
   const shown = chars.length ? 'home' : 'welcome';
@@ -68,16 +72,26 @@ export function renderMenu(root) {
     return;
   }
 
-  // 'dungeon' : une équipe de 1 à 4 héros (jeu local) · 'room' : un seul héros, dans un salon (en ligne) · 'farm' : un seul héros, seul
-  const view = ui.view === 'farm' ? 'farm' : ui.view === 'expeditions' ? 'expeditions' : online ? 'room' : 'dungeon';
-  const plan = view === 'farm' ? farmPlan(chars, saved) : view === 'expeditions' ? expeditionPlan(chars) : view === 'room' ? roomPlan(chars) : dungeonPlan(chars, saved);
   watchExpeditions();
-  root.append(h('div', { class: 'menu' },
-    ...top,
-    viewTabs(view === 'room' ? 'dungeon' : view),
-    h('div', { class: 'home-grid' }, heroesPanel(chars, view), h('div', { class: 'home-right' }, plan.panel)),
-    footNote(),
-    plan.bar));
+  const place = placeIds.includes(ui.place) ? ui.place : 'camp';
+  const banners = [resumeBanner(saved), roomBanner()];
+  let main;
+  let bar = null;
+  if (place === 'aventure') {
+    // 'dungeon' : une équipe de 1 à 4 héros (jeu local) · 'room' : un seul héros, dans un salon (en ligne) · 'farm' : un seul héros, seul
+    const view = ui.view === 'farm' ? 'farm' : ui.view === 'expeditions' ? 'expeditions' : online ? 'room' : 'dungeon';
+    const plan = view === 'farm' ? farmPlan(chars, saved) : view === 'expeditions' ? expeditionPlan(chars) : view === 'room' ? roomPlan(chars) : dungeonPlan(chars, saved);
+    main = [
+      h('header', { class: 'place-head' }, h('div', { class: 'eyebrow' }, 'Aventure'), h('h1', null, 'Où partir ?'),
+        h('p', { class: 'muted' }, 'Trois façons de jouer : un donjon (seul ou à plusieurs), la zone de farm, ou une expédition pendant que tu fais autre chose.')),
+      viewTabs(view === 'room' ? 'dungeon' : view),
+      h('div', { class: 'home-grid' }, heroesPanel(chars, view), h('div', { class: 'home-right' }, plan.panel))
+    ];
+    bar = plan.bar;
+  } else main = placeContent(place);
+  root.append(h('div', { class: `menu app-shell place-${place}` },
+    navBar(place),
+    h('div', { class: 'place-main' }, ...banners, ...main, footNote(), bar)));
   if (switched) window.scrollTo(0, 0);
 }
 
@@ -464,18 +478,7 @@ function launchBar({ heroes, who, empty, where, fit = null, label, ic, id = null
 //  ② Les expéditions (le côté « idle »)
 // ============================================================
 
-/** Récupère les récompenses d'un héros revenu d'expédition, et les annonce. */
-async function claimFor(ch) {
-  const res = await characterAction({ type: 'CHAR_EXPEDITION_CLAIM', charId: ch.id });
-  if (!res.ok) return;
-  const c = res.claim;
-  const bits = [`+${c.shards} éclats`];
-  if (c.xp) bits.push(`+${c.xp} XP${c.levels ? ` (niveau ${res.character.level} !)` : ''}`);
-  if (c.item) bits.push(app.content.items[c.item.id].name);
-  play(c.item ? 'crit' : 'coins');
-  toast(`${ch.name} est de retour : ${bits.join(' · ')}.`, 'good');
-  redraw();
-}
+const claimFor = (ch) => claimExpedition(ch);
 
 /** Tant qu'un héros est en expédition, l'accueil se redessine régulièrement (le temps restant, puis « De retour ! »). */
 let expTimer = null;

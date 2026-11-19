@@ -525,16 +525,21 @@ function sceneChoice(run, tile) {
       if (!groups.has(o.target)) groups.set(o.target, []);
       groups.get(o.target).push(o);
     }
-    // La légende des 4 coups bas n'est écrite qu'une seule fois (elle est la même pour toutes les cibles).
-    const legend = app.content.lowBlows.map((b) => h('li', null, h('b', null, b.name), ' : ', b.desc));
+    // La légende des coups bas n'est écrite qu'une seule fois (elle est la même pour toutes les cibles), avec ce que le saboteur y gagne.
+    const legend = groups.size ? app.content.lowBlows.map((b) => h('li', null, h('b', null, b.name), ' : ', b.desc, b.gain ? h('span', { class: 'blow-gain' }, ` Si ça marche, tu gagnes : ${b.gain.desc}.`) : null)) : [];
+    const pacts = pend.options.filter((x) => x.pact);
     options = [
-      h('ul', { class: 'blow-legend small muted' }, legend),
+      groups.size ? h('ul', { class: 'blow-legend small muted' }, legend) : null,
       ...[...groups.entries()].map(([targetId, list]) =>
         h('div', { class: 'blow-group' },
           h('div', { class: 'blow-target' }, icon('low_blow', 16), `Viser ${playerById(run, targetId).name}`),
           h('div', { class: 'row gap wrap' }, list.map((o) => h('button', { class: 'btn btn-danger btn-small', title: o.desc, disabled: !yourTurn(run), onClick: () => act({ type: 'CHOOSE', option: o.id }) }, o.label.split(' → ')[0]))))),
+      pacts.length ? h('div', { class: 'blow-group pact-group' },
+        h('div', { class: 'blow-target' }, icon('flame', 16), 'Un pacte avec les ombres', h('small', { class: 'muted' }, ' — pour toi, sans victime')),
+        h('div', { class: 'pact-list' }, pacts.map((o) => h('button', { class: 'btn btn-small pact-btn', dataset: { pact: o.pact }, disabled: !yourTurn(run), onClick: () => act({ type: 'CHOOSE', option: o.id }) },
+          h('b', null, o.label), h('small', null, o.desc))))) : null,
       h('button', { class: 'btn btn-primary', disabled: !yourTurn(run), onClick: () => act({ type: 'CHOOSE', option: 'pass' }) }, 'Ne rien faire (rester honnête)')
-    ];
+    ].filter(Boolean);
   } else {
     options = [h('div', { class: 'choice-list' }, pend.options.map((o, i) =>
       h('button', { class: `btn ${i === 0 ? 'btn-primary' : ''} btn-wide`, disabled: !yourTurn(run), onClick: () => act({ type: 'CHOOSE', option: o.id }) }, o.label)))];

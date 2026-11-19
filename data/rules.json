@@ -52,7 +52,7 @@
   },
 
   "fountain": {"poisonMax": 5, "xpShareRatio": 0.6, "lifeHealPct": 0.25},
-  "lowBlow": {"reboundMax": 5},
+  "lowBlow": {"reboundMax": 5, "dodgeMin": 14, "_dodgeMin": "Droit de réponse : la victime d'un coup bas réussi lance un D20 ; à dodgeMin ou plus (chance comprise), elle l'esquive et le saboteur ne gagne rien."},
   "ghost": {"successMin": 8, "bonus": 2},
   "antiCarry": {"lossPerLevel": 0.3, "minFactor": 0.05},
   "contribution": {"tankedWeight": 0.5, "minMult": 0.5, "maxMult": 1.5},

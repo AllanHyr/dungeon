@@ -295,37 +295,97 @@ function applyBlow(state, blow, victim) {
   }
 }
 
+/** Le gain d'un coup bas réussi (pour le saboteur) ou d'un pacte : un bonus de quelques combats (comme le feu de camp), ou des PV. */
+function applyGain(state, gain, who) {
+  if (!gain) return;
+  if (gain.kind === 'heal') {
+    const amount = Math.round(unitStats(state, who).hpMax * gain.hpPct);
+    healUnit(state, who, who, amount);
+    log(state, `${who.name} regagne des PV (${gain.desc || `+${amount}`}).`, 'good');
+  } else if (gain.kind === 'buff') {
+    who.campBuffs = who.campBuffs || [];
+    who.campBuffs.push({ id: `gain:${gain.stat}:${state.turn}`, name: gain.name || 'Coup bas', stat: gain.stat, pct: gain.pct, combats: gain.combats });
+    log(state, `${who.name} en profite : ${gain.desc || gain.stat}.`, 'good');
+  }
+}
+
 const lowBlow = {
   onReveal(state) {
     const actor = decider(state);
-    const reboundMax = state.content.rules.lowBlow.reboundMax;
+    const c = state.content;
+    const reboundMax = c.rules.lowBlow.reboundMax;
     const options = [];
+    // Les coups bas : contre un allié (en solo, il n'y en a pas : restent les pactes)
     for (const p of livingPlayers(state)) {
       if (p.id === actor.id) continue;
-      for (const b of state.content.lowBlows) {
+      for (const b of c.lowBlows) {
         if (b.kind === 'curse' && !cursableSlots(state, p).length) continue;
-        options.push({ id: `blow:${p.id}:${b.id}`, target: p.id, blow: b.id, label: `${b.name} → ${p.name}`, desc: b.desc });
+        options.push({ id: `blow:${p.id}:${b.id}`, target: p.id, blow: b.id, label: `${b.name} → ${p.name}`, desc: `${b.desc}${b.gain ? ` Si ça marche, tu gagnes : ${b.gain.desc}.` : ''}`, group: 'blow' });
       }
     }
+    // Les pactes : pour soi, sans victime
+    for (const pact of c.pacts) {
+      if (pact.cost.kind === 'curse' && !cursableSlots(state, actor).length) continue;
+      options.push({ id: `pact:${pact.id}`, pact: pact.id, label: pact.name, desc: pact.desc, group: 'pact' });
+    }
     options.push({ id: 'pass', label: 'Ne rien faire (rester honnête)' });
-    askChoice(state, 'low_blow', `${actor.name} peut jouer un mauvais tour... Mais le coup peut se retourner contre lui (jet de ${reboundMax} ou moins).`, options);
+    const others = livingPlayers(state).length > 1;
+    askChoice(state, 'low_blow', others
+      ? `${actor.name} peut jouer un mauvais tour à un allié (s'il rate — ${reboundMax} ou moins au dé — le coup se retourne contre lui ; la victime peut aussi l'esquiver), ou passer un pacte avec les ombres.`
+      : `${actor.name} trouve un autel des ombres : un pacte coûte quelque chose tout de suite, pour un bonus pendant les prochains combats.`, options);
   },
   onChoice(state, tile, id) {
+    const actor = decider(state);
     if (id === 'pass') {
-      log(state, `${decider(state).name} reste honnête.`, 'info');
+      log(state, `${actor.name} reste honnête.`, 'info');
       headline(state, 'Vous résistez à la tentation.', 'neutral');
       finishTile(state);
       return;
     }
     const opt = state.pending.options.find((o) => o.id === id);
-    tile.choice = { target: opt.target, blow: opt.blow };
+    if (opt.pact) {
+      // Un pacte : le coût tout de suite, puis le gain (pas de dé)
+      const pact = state.content.pacts.find((x) => x.id === opt.pact);
+      log(state, `${actor.name} passe un pacte : ${pact.name}.`, 'social');
+      applyBlow(state, pact.cost, actor);
+      applyGain(state, { ...pact.gain, name: pact.name }, actor);
+      actor.stats.pacts = (actor.stats.pacts || 0) + 1;
+      headline(state, `${pact.name} : ${pact.gain.desc}`, 'neutral');
+      finishTile(state);
+      return;
+    }
+    tile.choice = { target: opt.target, blow: opt.blow, saboteur: actor.id };
     askRoll(state, 'rebound', 'Le coup réussira-t-il ?', `Un jet de ${state.content.rules.lowBlow.reboundMax} ou moins et le coup se retourne contre vous !`);
   },
   onRoll(state, tile, roll) {
     const c = state.content;
-    const actor = getPlayer(state, state.pending.actor);
+    const actor = getPlayer(state, tile.choice.saboteur || state.pending.actor);
     const target = getPlayer(state, tile.choice.target);
     const blow = c.lowBlows.find((b) => b.id === tile.choice.blow);
+
+    // 2) Le droit de réponse de la victime : un jet d'esquive
+    if (state.pending.purpose === 'dodge') {
+      const dodged = roll.natural === 20 || roll.total >= c.rules.lowBlow.dodgeMin;
+      if (dodged) {
+        target.stats.rollsOk++;
+        social(state, 'dodge', target.id, actor.id, blow.id);
+        log(state, `${target.name} voit venir le coup et l'esquive ! ${actor.name} repart bredouille.`, 'good');
+        headline(state, `${target.name} esquive le coup bas !`, 'good');
+      } else {
+        target.stats.rollsKo++;
+        actor.stats.sabotagesOk++;
+        target.stats.sabotagesSuffered++;
+        social(state, 'sabotage', actor.id, target.id, blow.id);
+        log(state, `${actor.name} joue un sale tour à ${target.name} : ${blow.name} !`, 'social');
+        headline(state, `${blow.name} réussi sur ${target.name} !`, 'bad');
+        applyBlow(state, blow, target);
+        applyGain(state, { ...blow.gain, name: blow.name }, actor);
+      }
+      finishTile(state);
+      return;
+    }
+
+    // 1) Le jet du saboteur : le coup peut se retourner contre lui
     const rebound = roll.natural === 1 || roll.total <= c.rules.lowBlow.reboundMax;
     actor.stats.sabotages++;
     if (rebound) {
@@ -336,16 +396,12 @@ const lowBlow = {
       log(state, `Catastrophe ! Le coup bas de ${actor.name} se retourne contre lui !`, 'bad');
       headline(state, 'Le coup bas se retourne contre son auteur !', 'bad');
       applyBlow(state, blow, actor);
-    } else {
-      actor.stats.sabotagesOk++;
-      actor.stats.rollsOk++;
-      target.stats.sabotagesSuffered++;
-      social(state, 'sabotage', actor.id, target.id, blow.id);
-      log(state, `${actor.name} joue un sale tour à ${target.name} : ${blow.name} !`, 'social');
-      headline(state, `${blow.name} réussi sur ${target.name} !`, 'bad');
-      applyBlow(state, blow, target);
+      finishTile(state);
+      return;
     }
-    finishTile(state);
+    actor.stats.rollsOk++;
+    log(state, `${actor.name} tente ${blow.name.toLowerCase()} sur ${target.name}...`, 'social');
+    askRoll(state, 'dodge', `${target.name} peut esquiver le coup !`, `${target.name} lance le dé : ${c.rules.lowBlow.dodgeMin} ou plus, et « ${blow.name} » est esquivé (${actor.name} ne gagne alors rien).`, { actor: target.id });
   }
 };
 

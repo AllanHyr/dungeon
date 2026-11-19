@@ -82,6 +82,9 @@ node server/server.mjs        # Node 22.13 ou plus récent, rien à installer ->
    *(En ligne, chaque joueur amène UN héros dans un salon ; l'équipe de 1 à 4 héros sert à jouer seul, hors ligne.)*
 2. Chaque tour : le joueur sous les projecteurs clique **Avancer**, lance le **D20**, puis décide.
 3. Cases possibles : combat, trésor, piège, fontaine d'XP, fontaine de vie (rare), coup bas, marchand, un **feu de camp garanti au milieu** (chacun peut changer ses sorts équipés et choisir : se reposer, affûter ses armes ou monter la garde), et le boss à la fin.
+   **Le coup bas** : on peut jouer un sale tour à un allié (empoisonner, croche-pied, assommer, maudire un objet). S'il réussit, le saboteur **gagne** un petit bonus
+   (+dégâts, PV, protection) ; mais le coup peut se retourner contre lui (5 ou moins au dé), et la **victime a un droit de réponse** : un jet d'esquive (14 ou plus).
+   La même case propose aussi des **pactes** (un coût tout de suite, un bonus pour les prochains combats) : ils marchent seul, sans victime.
    *(Ou, sur l'accueil, l'onglet **Zone de farm solo** : un seul personnage, des vagues de monstres, un objet au choix — voir §3.)*
 4. Un mort devient **fantôme** : il peut encore aider. Il peut être ressuscité (fontaine de vie ou compétence du Veilleur), **une seule fois par run**.
 5. **L'équipement** : 14 emplacements (tête, épaules, dos, torse, mains, ceinture, jambes, pieds, cou, 2 anneaux, relique, main droite et main gauche). Une arme à
@@ -266,7 +269,7 @@ donjon/
 │   ├── achievements.json les succès (condition + récompenses : compétence, fonction, titre)
 │   ├── monsters.json     monstres, boss, leurs compétences et leurs particularités (régénération, riposte...)
 │   ├── tiles.json        types de cases et textes d'ambiance
-│   └── events.json       les coups bas
+│   └── events.json       les coups bas et les pactes
 ├── src/
 │   ├── core/             LA LOGIQUE DU JEU (aucun lien avec le navigateur !) — la même, dans le navigateur et sur le serveur
 │   ├── net/              les « passerelles » : l'écran parle à l'une des deux, sans savoir laquelle
@@ -338,7 +341,7 @@ dans un JSON, le jeu affiche une erreur en français qui dit où chercher.
 ## 6. Les tests
 
 ```bash
-node tests/run-tests.mjs        # 267 tests de règles (PA, rangs, dés, boucliers, passifs, donjons à thème et mécaniques de monstres, butin exclusif, description des bonus et malus, marque et venin de l'Assassin, puissance sacrée et auras du Templier, formes et Expiation du Prêtre, rage, postures et blessure profonde du Guerrier, formes du Druide, chants et Tempo du Barde, charges et Déflagration du Mage, feu de camp, forge, équipement à 14 emplacements, raccourcis clavier, farm (rattrapage, récompense au choix), expéditions, succès, actions sur les personnages, niveau effectif, stasis (à plusieurs, raretés par mode), coups bas, sauvegarde, pilote automatique...)
+node tests/run-tests.mjs        # 270 tests de règles (PA, rangs, dés, boucliers, passifs, donjons à thème et mécaniques de monstres, butin exclusif, description des bonus et malus, marque et venin de l'Assassin, puissance sacrée et auras du Templier, formes et Expiation du Prêtre, rage, postures et blessure profonde du Guerrier, formes du Druide, chants et Tempo du Barde, charges et Déflagration du Mage, feu de camp, forge, équipement à 14 emplacements, raccourcis clavier, farm (rattrapage, récompense au choix), expéditions, succès, actions sur les personnages, niveau effectif, stasis (à plusieurs, raretés par mode), coups bas (gain, esquive, pactes), sauvegarde, pilote automatique...)
 node tests/server-api.mjs       # 36 tests du SERVEUR (sans navigateur : on parle à l'API) : comptes, sessions, mots de passe, limites anti-abus, tricheries refusées, parties complètes jouées par un robot, fichiers publics, outil d'administration
 node tests/server-rooms.mjs     # 21 tests des SALONS (sans navigateur) : un héros par compte, prêt / réglages / retirer / quitter, parties à 2-3 joueurs jouées par des robots, tricheries refusées, rien de secret envoyé, temps réel, minuteur du serveur, redémarrage
 node tests/fuzz.mjs 1000        # 1000 parties (avec un donjon, des spécialisations et des talents tirés au hasard), salles d'entraînement et sessions de farm « chaotiques » : aucune erreur attendue (et une action refusée ne change jamais l'état)

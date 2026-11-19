@@ -50,11 +50,11 @@
     "low_blow": {
       "name": "Coup bas",
       "icon": "low_blow",
-      "minPlayers": 2,
       "flavor": [
         "Un compagnon trébuche... C'est le moment idéal pour une petite traîtrise.",
         "Personne ne regarde. Une occasion en or de faire un mauvais coup.",
-        "L'ombre vous murmure à l'oreille : « Et si... ? »"
+        "L'ombre vous murmure à l'oreille : « Et si... ? »",
+        "Un autel noir suinte dans la pénombre. Il promet beaucoup, contre un peu de vous-même."
       ]
     },
     "camp": {

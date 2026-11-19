@@ -32,6 +32,9 @@ Les potions (`"slot": "consumable"`) ne se portent pas : elles restent dans le s
 * **Rien ne se perd** : un objet remplacé retourne toujours dans le sac.
 * **Niveau requis** : comme avant, il faut le niveau **réel** du personnage. En mode Tranche / Stasis, un objet de niveau supérieur à la tranche reste porté mais est **inactif**.
 * **Niveau d'équipement** = la somme des niveaux des objets portés (14 emplacements maximum). Le succès « Équipé pour la gloire » (grandes expéditions) demande **36**.
+* **Raretés et modes** : hors Stasis (Basic, Tranche), un objet est au mieux **épique**, et très rarement (poids ×0,25) ; le **légendaire** ne tombe
+  qu'en **Stasis**, qui se joue à plusieurs (2 joueurs ou plus, en ligne). Réglages : `maxRarity` et `rarityWeights` dans `data/modes.json`.
+  Le farm et les expéditions restent plafonnés à « rare ». Un légendaire de donjon ne se forge qu'après avoir terminé ce donjon en Stasis.
 * **La relique** est l'emplacement du « gameplay » : ses objets ont souvent un effet (`effect`, `modifiers`, `triggers`, `+1 PA`...).
   Il n'y en a que de rares (épiques et légendaires), pour l'instant six.
 

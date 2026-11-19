@@ -1476,6 +1476,9 @@ html.fx-playing .run { pointer-events: none; } /* (le temps d'une animation : un
 .zone-pick small { color: var(--muted); }
 .zone-pick.on { border-color: var(--brass-3); background: rgba(212, 170, 80, 0.12); box-shadow: 0 0 0 1px rgba(212, 170, 80, 0.35); }
 .zone-pick:disabled { opacity: 0.5; cursor: not-allowed; }
+.mode-opt:disabled { opacity: 0.45; cursor: not-allowed; }
+.mode-opt .icon { margin-left: 4px; }
+.mode-multi-note { display: flex; align-items: center; gap: 4px; }
 /* ---- Expéditions */
 .exp-away { display: flex; flex-direction: column; gap: 8px; }
 .exp-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--ink-3); }

@@ -108,7 +108,8 @@ export function sanitizeCharacter(content, raw) {
     if (content.tranches[tranche]) ch.stats.clears[tranche] = { total: n(rec?.total), group: Math.min(n(rec?.group), n(rec?.total)) };
   }
   // La collection de l'encyclopédie : donjons terminés, monstres vaincus, objets exclusifs trouvés (on ne garde que ce qui existe encore)
-  ch.stats.dungeons = {}; ch.stats.bestiary = {}; ch.stats.found = {};
+  ch.stats.dungeons = {}; ch.stats.bestiary = {}; ch.stats.found = {}; ch.stats.stasisClears = {};
+  for (const [id, k] of Object.entries(st.stasisClears && typeof st.stasisClears === 'object' ? st.stasisClears : {})) if (content.dungeons[id] && n(k)) ch.stats.stasisClears[id] = n(k);
   const obj = (v) => (v && typeof v === 'object' ? v : {});
   for (const [id, k] of Object.entries(obj(st.dungeons))) if (content.dungeons[id] && n(k)) ch.stats.dungeons[id] = n(k);
   for (const [id, k] of Object.entries(obj(st.bestiary))) if (content.monsters[id] && n(k)) ch.stats.bestiary[id] = n(k);

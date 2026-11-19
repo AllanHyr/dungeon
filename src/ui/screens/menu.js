@@ -330,10 +330,19 @@ function dungeonPanel(team, { title, hint }) {
     : h('p', { class: 'muted small' }, 'Choisis au moins un héros : le verdict de chaque donjon apparaîtra ici.');
 
   // La difficulté : un sélecteur à trois positions, et l'explication de celle qui est choisie.
+  // Le Stasis (minPlayers 2) ne se joue qu'à plusieurs, en ligne : hors ligne il est grisé.
+  const online = app.gateway.mode === 'online';
+  const multiOnly = (key) => (content.modes[key].minPlayers || 1) > 1;
+  if (!online && multiOnly(ui.setup.mode)) ui.setup.mode = 'tranche';
   const modeOpt = (key) => {
     const m = content.modes[key];
     const sel = ui.setup.mode === key;
-    return h('button', { class: `mode-opt ${sel ? 'on' : ''}`, type: 'button', 'aria-pressed': sel, title: m.short, onClick: () => { ui.setup.mode = key; play('click'); redraw(); } }, m.name);
+    const off = !online && multiOnly(key);
+    return h('button', {
+      class: `mode-opt ${sel ? 'on' : ''}`, type: 'button', 'aria-pressed': sel, dataset: { mode: key }, disabled: off,
+      title: off ? `${m.name} : à plusieurs seulement (au moins ${m.minPlayers} joueurs, en ligne).` : m.short,
+      onClick: () => { ui.setup.mode = key; play('click'); redraw(); }
+    }, m.name, off ? icon('lock', 12) : null);
   };
   const stasisLevels = content.modes.stasis.levels || [];
   const modeBlock = h('div', { class: 'mode-block' },
@@ -347,7 +356,8 @@ function dungeonPanel(team, { title, hint }) {
           }, l.level)))
       : null,
     h('p', { class: 'mode-desc' }, content.modes[ui.setup.mode].short),
-    h('p', { class: 'muted small' }, 'Effets : ' + modeEffects(ui.setup)));
+    h('p', { class: 'muted small' }, 'Effets : ' + modeEffects(ui.setup)),
+    !online ? h('p', { class: 'muted small mode-multi-note' }, icon('lock', 12), ' Le Stasis (et ses objets légendaires) se joue à plusieurs : en ligne, dans un salon d\'au moins 2 joueurs.') : null);
 
   const panel = h('section', { class: 'panel home-plan' },
     h('h2', null, h('span', { class: 'step' }, '2'), title, h('small', { class: 'muted' }, hint)),

@@ -126,11 +126,15 @@ Le **niveau maximum est bridé à 8** pour l'instant (`levelCap` dans `data/rule
 
 Les **modes** :
 
-| Mode | Équipement et compétences | XP / butin | Difficulté |
-| --- | --- | --- | --- |
-| **Basic** | aucune restriction | très réduits | normale |
-| **Tranche** | niveau ≤ tranche du donjon | normaux | normale |
-| **Stasis 1 / 2 / 3** | comme Tranche | bien meilleurs (qualité, pas niveau) | très élevée |
+| Mode | Qui | Équipement et compétences | XP / butin | Meilleure rareté | Difficulté |
+| --- | --- | --- | --- | --- | --- |
+| **Basic** | seul ou à plusieurs | aucune restriction | très réduits | épique (très rare) | normale |
+| **Tranche** | seul ou à plusieurs | niveau ≤ tranche du donjon | normaux | épique (très rare) | normale |
+| **Stasis 1 / 2 / 3** | **à plusieurs seulement** (2 joueurs ou plus, en ligne) | comme Tranche | bien meilleurs (qualité, pas niveau) | **légendaire** | très élevée |
+
+Jouer à plusieurs débloque le plus beau contenu : le **Stasis**, et avec lui les **objets légendaires** (y compris ceux des tables de donjon).
+Hors ligne, le Stasis est grisé. Un légendaire ne se **forge** qu'après avoir terminé son donjon en Stasis. Tout est dans `data/modes.json`
+(`minPlayers`, `maxRarity`, `rarityWeights` : l'épique est 4 fois plus rare hors Stasis).
 
 Le jeu distingue toujours le **niveau réel** (sauvegardé) du **niveau effectif** (celui utilisé dans le donjon :
 en Tranche et Stasis, c'est `min(niveau réel, tranche)`).
@@ -333,7 +337,7 @@ dans un JSON, le jeu affiche une erreur en français qui dit où chercher.
 ## 6. Les tests
 
 ```bash
-node tests/run-tests.mjs        # 261 tests de règles (PA, rangs, dés, boucliers, passifs, donjons à thème et mécaniques de monstres, butin exclusif, description des bonus et malus, marque et venin de l'Assassin, puissance sacrée et auras du Templier, formes et Expiation du Prêtre, rage, postures et blessure profonde du Guerrier, formes du Druide, chants et Tempo du Barde, feu de camp, forge, équipement à 14 emplacements, raccourcis clavier, farm (rattrapage, récompense au choix), expéditions, succès, actions sur les personnages, niveau effectif, stasis, coups bas, sauvegarde, pilote automatique...)
+node tests/run-tests.mjs        # 263 tests de règles (PA, rangs, dés, boucliers, passifs, donjons à thème et mécaniques de monstres, butin exclusif, description des bonus et malus, marque et venin de l'Assassin, puissance sacrée et auras du Templier, formes et Expiation du Prêtre, rage, postures et blessure profonde du Guerrier, formes du Druide, chants et Tempo du Barde, feu de camp, forge, équipement à 14 emplacements, raccourcis clavier, farm (rattrapage, récompense au choix), expéditions, succès, actions sur les personnages, niveau effectif, stasis (à plusieurs, raretés par mode), coups bas, sauvegarde, pilote automatique...)
 node tests/server-api.mjs       # 36 tests du SERVEUR (sans navigateur : on parle à l'API) : comptes, sessions, mots de passe, limites anti-abus, tricheries refusées, parties complètes jouées par un robot, fichiers publics, outil d'administration
 node tests/server-rooms.mjs     # 21 tests des SALONS (sans navigateur) : un héros par compte, prêt / réglages / retirer / quitter, parties à 2-3 joueurs jouées par des robots, tricheries refusées, rien de secret envoyé, temps réel, minuteur du serveur, redémarrage
 node tests/fuzz.mjs 1000        # 1000 parties (avec un donjon, des spécialisations et des talents tirés au hasard), salles d'entraînement et sessions de farm « chaotiques » : aucune erreur attendue (et une action refusée ne change jamais l'état)

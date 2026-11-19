@@ -129,6 +129,7 @@ l'onglet **Forge** regroupe le reste. Tous les nombres sont dans `data/rules.jso
   **de l'objet** (pas aux PA, initiative, chance ni sauvegarde ; un malus ne grandit pas). Le cran n coûte `upgradeCost[rareté]` × n.
   L'amélioration est portée par l'objet lui-même (`{ uid, id, plus }`) : elle le suit dans les parties, et s'affiche « Heaume de fer +2 ».
 * **Forger** un objet **exclusif d'un donjon que ce personnage a terminé** (`stats.dungeons`), au prix `craftCost[rareté]` : il arrive dans le sac.
+  Un **légendaire** demande d'avoir terminé ce donjon **en Stasis** (`stats.stasisClears`), puisqu'il ne tombe qu'en Stasis, à plusieurs.
   Le meilleur butin reste à gagner en donjon, mais on n'est plus à la merci de la chance pour la pièce qui manque.
 * Actions (mêmes règles hors ligne et sur le serveur, `src/core/profile-actions.js`) : `CHAR_SALVAGE {uid}`, `CHAR_SALVAGE_BULK {rarity}`, `CHAR_LOCK {uid}`, `CHAR_UPGRADE {uid}`, `CHAR_CRAFT {itemId}`.
 

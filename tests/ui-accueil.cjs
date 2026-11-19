@@ -96,10 +96,10 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
 
   console.log('\n● La difficulté');
   check((await page.$$('.mode-opt')).length === 3 && !!(await page.$('.mode-opt.on:has-text("Tranche")')), 'trois positions, « Tranche » par défaut');
-  await page.click('.mode-opt:has-text("Stasis")');
-  check(!!(await page.$('.stasis-levels')) && (await page.$$('.stasis-levels .chip-btn')).length >= 2, 'Stasis propose ses niveaux');
+  check(await page.$eval('.mode-opt[data-mode="stasis"]', (b) => b.disabled), 'hors ligne, le Stasis est grisé (il se joue à plusieurs)');
+  check(/Stasis.*plusieurs/.test(await page.textContent('.mode-multi-note')), 'une note explique pourquoi');
   await page.click('.mode-opt:has-text("Basic")');
-  check(!(await page.$('.stasis-levels')) && /restriction/i.test(await page.textContent('.mode-desc')), 'Basic les cache et explique ce qu\'il change');
+  check(!(await page.$('.stasis-levels')) && /restriction/i.test(await page.textContent('.mode-desc')), 'Basic explique ce qu\'il change');
   await page.click('.mode-opt:has-text("Tranche")');
 
   console.log('\n● Choisir ses héros');

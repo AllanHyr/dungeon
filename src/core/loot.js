@@ -10,6 +10,7 @@
 // une boost < 1 les défavorise (mode Basic).
 // ATTENTION : la qualité monte mais JAMAIS le niveau : un donjon de tranche 4
 // ne donne que des objets de niveau <= 4.
+// Le MODE fixe la meilleure rareté possible (`maxRarity` de modes.json : épique, très rare, hors Stasis ; légendaire en Stasis seulement).
 
 import { weightedPick, nextFloat } from './rng.js';
 import { newItem } from './items.js';
@@ -35,8 +36,16 @@ export function dungeonTable(state, filter = () => true) {
 /** Tire une rareté parmi celles qui ont au moins un objet disponible. */
 export function rollRarity(state, items, boost) {
   const c = state.content;
+  const mult = state.params?.rarityWeights || {};
   const available = c.rarities.filter((r) => items.some((i) => i.rarity === r.id));
-  return weightedPick(state, available, (r) => r.weight * Math.pow(Math.max(0.05, boost), c.rarityIndex[r.id]));
+  return weightedPick(state, available, (r) => r.weight * (mult[r.id] ?? 1) * Math.pow(Math.max(0.05, boost), c.rarityIndex[r.id]));
+}
+
+/** La meilleure rareté que ce mode peut donner (son `maxRarity`, sinon toutes). */
+export function rarityCap(state) {
+  const c = state.content;
+  const cap = state.params?.maxRarity;
+  return cap ? c.rarityIndex[cap] : c.rarities.length - 1;
 }
 
 /**
@@ -48,9 +57,11 @@ export function rollRarity(state, items, boost) {
 export function rollItem(state, opts = {}) {
   const c = state.content;
   const tranche = state.setup.tranche;
-  const table = opts.noExclusive ? [] : dungeonTable(state, opts.filter);
+  const cap = rarityCap(state);
+  const allowed = (i) => c.rarityIndex[i.rarity] <= cap && (!opts.filter || opts.filter(i));
+  const table = opts.noExclusive ? [] : dungeonTable(state, allowed);
   const fromTable = table.length > 0 && (opts.exclusiveOnly || nextFloat(state) < (c.rules.loot.dungeonTableChance ?? 0.3));
-  const items = fromTable ? table : eligibleItems(c, tranche, opts.filter);
+  const items = fromTable ? table : eligibleItems(c, tranche, allowed);
   if (!items.length) return null;
 
   let rarity = rollRarity(state, items, opts.boost ?? 1);

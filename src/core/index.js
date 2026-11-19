@@ -5,6 +5,9 @@
 
 export { buildContent, getModeParams, availableTranches, dungeonsOf, dungeonIdOf, dungeonRules, DATA_FILES, EQUIP_SLOTS, ITEM_TYPES, FEATURES, FX_VOCAB } from './content.js';
 export { createRun, createTraining, createFarm, dispatch, restoreState, cloneState, attachContent, STATE_VERSION } from './engine.js';
+export {
+  expeditionRules, expeditionOf, onExpedition, expeditionLeft, expeditionSlots, canStartExpedition, durationText
+} from './expeditions.js';
 export { applyFarmResult, canStartFarm, waveInfo, farmZone, choiceTier, catchUpLevel, pickLoot } from './farm.js';
 export {
   checkAchievements, achievementProgress, achievementsFor, hasFeature, achievementForFeature, titlesOf, rewardTexts, gearLevel, isUnlocked

@@ -563,8 +563,8 @@ Ce que ce serveur fait aujourd'hui (étapes **4a** et **4b**) : les comptes, les
 **donjons à plusieurs** (salons avec code, un héros par joueur, minuteur de tour tenu par le serveur, pilote automatique pour les absents,
 mises à jour en direct), avec reprise après rechargement ou changement d'appareil.
 
-À venir : le **farm automatique** (le succès « Équipé pour la gloire »), comme une tâche du serveur qui tourne même quand personne n'est
-connecté ; puis la finition (illustrations, animations, sons).
+Les **expéditions** suivent l'horloge du serveur : un héros envoyé en mission avance même quand personne n'est connecté
+(rien ne tourne en tâche de fond : à son retour, le serveur compare simplement l'heure). À venir : la finition (illustrations, animations, sons).
 
 > La version du jeu **publiée sur la plateforme Claude** reste en mode local (la page y est isolée : elle ne peut pas appeler ton
 > serveur). Elle sert de démonstration ; le vrai jeu en ligne, c'est celui de ton VPS.

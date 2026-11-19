@@ -101,7 +101,7 @@ export function sanitizeCharacter(content, raw) {
   const st = raw.stats || {};
   ch.stats = {
     runs: n(st.runs), wins: n(st.wins), deaths: n(st.deaths),
-    farmRuns: n(st.farmRuns), farmWaves: n(st.farmWaves), farmBest: n(st.farmBest),
+    farmRuns: n(st.farmRuns), farmWaves: n(st.farmWaves), farmBest: n(st.farmBest), expeditions: n(st.expeditions),
     clears: {}
   };
   for (const [tranche, rec] of Object.entries(st.clears && typeof st.clears === 'object' ? st.clears : {})) {
@@ -194,6 +194,11 @@ export function sanitizeCharacter(content, raw) {
     const def = content.items[clean.id];
     equipFromBag(content, holder, clean.uid, EQUIP_SLOTS.includes(slot) && slotsFor(def).includes(slot) ? slot : null);
   }
+  // L'expédition en cours (si elle existe encore dans les données)
+  const ex = raw.expedition;
+  if (ex && typeof ex === 'object' && content.farm.expeditions.list.some((e) => e.id === ex.id) && Number.isFinite(ex.start) && Number.isFinite(ex.end) && ex.end >= ex.start) {
+    ch.expedition = { id: ex.id, start: ex.start, end: ex.end };
+  }
   // La forge : les éclats, et les cadenas (seulement sur des objets qu'on possède encore)
   ch.shards = n(raw.shards);
   const owned = new Set(ownedItems(ch).map((o) => o.inst.uid));
@@ -220,7 +225,7 @@ export function sanitizeProfile(content, raw) {
     fx: ['full', 'fast', 'min'].includes(raw.settings?.fx) ? raw.settings.fx : null, // animations : complètes, rapides, réduites (null : selon le système)
     turnSeconds: Math.max(0, Math.min(300, Number(raw.settings?.turnSeconds) || 0)), // minuteur de tour (0 = désactivé)
     training: raw.settings?.training && Array.isArray(raw.settings.training.specs) ? raw.settings.training : null, // dernière salle d'entraînement
-    view: raw.settings?.view === 'farm' ? 'farm' : 'dungeon', // onglet de l'accueil : donjon en équipe ou farm solo
+    view: ['farm', 'expeditions'].includes(raw.settings?.view) ? raw.settings.view : 'dungeon', // onglet de l'accueil : donjon en équipe, farm solo ou expéditions
     farmChar: ids.has(raw.settings?.farmChar) ? raw.settings.farmChar : null // dernier personnage envoyé au farm
   };
   profile.lastTeam = (Array.isArray(raw.lastTeam) ? raw.lastTeam : []).filter((id) => ids.has(id)).slice(0, 4);

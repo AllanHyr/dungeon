@@ -1,5 +1,5 @@
 {
-  "_note": "SUCCÈS (par personnage). Un succès a une CONDITION (ce qu'il faut accomplir) et des RÉCOMPENSES : une compétence rendue accessible à CE personnage, une fonction du jeu (ex. le farm automatique), ou un titre. Il peut être réservé à certaines classes avec \"classes\": [...]. Voir docs/FARM-ET-SUCCES.md pour tous les types de conditions et de récompenses.",
+  "_note": "SUCCÈS (par personnage). Un succès a une CONDITION (ce qu'il faut accomplir) et des RÉCOMPENSES : une compétence rendue accessible à CE personnage, une fonction du jeu (ex. les grandes expéditions), ou un titre. Il peut être réservé à certaines classes avec \"classes\": [...]. Voir docs/FARM-ET-SUCCES.md pour tous les types de conditions et de récompenses.",
 
   "achievements": [
     {
@@ -41,7 +41,7 @@
       "icon": "armor",
       "desc": "Atteindre un niveau d'équipement de 36 (la somme des niveaux des objets portés : neuf objets de la tranche 4, par exemple).",
       "condition": { "type": "gearLevel", "atLeast": 36 },
-      "rewards": [ { "type": "feature", "feature": "autoFarm" } ]
+      "rewards": [ { "type": "feature", "feature": "grandesExpeditions" } ]
     }
   ]
 }

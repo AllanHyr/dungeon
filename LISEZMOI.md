@@ -154,6 +154,9 @@ Sur l'accueil, l'onglet **Zone de farm solo** :
   atteindre un niveau d'équipement... Ils débloquent une **compétence** pour ce personnage, une **fonction** du jeu (le farm automatique,
   à l'étape suivante) ou un **titre**. Exemple fourni : le Veilleur ne peut apprendre *Cantique de hâte* qu'après avoir fini le premier donjon en groupe.
 
+**Les expéditions** (onglet de l'accueil) : quand tu n'as pas le temps de jouer, envoie un héros en mission (30 min, 2 h, une nuit).
+Il revient, même jeu fermé, avec des éclats, de l'XP de rattrapage (s'il est en retard sur ton meilleur héros) et parfois un objet. Trois héros en route au plus.
+
 **La forge** (fiche du personnage) : le butin inutile n'est jamais perdu.
 
 * Dans le sac, un **cadenas** protège un objet, une **corbeille** le **démantèle** en **éclats** (plus il est rare, plus il en donne) ; on peut aussi tout démanteler d'un coup (les communs...).
@@ -329,7 +332,7 @@ dans un JSON, le jeu affiche une erreur en français qui dit où chercher.
 ## 6. Les tests
 
 ```bash
-node tests/run-tests.mjs        # 256 tests de règles (PA, rangs, dés, boucliers, passifs, donjons à thème et mécaniques de monstres, butin exclusif, description des bonus et malus, marque et venin de l'Assassin, puissance sacrée et auras du Templier, formes et Expiation du Prêtre, rage, postures et blessure profonde du Guerrier, formes du Druide, chants et Tempo du Barde, feu de camp, forge, équipement à 14 emplacements, raccourcis clavier, farm (rattrapage, récompense au choix), succès, actions sur les personnages, niveau effectif, stasis, coups bas, sauvegarde, pilote automatique...)
+node tests/run-tests.mjs        # 259 tests de règles (PA, rangs, dés, boucliers, passifs, donjons à thème et mécaniques de monstres, butin exclusif, description des bonus et malus, marque et venin de l'Assassin, puissance sacrée et auras du Templier, formes et Expiation du Prêtre, rage, postures et blessure profonde du Guerrier, formes du Druide, chants et Tempo du Barde, feu de camp, forge, équipement à 14 emplacements, raccourcis clavier, farm (rattrapage, récompense au choix), expéditions, succès, actions sur les personnages, niveau effectif, stasis, coups bas, sauvegarde, pilote automatique...)
 node tests/server-api.mjs       # 36 tests du SERVEUR (sans navigateur : on parle à l'API) : comptes, sessions, mots de passe, limites anti-abus, tricheries refusées, parties complètes jouées par un robot, fichiers publics, outil d'administration
 node tests/server-rooms.mjs     # 21 tests des SALONS (sans navigateur) : un héros par compte, prêt / réglages / retirer / quitter, parties à 2-3 joueurs jouées par des robots, tricheries refusées, rien de secret envoyé, temps réel, minuteur du serveur, redémarrage
 node tests/fuzz.mjs 1000        # 1000 parties (avec un donjon, des spécialisations et des talents tirés au hasard), salles d'entraînement et sessions de farm « chaotiques » : aucune erreur attendue (et une action refusée ne change jamais l'état)
@@ -356,6 +359,7 @@ Tests de l'interface dans un vrai navigateur (nécessite Playwright, et le jeu l
 PORT=8765 node serve.mjs &
 node tests/ui-smoke.cjs http://localhost:8765/ /tmp     # joue une run en cliquant comme un humain
 node tests/ui-tour.cjs http://localhost:8765/ /tmp      # fiches, fenêtres, scénarios forcés, combat, version téléphone
+node tests/ui-expeditions.cjs http://localhost:8765/ /tmp    # expéditions : onglet, envoyer, héros bloqué (donjon, farm), retour et récompenses, rappeler, téléphone
 node tests/ui-farm.cjs http://localhost:8765/ /tmp      # farm : onglet, XP de rattrapage, vagues et éclats, 1 objet au choix parmi 3, succès, mort, reprise, ancien coffre, téléphone
 node tests/ui-sheet.cjs http://localhost:8765/ /tmp     # la fiche : stats, poupée d'équipement, sac par sections, arbre de compétences, téléphone
 node tests/ui-spec.cjs http://localhost:8765/ /tmp     # spécialisation et deck : cartes, choix unique, sort évolué, équiper / retirer, téléphone
@@ -399,9 +403,8 @@ Le plan convenu (une étape = un jeu qui marche et qu'on peut tester) :
 2. ✅ **Zone de farm solo + succès** : une petite zone en vagues ; des éclats à chaque vague, **1 objet au choix parmi 3** en fin de session,
    de l'**XP de rattrapage** pour les héros en retard (le coffre d'origine a été retiré) ; la **forge** ; des **succès par personnage** (finir le 1er donjon en groupe → débloque une compétence ; atteindre un niveau
    d'équipement → débloque le farm auto), le tout décrit en JSON.
-3. **Farm automatique** : débloqué par le succès « Équipé pour la gloire » (niveau d'équipement 36), pour que le début de partie
-   reste un défi. Il deviendra les **expéditions** : on envoie un héros, il revient plus tard avec des éclats, de l'XP de rattrapage et un objet au choix. *(Fait après le serveur :
-   ce sera une tâche du serveur, qui continue de tourner même quand le joueur a fermé son navigateur.)*
+3. ✅ **Expéditions** (à la place du farm automatique) : on envoie un héros 30 min, 2 h ou une nuit ; il revient, même jeu fermé, avec des éclats,
+   de l'XP de rattrapage et parfois un objet. La grande expédition (8 h) se débloque avec le succès « Équipé pour la gloire ». En ligne, l'heure est celle du serveur.
 4. **Serveur sur ton VPS** : Node 22 sans dépendance (`http` + `node:sqlite`), le serveur applique les règles (donc impossible de tricher).
    * ✅ **4a — comptes et parties solo en ligne** : inscription / connexion (mots de passe hachés, sessions, code d'invitation),
      personnages, éclats et succès **stockés sur le serveur**, parties (farm solo, donjon avec ses propres personnages) jouées

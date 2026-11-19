@@ -164,7 +164,7 @@ Une seule idée : **à gauche, qui part ; à droite, où ; en bas, un résumé e
   *Coffre n/24* (farm, ou dès qu'il contient quelque chose), *Partie en cours* (le héros est engagé).
 * **② Le donjon** (colonne de droite) : une carte par donjon avec une puce **Adapté / Risqué / Très dangereux** calculée pour l'équipe choisie (`assess()`), l'explication détaillée du donjon choisi
   (les remarques identiques sont regroupées), puis la **difficulté** (Basic / Tranche / Stasis) en sélecteur à trois positions. Les donjons « bientôt » tiennent sur une seule ligne.
-  En farm : la zone en quatre puces (le détail se déplie : *Comment ça marche ?*), puis l'état du farm automatique.
+  En farm : la zone en quatre puces (le détail se déplie : *Comment ça marche ?*). Onglet Expéditions : « En route » (barre d'avancée, Récupérer / Rappeler), puis une carte par expédition (`.exp-card`).
 * **La barre du bas** (`.launch-bar`) reste visible : les médaillons de l'équipe, « qui · où · difficulté » (avec la puce de verdict), et le bouton. Grisé tant qu'aucun héros n'est choisi, et elle dit pourquoi.
 * **Écrans** : au-dessus de 1000 px, deux colonnes ; en dessous, une colonne (les fiches se rangent sur deux colonnes sur tablette) ; sous 760 px (téléphone), l'en-tête tient sur une ligne (icônes seules),
   les fiches perdent leur ligne de stats et leur barre d'XP, et la barre du bas passe sur deux lignes.

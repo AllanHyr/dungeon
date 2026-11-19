@@ -50,7 +50,7 @@ export function createLocalGateway({ content, dataUrl, storage }) {
     },
 
     async character(action) {
-      const res = applyCharacterAction(gw.content, profile.characters, action, { newId: () => newCharacterId(profile), locked: gw.lockedIds() });
+      const res = applyCharacterAction(gw.content, profile.characters, action, { newId: () => newCharacterId(profile), locked: gw.lockedIds(), now: Date.now() });
       if (!res.ok) return res;
       afterCharacterResult(profile, res);
       saveProfile(profile, store);

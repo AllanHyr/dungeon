@@ -23,6 +23,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { rollFarmItem, rollChoices } from '../src/core/farm.js';
+import { applyPrefs, emptyProfile } from '../src/net/common.js';
 import { rollItem, rollShopItem } from '../src/core/loot.js';
 import { makeMonster, spawnMonsters, planMonsters, endCombat } from '../src/core/combat.js';
 import { nextFloat } from '../src/core/rng.js';
@@ -4082,6 +4083,12 @@ test('trois zones ; chacune exige un niveau ; plus haut = plus d\'éclats et des
   // la force des monstres est réglable par zone (waves.scale)
   const w1 = waveInfo(content.farm.zones.terriers, 1), w4 = waveInfo(z4, 1);
   assert(w4.hpMult < w1.hpMult && Math.abs(w4.hpMult - z4.waves.scale.hp) < 1e-9, 'Fourrés : monstres ×0,65 PV');
+});
+
+test('en ligne, les préférences gardent l\'onglet Expéditions et la zone de farm choisie', () => {
+  const prof = applyPrefs(emptyProfile(), { settings: { view: 'expeditions', farmZone: 'fosses', farmChar: 'c1' } });
+  eq([prof.settings.view, prof.settings.farmZone, prof.settings.farmChar], ['expeditions', 'fosses', 'c1']);
+  eq(applyPrefs(emptyProfile(), { settings: { view: 'nimporte' } }).settings.view, 'dungeon');
 });
 
 console.log(`\n${failed ? '❌' : '✅'} ${passed} tests réussis, ${failed} échoués\n`);

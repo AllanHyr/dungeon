@@ -72,8 +72,9 @@ export function applyPrefs(profile, raw) {
     fx: ['full', 'fast', 'min'].includes(s.fx) ? s.fx : null,
     turnSeconds: Number.isFinite(s.turnSeconds) && s.turnSeconds >= 0 && s.turnSeconds <= 600 ? s.turnSeconds : 0,
     training: s.training && typeof s.training === 'object' ? s.training : null,
-    view: s.view === 'farm' ? 'farm' : 'dungeon',
-    farmChar: typeof s.farmChar === 'string' ? s.farmChar : null
+    view: ['farm', 'expeditions'].includes(s.view) ? s.view : 'dungeon',
+    farmChar: typeof s.farmChar === 'string' ? s.farmChar : null,
+    farmZone: typeof s.farmZone === 'string' ? s.farmZone : null
   };
   if (Array.isArray(raw.lastTeam)) profile.lastTeam = raw.lastTeam.filter((id) => typeof id === 'string').slice(0, 4);
   if (raw.lastSetup && typeof raw.lastSetup === 'object') {

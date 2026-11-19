@@ -11,19 +11,25 @@ import { MONSTERS_CRYPT } from './art/monsters-crypt.js';
 import { MONSTERS_DEPTHS } from './art/monsters-depths.js';
 import { MONSTERS_DONJONS } from './art/monsters-donjons.js';
 import { SCENES as SCENE_DRAWINGS, VIGNETTES as VIGNETTE_DRAWINGS } from './art/scenes.js';
+import { PIXEL_HEROES } from './art/pixel-heroes.js';
+import { PIXEL_MONSTERS } from './art/pixel-monsters.js';
 
 const MONSTERS = { ...MONSTERS_CAVES, ...MONSTERS_CRYPT, ...MONSTERS_DEPTHS, ...MONSTERS_DONJONS };
 const SCENES = SCENE_DRAWINGS;
 const VIGNETTES = VIGNETTE_DRAWINGS;
 
-export const heroIds = () => Object.keys(HEROES);
-export const monsterIds = () => Object.keys(MONSTERS);
+export const heroIds = () => [...new Set([...Object.keys(PIXEL_HEROES), ...Object.keys(HEROES)])];
+export const monsterIds = () => [...new Set([...Object.keys(PIXEL_MONSTERS), ...Object.keys(MONSTERS)])];
 export const sceneIds = () => Object.keys(SCENES);
 export const vignetteIds = () => Object.keys(VIGNETTES);
 
+// Les portraits : en pixel art (direction « Table pixel », art/pixel-*.js) ; l'ancien dessin peint ne sert plus que de secours.
+const pixelCache = new Map();
+const cached = (key, draw) => { if (!pixelCache.has(key)) pixelCache.set(key, draw()); return pixelCache.get(key); };
+
 /** Le dessin SVG (en texte) d'une classe de héros, ou null s'il n'y en a pas. */
-export const heroSvg = (classId) => (HEROES[classId] ? HEROES[classId](uid()) : null);
-export const monsterSvg = (monsterId) => (MONSTERS[monsterId] ? MONSTERS[monsterId](uid()) : null);
+export const heroSvg = (classId) => (PIXEL_HEROES[classId] ? cached('h:' + classId, PIXEL_HEROES[classId]) : HEROES[classId] ? HEROES[classId](uid()) : null);
+export const monsterSvg = (monsterId) => (PIXEL_MONSTERS[monsterId] ? cached('m:' + monsterId, PIXEL_MONSTERS[monsterId]) : MONSTERS[monsterId] ? MONSTERS[monsterId](uid()) : null);
 export const vignetteSvg = (id) => (VIGNETTES[id] ? VIGNETTES[id](uid()) : null);
 const sceneCache = new Map();
 /**

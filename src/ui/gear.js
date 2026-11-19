@@ -76,7 +76,12 @@ export function equipmentView({ content, holder, view, tranche = null, actions, 
 
   // ---- le panneau de détail sous la poupée (change au survol sans tout redessiner)
   const detail = h('div', { class: 'slot-detail', 'aria-live': 'polite' });
-  const showDetail = (slot) => mount(detail, slotDetail(slot));
+  // (le panneau ne rapetisse jamais pendant qu'on survole : sinon, dans une fenêtre plus haute que l'écran, la page se recale,
+  //  l'emplacement glisse hors de la souris, le détail change encore... et tout se met à trembler)
+  const showDetail = (slot) => {
+    if (detail.isConnected && detail.offsetHeight) detail.style.minHeight = `${Math.max(parseFloat(detail.style.minHeight) || 0, detail.offsetHeight)}px`;
+    mount(detail, slotDetail(slot));
+  };
   const resetDetail = () => showDetail(view.sel);
 
   function slotDetail(slot) {

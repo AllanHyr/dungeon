@@ -334,7 +334,7 @@ export function applyEffect(state, caster, e, targets, ctx) {
         if (!u.alive) continue;
         const amount = calcDamage(cs.atk * e.power * cs.damage * cs.dot, unitStats(state, u).def);
         const st = giveStatus(state, caster, u, {
-          id: 'dot', key: e.key || ctx.skill?.id || 'dot', label: e.label || 'saigne', name: e.name, amount, turns: e.turns, nonLethal: !!e.nonLethal,
+          id: 'dot', key: e.key || ctx.skill?.id || 'dot', label: e.label || 'saigne', name: e.name, fx: e.fx || undefined, amount, turns: e.turns, nonLethal: !!e.nonLethal,
           stack: !!e.stack, maxStacks: e.maxStacks, stacks: e.stacks, drain: e.drain
         });
         say(`   ${u.name} ${e.label || 'saigne'} (${amount * (st.stacks || 1)} PV par tour pendant ${e.turns} tours${st.stacks > 1 ? `, ${st.stacks} cumuls` : ''}).`, 'combat');

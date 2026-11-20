@@ -708,10 +708,72 @@ async function supportAfter(beat, ctx, targets, skip = []) {
   await sleep(180);
 }
 
+// Les effets sur la durée : chaque nature a son animation, sa teinte sur le portrait et son son (`cause` = dotKind du moteur).
+const TICKS = {
+  poison: { hit: 'splat', element: 'poison', tint: '#7ad83a', sound: 'poison' },
+  venom: { hit: 'splat', element: 'poison', tint: '#a8e03c', sound: 'poison' },
+  burn: { hit: 'blast', element: 'fire', tint: '#ff7a2e', sound: 'hit_blast' },
+  bleed: { hit: 'splat', element: 'blood', tint: '#ff4a3a', sound: 'hit_splat' },
+  shadow: { hit: 'blast', element: 'shadow', tint: '#a864ff', sound: 'hit_drain' },
+  drain: { hit: 'splat', element: 'blood', tint: '#c0304a', sound: 'hit_drain' },
+  hot: { element: 'heal', tint: '#6df0a0', sound: null },
+  hurt: { hit: 'blast', element: 'physical', tint: null, sound: null }
+};
+
+/** L'animation propre à un effet sur la durée, posée sur la cible avant la perte (ou le gain) de PV. */
+function tickFx(cause, a) {
+  const { x, y, r } = a;
+  switch (cause) {
+    case 'burn':
+      cv.flames(x, y, { r, n: 7, dur: 0.85 });
+      cv.flash(x, y + r * 0.3, { r: r * 1.3, element: 'fire', dur: 0.3, alpha: 0.55 });
+      break;
+    case 'poison':
+      cv.bubbles(x, y, { r, n: 11, dur: 1, element: 'poison' });
+      cv.dust(x, y + r * 0.2, { n: 6, r: r * 0.5, element: 'poison', alpha: 0.35, rise: r * 0.8 });
+      break;
+    case 'venom':
+      cv.drips(x, y, { r, n: 6, dur: 0.95, element: 'venom' });
+      cv.bubbles(x, y + r * 0.3, { r: r * 0.8, n: 6, dur: 0.9, element: 'venom' });
+      break;
+    case 'bleed':
+      cv.drips(x, y, { r, n: 8, dur: 0.85, element: 'blood' });
+      cv.claws(x, y, { size: r * 0.9, element: 'blood', width: 4 });
+      break;
+    case 'shadow':
+      cv.wisps(x, y, { r, n: 7, dur: 0.85, element: 'shadow' });
+      cv.later(0.5, () => cv.flash(x, y, { r: r * 1.2, element: 'shadow', dur: 0.25, alpha: 0.6 }));
+      break;
+    case 'drain':
+      cv.wisps(x, y, { r, n: 6, dur: 1, element: 'blood', to: { x, y: y - r * 3 } });
+      break;
+    case 'hot':
+      cv.rise(x, y + r * 0.5, { kind: 'leaf', element: 'heal', n: 9, spread: r * 0.8, height: r * 1.6, size: 7, dur: 1, soft: 0.25 });
+      cv.ring(x, y + r * 0.7, { r0: r * 0.3, r1: r * 1.3, w: 3, element: 'heal', squash: 0.35, dur: 0.6 });
+      break;
+    default:
+      break;
+  }
+}
+
+/** Le portrait prend la teinte de l'effet un instant (vert du poison, orange de la brûlure...). */
+function tintPulse(a, color) {
+  const el = a?.medal;
+  if (!el?.animate || !color || reduceMotion()) return;
+  el.animate([{ filter: 'none' }, { filter: `drop-shadow(0 0 6px ${color}) drop-shadow(0 0 2px ${color}) saturate(1.4)` }, { filter: 'none' }], { duration: 700 * speed(), easing: 'ease-in-out' });
+}
+
 async function runTick(beat, ctx) {
-  const mapped = { poison: { hit: 'splat', element: 'poison' }, bleed: { hit: 'splat', element: 'blood' }, hurt: { hit: 'blast', element: 'physical' }, hot: { element: 'nature' } }[beat.cause] || {};
+  const mapped = TICKS[beat.cause] || TICKS.hurt;
   const a = anchorOf(beat.unitId);
-  if (a && mode !== 'min' && beat.cause === 'poison') supportFx('poison', a, ctx);
+  if (a) {
+    if (mapped.sound) sfx(mapped.sound, { pan: panOf(a), vol: 0.7 });
+    if (mode !== 'min') {
+      tickFx(beat.cause, a);
+      tintPulse(a, mapped.tint);
+      await sleep(beat.cause === 'hot' ? 220 : 320); // (l'effet se montre, PUIS la barre de vie bouge)
+    }
+  }
   await runSteps(beat.steps, { ...ctx, style: { weight: 1, element: mapped.element }, casterA: null, beat: { outcome: 'hit' }, hit: mapped.hit, element: mapped.element }, 80);
 }
 

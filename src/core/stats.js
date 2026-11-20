@@ -244,6 +244,8 @@ export function computeStats(state, unit) {
   const paBase = isPlayer ? rules.basePa : unit.paBase ?? rules.basePa;
   out.pa = Math.min(rules.maxPa ?? 99, Math.max(1, Math.round(paBase + paFlat + sum('pa', ctx).flat)));
   out.damage = Math.max(0.1, 1 + sum('damage', ctx).pct);
+  // Au farm (seul face aux vagues), un soigneur tue lentement : farm.json > roleDamage lui donne un bonus de dégâts (là seulement).
+  if (isPlayer && state.farm) out.damage *= 1 + (c.farm?.roleDamage?.[c.classes[unit.classId]?.role] || 0);
   out.dot = Math.max(0.1, 1 + sum('dot', ctx).pct); // dégâts des poisons et saignements qu'il pose
   out.taken = Math.max(0.1, 1 + sum('taken', ctx).pct);
   out.healPower = Math.max(0.1, 1 + sum('healPower', ctx).pct);

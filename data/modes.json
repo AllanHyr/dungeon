@@ -38,8 +38,8 @@
       "legendaryMinPlayers": 2,
       "levels": [
         { "level": 1, "monsterHp": 1.5, "monsterAtk": 1.25, "xp": 1.8, "gold": 1.5, "dropChance": 1.4, "rarityBoost": 1.5, "trapDcBonus": 2 },
-        { "level": 2, "monsterHp": 2.0, "monsterAtk": 1.5, "xp": 2.6, "gold": 2.0, "dropChance": 1.7, "rarityBoost": 1.9, "trapDcBonus": 3 },
-        { "level": 3, "monsterHp": 2.6, "monsterAtk": 1.8, "xp": 3.5, "gold": 2.5, "dropChance": 2.0, "rarityBoost": 2.3, "trapDcBonus": 4 }
+        { "level": 2, "monsterHp": 1.75, "monsterAtk": 1.38, "xp": 2.6, "gold": 2.0, "dropChance": 1.7, "rarityBoost": 1.9, "trapDcBonus": 3 },
+        { "level": 3, "monsterHp": 2.1, "monsterAtk": 1.55, "xp": 3.5, "gold": 2.5, "dropChance": 2.0, "rarityBoost": 2.3, "trapDcBonus": 4 }
       ]
     }
   }

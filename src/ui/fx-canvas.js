@@ -735,133 +735,125 @@ export function column(x, y, { w = 54, element = 'holy', dur = 0.9 } = {}) {
   }));
 }
 
-// ---------------- Les effets sur la durée (à chaque tour) ----------------
+// ---------------- Les effets sur la durée (à chaque tour), EN PIXEL ART ----------------
+// Des blocs carrés posés sur une grille (PX pixels d'écran par « pixel »), des couleurs pleines (aucun flou, aucun halo, aucun mélange
+// lumineux) et un mouvement saccadé à 12 images par seconde, comme un sprite : ils s'accordent aux portraits et aux décors en pixel art.
 
-/** Des langues de feu qui lèchent la cible par en dessous, puis des braises qui montent (brûlure). */
-export function flames(x, y, { r = 40, n = 7, dur = 0.9, element = 'fire' } = {}) {
-  const pal = palette(element);
-  const total = dur + 0.4;
-  const tongues = Array.from({ length: n }, (_, i) => ({ dx: (i - (n - 1) / 2) * ((r * 1.7) / n) + rand(-4, 4), h: r * rand(0.9, 1.7), w: r * rand(0.2, 0.32), phase: rand(0, 6), delay: Math.random() * 0.15 }));
-  const embers = Array.from({ length: 14 }, () => ({ x: x + rand(-r * 0.8, r * 0.8), y: y + rand(0, r * 0.6), vy: rand(70, 150), vx: rand(-24, 24), life: rand(0.5, 0.9), delay: rand(0.1, 0.5), s: rand(1.6, 3.2) }));
-  return add(timed(total, function draw(c, t) {
-    const time = t * total;
-    c.globalCompositeOperation = 'lighter';
-    for (const f of tongues) {
-      const k = clamp01((time - f.delay) / dur);
-      if (k <= 0 || k >= 1) continue;
-      const amp = Math.sin(Math.PI * k);
-      const h = f.h * amp * (0.85 + 0.15 * Math.sin(time * 22 + f.phase));
-      const bx = x + f.dx, by = y + r * 0.75;
-      for (const [scale, color, alpha] of [[1, pal.dark, 0.55], [0.7, pal.glow, 0.8], [0.38, pal.core, 0.9]]) {
-        c.globalAlpha = alpha * amp;
-        c.fillStyle = color;
-        c.beginPath();
-        c.moveTo(bx - f.w * scale, by);
-        c.quadraticCurveTo(bx - f.w * scale * 0.8, by - h * scale * 0.5, bx + Math.sin(time * 12 + f.phase) * f.w * 0.6, by - h * scale);
-        c.quadraticCurveTo(bx + f.w * scale * 0.8, by - h * scale * 0.5, bx + f.w * scale, by);
-        c.closePath();
-        c.fill();
+const PX = 4;
+const snap = (v) => Math.round(v / PX) * PX;
+const stepped = (age) => Math.floor(age * 12) / 12; // (le temps avance par à-coups)
+/** Un « pixel » de l'effet : un carré plein aligné sur la grille. */
+function block(c, x, y, color, size = 1) {
+  c.fillStyle = color;
+  c.fillRect(snap(x), snap(y), PX * size, PX * size);
+}
+/** Un effet en pixels : `draw(c, age)` reçoit l'âge déjà « saccadé ». */
+function pxEffect(dur, draw) {
+  return add({ dur, update() { return this.age < this.dur; }, draw(c) { c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; draw(c, stepped(this.age)); } });
+}
+
+/** Des flammes en blocs qui montent depuis le bas de la cible, puis quelques braises carrées (brûlure). */
+export function pxFlames(x, y, { r = 40, dur = 0.9 } = {}) {
+  const cols = Math.max(4, Math.round((r * 1.6) / PX));
+  const x0 = x - (cols * PX) / 2, base = y + r * 0.8;
+  const seeds = Array.from({ length: cols }, () => ({ h: rand(0.4, 1), ph: rand(0, 6) }));
+  const embers = Array.from({ length: 8 }, () => ({ x: x + rand(-r * 0.7, r * 0.7), d: rand(0.15, 0.5), v: rand(60, 120) }));
+  return pxEffect(dur, (c, age) => {
+    const k = clamp01(age / dur), amp = Math.sin(Math.PI * k);
+    seeds.forEach((s, i) => {
+      const hgt = Math.round(((r * 1.6) / PX) * s.h * amp * (0.75 + 0.25 * Math.sin(age * 30 + s.ph)));
+      for (let j = 0; j < hgt; j++) {
+        const t = j / Math.max(1, hgt);
+        block(c, x0 + i * PX, base - j * PX, t < 0.45 ? '#b2300b' : t < 0.8 ? '#ff7a2e' : '#ffd040');
       }
-    }
+      if (hgt > 2) block(c, x0 + i * PX, base - (hgt - 1) * PX, '#fff2c0');
+    });
     for (const e of embers) {
-      const k = clamp01((time - e.delay) / e.life);
-      if (k <= 0 || k >= 1) continue;
-      c.globalAlpha = 1 - k;
-      c.fillStyle = k < 0.4 ? pal.core : pal.glow;
-      c.fillRect(e.x + e.vx * k * e.life, e.y - e.vy * k * e.life, e.s, e.s); // (des braises carrées : on reste en pixel art)
+      const q = (age - e.d) / 0.5;
+      if (q > 0 && q < 1) block(c, e.x, base - r * 0.6 - e.v * q, q < 0.5 ? '#ffd040' : '#ff7a2e');
     }
-  }));
+  });
 }
 
-/** Des bulles qui montent de la cible et éclatent (poison). */
-export function bubbles(x, y, { r = 40, n = 10, dur = 1, element = 'poison' } = {}) {
-  const pal = palette(element);
-  const ps = Array.from({ length: n }, () => ({ x: x + rand(-r * 0.8, r * 0.8), y: y + rand(0, r * 0.8), s: rand(3, 7) * (r / 40), h: rand(r * 0.8, r * 1.8), delay: rand(0, dur * 0.4), life: rand(dur * 0.5, dur * 0.8), wob: rand(0, 6) }));
-  return add(timed(dur, function draw(c, t) {
-    const time = t * dur;
-    for (const p of ps) {
-      const k = clamp01((time - p.delay) / p.life);
-      if (k <= 0 || k >= 1) continue;
-      const px = p.x + Math.sin(p.wob + k * 8) * 3, py = p.y - p.h * easeOut(k);
-      if (k < 0.85) {
-        c.globalAlpha = 0.5;
-        c.fillStyle = pal.dark;
-        c.beginPath();
-        c.arc(px, py, p.s, 0, Math.PI * 2);
-        c.fill();
-        c.globalAlpha = 0.95;
-        c.strokeStyle = pal.glow;
-        c.lineWidth = 1.6;
-        c.stroke();
-        c.fillStyle = pal.core;
-        c.fillRect(px - p.s * 0.5, py - p.s * 0.5, Math.max(1.5, p.s * 0.35), Math.max(1.5, p.s * 0.35)); // (le reflet)
-      } else {
-        const q = (k - 0.85) / 0.15;
-        c.globalAlpha = 1 - q;
-        c.strokeStyle = pal.core;
-        c.lineWidth = 1.2;
-        c.beginPath();
-        c.arc(px, py, p.s * (1 + q * 1.3), 0, Math.PI * 2);
-        c.stroke();
-      }
-    }
-  }));
-}
-
-/** Des gouttes qui coulent le long de la cible et tombent (saignement, venin). */
-export function drips(x, y, { r = 40, n = 7, dur = 0.9, element = 'blood' } = {}) {
-  const pal = palette(element);
-  const ds = Array.from({ length: n }, () => ({ x: x + rand(-r * 0.7, r * 0.7), y0: y - r * rand(0.1, 0.7), fall: r * rand(1, 1.5), delay: rand(0, dur * 0.35), life: rand(dur * 0.45, dur * 0.65), s: rand(2.5, 4.5) * (r / 40) }));
-  return add(timed(dur, function draw(c, t) {
-    const time = t * dur;
-    for (const d of ds) {
-      const k = clamp01((time - d.delay) / d.life);
-      if (k <= 0 || k >= 1) continue;
-      const py = d.y0 + d.fall * easeIn(k);
-      c.globalAlpha = k < 0.8 ? 1 : (1 - k) / 0.2;
-      c.fillStyle = pal.dark;
-      c.fillRect(d.x - 1, d.y0, 2, (py - d.y0) * 0.7 * (1 - k)); // la traînée
-      c.fillStyle = pal.glow;
-      c.save();
-      c.translate(d.x, py);
-      glyph(c, 'drop', d.s * 1.4);
-      c.restore();
-    }
-  }));
-}
-
-/**
- * Des volutes : elles s'enroulent vers la cible (douleur, ombre) ou, avec `to`, partent de la cible vers un autre point (drain de vie).
- */
-export function wisps(x, y, { r = 40, n = 6, dur = 0.9, element = 'shadow', to = null } = {}) {
-  const pal = palette(element);
-  const ws = Array.from({ length: n }, (_, i) => ({ a: (i / n) * Math.PI * 2 + rand(-0.3, 0.3), d: r * rand(1.4, 2.2), curl: rand(-1.5, 1.5), delay: rand(0, dur * 0.25), s: rand(3, 5) }));
-  return add(timed(dur, function draw(c, t) {
-    const time = t * dur;
-    c.globalCompositeOperation = 'lighter';
-    for (const w of ws) {
-      const k = clamp01((time - w.delay) / (dur * 0.7));
-      if (k <= 0 || k >= 1) continue;
-      for (let j = 0; j < 5; j++) {
-        const kk = clamp01(k - j * 0.04);
-        let px, py;
-        if (to) {
-          px = x + (to.x - x) * easeInOut(kk) + Math.sin(kk * 9 + w.a) * 12;
-          py = y + (to.y - y) * easeInOut(kk) - Math.sin(Math.PI * kk) * 40;
+/** Des bulles en pixels (un petit anneau carré) qui montent et éclatent en quatre points (poison, venin). */
+export function pxBubbles(x, y, { r = 40, n = 7, dur = 1, colors = ['#3f8a1a', '#93e04a', '#f0ffc4'] } = {}) {
+  const [dark, mid, light] = colors;
+  const bs = Array.from({ length: n }, () => ({ x: x + rand(-r * 0.75, r * 0.75), y: y + rand(0, r * 0.7), h: rand(r * 0.8, r * 1.6), d: rand(0, dur * 0.4), life: rand(dur * 0.45, dur * 0.6), big: Math.random() < 0.65 }));
+  return pxEffect(dur, (c, age) => {
+    for (const b of bs) {
+      const q = (age - b.d) / b.life;
+      if (q <= 0 || q >= 1) continue;
+      const bx = b.x + (Math.floor(q * 6) % 2 ? PX : 0), by = b.y - b.h * q;
+      if (q < 0.82) {
+        if (b.big) {
+          // un anneau de 3 × 3 : le centre vide, un reflet clair en haut à gauche
+          for (const [dx, dy] of [[1, 0], [0, 1], [2, 1], [1, 2]]) block(c, bx + dx * PX, by + dy * PX, mid);
+          block(c, bx, by, light);
         } else {
-          const q = 1 - easeIn(kk);
-          const ang = w.a + w.curl * (1 - q);
-          px = x + Math.cos(ang) * w.d * q;
-          py = y + Math.sin(ang) * w.d * q * 0.7;
+          block(c, bx, by, mid);
+          block(c, bx + PX, by + PX, dark);
         }
-        c.globalAlpha = (1 - j / 5) * Math.sin(Math.PI * k);
-        c.fillStyle = j === 0 ? pal.core : pal.glow;
-        c.beginPath();
-        c.arc(px, py, w.s * (1 - j / 7), 0, Math.PI * 2);
-        c.fill();
+      } else {
+        const o = b.big ? 2 : 1; // l'éclatement : quatre points qui s'écartent
+        for (const [dx, dy] of [[-o, 0], [o, 0], [0, -o], [0, o]]) block(c, bx + dx * PX, by + dy * PX, light);
       }
     }
-  }));
+  });
+}
+
+/** Des gouttes en pixels qui coulent puis tombent et s'écrasent en trois points (saignement, venin). */
+export function pxDrips(x, y, { r = 40, n = 6, dur = 0.9, colors = ['#8f1b14', '#e0303a', '#ffb0a0'] } = {}) {
+  const [dark, mid, light] = colors;
+  const ds = Array.from({ length: n }, () => ({ x: x + rand(-r * 0.65, r * 0.65), y0: y - r * rand(0.1, 0.6), fall: r * rand(1, 1.4), d: rand(0, dur * 0.35), life: rand(dur * 0.4, dur * 0.55) }));
+  return pxEffect(dur, (c, age) => {
+    for (const d of ds) {
+      const q = (age - d.d) / d.life;
+      if (q <= 0) continue;
+      if (q < 1) {
+        const py = d.y0 + d.fall * q * q;
+        for (let ty = d.y0; ty < py - PX; ty += PX) if (q < 0.5) block(c, d.x, ty, dark); // la traînée, au début
+        block(c, d.x, py, mid);
+        block(c, d.x, py + PX, mid);
+        block(c, d.x, py - PX, light);
+      } else if (q < 1.35) {
+        const py = d.y0 + d.fall;
+        for (const dx of [-1, 0, 1]) block(c, d.x + dx * PX * (1 + (q - 1) * 3), py + PX, dx ? dark : mid); // l'éclaboussure
+      }
+    }
+  });
+}
+
+/** Des volutes en pixels : des carrés qui s'enroulent vers la cible (douleur), ou s'en échappent vers le haut (`out` : drain). */
+export function pxWisps(x, y, { r = 40, n = 6, dur = 0.9, out = false, colors = ['#4a1f8a', '#a864ff', '#f3e4ff'] } = {}) {
+  const [dark, mid, light] = colors;
+  const ws = Array.from({ length: n }, (_, i) => ({ a: (i / n) * Math.PI * 2, d: rand(0, dur * 0.2), rr: r * rand(1.3, 1.9) }));
+  return pxEffect(dur, (c, age) => {
+    for (const w of ws) {
+      const q = (age - w.d) / (dur * 0.75);
+      if (q <= 0 || q >= 1) continue;
+      for (let j = 0; j < 4; j++) {
+        const qq = clamp01(q - j * 0.06);
+        let px, py;
+        if (out) { px = x + Math.sin(w.a + qq * 6) * r * 0.5; py = y - qq * r * 2.4; }
+        else { const rad = w.rr * (1 - qq), ang = w.a + qq * 3; px = x + Math.cos(ang) * rad; py = y + Math.sin(ang) * rad * 0.7; }
+        block(c, px, py, j === 0 ? light : j < 2 ? mid : dark);
+      }
+    }
+  });
+}
+
+/** Des feuilles et des croix vertes en pixels qui montent doucement (soin sur la durée). */
+export function pxLeaves(x, y, { r = 40, n = 6, dur = 1 } = {}) {
+  const ls = Array.from({ length: n }, () => ({ x: x + rand(-r * 0.7, r * 0.7), y: y + rand(0, r * 0.6), h: rand(r * 0.9, r * 1.5), d: rand(0, dur * 0.35), cross: Math.random() < 0.4 }));
+  return pxEffect(dur, (c, age) => {
+    for (const l of ls) {
+      const q = (age - l.d) / (dur * 0.6);
+      if (q <= 0 || q >= 1) continue;
+      const lx = l.x + (Math.floor(q * 4) % 2 ? PX : -PX), ly = l.y - l.h * q;
+      if (l.cross) { for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [2, 1], [1, 2]]) block(c, lx + dx * PX, ly + dy * PX, dx === 1 && dy === 1 ? '#f4fff6' : '#3ea84a'); }
+      else { block(c, lx, ly, '#8ae070'); block(c, lx + PX, ly - PX, '#3ea84a'); block(c, lx + PX, ly, '#1f7a35'); }
+    }
+  });
 }
 
 export { pick, lerp, clamp01 };

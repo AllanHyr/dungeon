@@ -63,7 +63,11 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await page.waitForSelector('.place-nav');
   await toCombat();
   await page.waitForSelector('.coach');
-  await page.click('.coach-skip');
+  // (l'écran se redessine pendant les animations des monstres : on réessaie le clic si la bulle vient d'être remplacée)
+  for (let i = 0; i < 5 && (await page.$('.coach')); i++) {
+    await page.click('.coach-skip').catch(() => {});
+    await page.waitForSelector('.coach', { state: 'detached', timeout: 1500 }).catch(() => {});
+  }
   check(!(await page.$('.coach')), '« Passer le guide » le ferme');
   check(await page.evaluate(async () => (await import('/src/ui/state.js')).app.profile.settings.coachCombat === true), 'pour de bon');
 

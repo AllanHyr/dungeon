@@ -344,3 +344,6 @@ h1, .place-head h1, .nav-brand b { font-size-adjust: none; }
   .dock .end-turn { min-height: 42px; font-size: 1rem; }
   .dock .flames .icon { width: 20px !important; height: 20px !important; }
 }
+
+/* Réglages : la rangée « Revoir les conseils » */
+.lab-tips { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }

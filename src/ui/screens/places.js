@@ -143,7 +143,7 @@ export function navBar(place) {
       app.gateway.canExport
         ? foot('Sauvegarde', 'save', () => openSaveModal(), 'Sauvegarder ou copier tes personnages')
         : foot(app.gateway.user?.name ? `Compte (${app.gateway.user.name})` : 'Compte', 'user', () => openAccountModal(), 'Mon compte : changer de mot de passe, se déconnecter', 'account-btn'),
-      foot('Sons', isSoundEnabled() ? 'sound_on' : 'sound_off', () => openSoundLab(), 'Sons et animations : volume, style des animations, banc d\'essai')));
+      foot('Réglages', isSoundEnabled() ? 'sound_on' : 'sound_off', () => openSoundLab(), 'Réglages : son et volume, animations, minuteur, revoir les conseils ; banc d\'essai des sons')));
 }
 
 // ============================================================

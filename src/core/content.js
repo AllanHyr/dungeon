@@ -494,12 +494,17 @@ export function buildContent(raw) {
   }
 
   // --- Zones de farm solo
-  c.farm = { zones: {}, zoneList: [], roleDamage: {} };
+  c.farm = { zones: {}, zoneList: [], roleDamage: {}, roleHeal: {} };
   // (bonus de dégâts au farm selon le rôle de la classe : un soigneur seul tue lentement)
   for (const [role, v] of Object.entries(raw.farm.roleDamage || {})) {
     if (role.startsWith('_')) continue;
     if (!['tank', 'healer', 'damage'].includes(role) || !(typeof v === 'number' && v >= 0 && v <= 3)) fail(`farm.json : roleDamage "${role}" invalide (rôle tank, healer ou damage ; bonus entre 0 et 3).`);
     c.farm.roleDamage[role] = v;
+  }
+  for (const [role, v] of Object.entries(raw.farm.roleHeal || {})) {
+    if (role.startsWith('_')) continue;
+    if (!['tank', 'healer', 'damage'].includes(role) || !(typeof v === 'number' && v >= 0 && v <= 1)) fail(`farm.json : roleHeal "${role}" invalide (rôle tank, healer ou damage ; soin entre 0 et 1).`);
+    c.farm.roleHeal[role] = v;
   }
   for (const [id, z] of Object.entries(raw.farm.zones || {})) {
     const where = `zone de farm "${id}"`;

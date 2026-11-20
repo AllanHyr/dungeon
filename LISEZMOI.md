@@ -174,7 +174,7 @@ Dans **Aventure**, l'onglet **Zone de farm solo** :
 * Après chaque vague : **vague suivante**, ou **s'arrêter**. Si le personnage meurt, il **ne perd que la vague en cours**.
 * Chaque vague donne des **éclats** pour la forge. En fin de session, on **garde 1 objet parmi 3** (meilleurs si l'on a tenu longtemps), les deux autres deviennent des éclats.
   Jamais d'épique ni de légendaire : le meilleur équipement vient des donjons en équipe.
-* Seul face aux vagues, un **soigneur** (Prêtre, Druide, Barde) tue lentement : au farm, et là seulement, il frappe **+50 %** plus fort (`roleDamage` dans `data/farm.json`).
+* Seul face aux vagues, un **soigneur** (Prêtre, Druide, Barde) tue lentement : au farm, et là seulement, il frappe **+50 %** plus fort (`roleDamage` dans `data/farm.json`). Un **dps** fragile (Assassin, Mage) récupère **30 %** de PV en plus entre deux vagues (`roleHeal`).
 * L'**XP sert à rattraper** : seul un héros plus bas que ton meilleur héros en gagne, jusqu'au niveau de celui-ci. Ton meilleur héros, lui, y gagne des éclats et un objet.
 * Les **succès** (fiche du personnage > onglet *Succès*) sont propres à chaque personnage : finir un donjon en équipe, vaincre des vagues,
   atteindre un niveau d'équipement... Ils débloquent une **compétence** pour ce personnage, une **fonction** du jeu (le farm automatique,

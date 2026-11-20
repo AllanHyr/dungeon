@@ -2,6 +2,7 @@
   "_note": "ZONES DE FARM SOLO. Un seul personnage affronte des vagues de monstres qui montent en difficulté. Il peut s'arrêter après chaque vague ; s'il meurt, il ne perd que la vague en cours. Chaque vague donne des ÉCLATS (pour la forge) ; en fin de session on CHOISIT 1 objet parmi 3 (les deux autres sont démantelés en éclats), meilleurs si l'on a tenu longtemps. L'XP du farm ne sert qu'à RATTRAPER : seul un héros plus bas que le meilleur héros du joueur en gagne, jusqu'au niveau de ce dernier. Voir docs/FARM-ET-SUCCES.md pour le détail de chaque réglage.",
 
   "roleDamage": { "_note": "Bonus de dégâts AU FARM SEULEMENT, selon le rôle de la classe (0.5 = +50 %) : seul face aux vagues, un soigneur tue lentement.", "healer": 0.5 },
+  "roleHeal": { "_note": "Soin EN PLUS entre deux vagues, selon le rôle (0.15 = +15 % des PV max) : un dps fragile seul tient moins longtemps.", "damage": 0.3 },
 
   "zones": {
     "terriers": {

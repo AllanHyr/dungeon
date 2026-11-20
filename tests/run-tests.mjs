@@ -15,7 +15,7 @@ import { hotkeyIndex, keyLabel, learnKey } from '../src/ui/keys.js';
 import { snapshotRun, planBeats, fxStyleOf, startState, targetsOf } from '../src/ui/fx-plan.js';
 import { statusInfo, unitEffects, turnsText, byDanger, describeMods } from '../src/ui/status.js';
 import { skillBlurb, resourceName } from '../src/ui/format.js';
-import { FX_VOCAB } from '../src/core/index.js';
+import { FX_VOCAB, dotKind } from '../src/core/index.js';
 import { soundList, soundGroups, hasSound } from '../src/ui/sound.js';
 import { heroSvg, monsterSvg, vignetteSvg, sceneCss, sceneIdFor, heroIds, monsterIds, sceneIds, vignetteIds } from '../src/ui/art.js';
 import { SCENES as SCENE_DRAWINGS } from '../src/ui/art/scenes.js';
@@ -4108,6 +4108,14 @@ test('hors Stasis : jamais de légendaire, l\'épique très rare ; en Stasis, le
   assert(stasis.legendary > 0, `légendaire en Stasis : ${JSON.stringify(stasis)}`);
   assert(!solo.legendary && solo.epic > normal.epic, `Stasis joué seul : jusqu'à l'épique, plus souvent qu'en Tranche : ${JSON.stringify(solo)}`);
   eq([content.modes.stasis.minPlayers, content.modes.tranche.maxRarity, content.modes.stasis.maxRarity, content.modes.stasis.soloMaxRarity], [undefined, 'epic', 'legendary', 'epic']);
+});
+test('les effets sur la durée ont une NATURE (pour leur animation) et chacun annonce son tour par un événement « tick »', () => {
+  eq([{ id: 'poison' }, { id: 'hot' }, { id: 'dot', name: 'Brûlure', label: 'brûle' }, { id: 'dot', name: 'Venin', label: 'souffre du venin' }, { id: 'dot', label: 'saigne' },
+    { id: 'dot', name: 'Douleur', label: 'souffre' }, { id: 'dot', name: 'Toucher vampirique', label: 'est vidé' }, { id: 'dot', label: 'brûle', fx: 'shadow' }, { id: 'stun' }].map(dotKind),
+  ['poison', 'hot', 'burn', 'venom', 'bleed', 'shadow', 'drain', 'shadow', null]);
+  const beats = planBeats([{ type: 'turn', unitId: 'm1' }, { type: 'tick', target: 'm1', dot: 'burn' }, { type: 'damage', target: 'm1', amount: 5 }, { type: 'tick', target: 'm1', dot: 'poison' }, { type: 'damage', target: 'm1', amount: 3 }],
+    { units: { m1: { id: 'm1', kind: 'monster', hp: 50, max: 50, shield: 0, alive: true, statuses: [] } }, combat: true }, null, content);
+  eq(beats.map((b) => `${b.type}:${b.cause}:${b.steps.length}`), ['tick:burn:1', 'tick:poison:1'], 'un temps fort par effet, chacun avec sa nature');
 });
 test('« Équiper le meilleur » : seulement ce qui est clairement meilleur (rien en baisse), les emplacements vides, jamais un objet trop haut', () => {
   const ch = createCharacter(content, { id: 'q', name: 'Q', classId: 'guerrier' });

@@ -23,7 +23,7 @@ import { resolveMode } from '../fx.js';
 import { vignetteSvg, sceneCss, sceneIdFor } from '../art.js';
 import {
   computeStats, getCombatView, skillOf, activeSkillIds, checkUsable, needsPick, validTargets, skillWorksOutside,
-  itemPrice, shopPrice, sellPrice, canBeRevived, wornFor, unitById, totalShield, otherRow, rarityOf, waveInfo, farmZone, choiceTier, previewXpCapped, campDeckOptions
+  itemPrice, shopPrice, sellPrice, canBeRevived, wornFor, unitById, totalShield, dotKind, otherRow, rarityOf, waveInfo, farmZone, choiceTier, previewXpCapped, campDeckOptions
 } from '../../core/index.js';
 
 const ROW_NAME = { front: 'avant', back: 'arrière' };
@@ -789,6 +789,8 @@ function fighter(run, u) {
   const fxShown = fxList.slice(0, 3);
   const fxMore = fxList.length - fxShown.length;
   const inspected = app.ui.inspect?.id === u.id && app.ui.inspect.actor === run.pending?.actor;
+  // Les effets qui durent se VOIENT sur le portrait tant qu'ils sont là : flammes, bulles de poison, gouttes, volutes, étoiles d'étourdissement
+  const auras = u.alive ? [...new Set([...(u.statuses || []).map((st) => (st.id === 'stun' ? 'stun' : dotKind(st))).filter(Boolean)])].slice(0, 2) : [];
   return h('div', {
     class: ['fighter', isMonster ? 'monster' : 'player', active ? 'active' : '', !u.alive ? 'is-dead' : '', u.boss ? 'is-boss' : '', targetable ? 'targetable' : '', dim ? 'dim' : '', who?.me ? 'mine' : '', inspected ? 'is-inspected' : ''].filter(Boolean).join(' '),
     dataset: { unit: u.id },
@@ -796,7 +798,7 @@ function fighter(run, u) {
     title: `${u.name} — PV ${u.hp}/${stats.hpMax} · Att ${stats.atk.toFixed(1)} · Déf ${stats.def.toFixed(1)} · Init ${stats.ini.toFixed(0)}${shield ? ` · bouclier ${shield}` : ''}`
   },
     isMonster ? intentTags(run, u) : null,
-    h('div', { class: 'f-medal' }, active ? h('span', { class: 'spot-tag' }, 'À jouer') : null, medal),
+    h('div', { class: 'f-medal' }, active ? h('span', { class: 'spot-tag' }, 'À jouer') : null, medal, auras.map((k) => h('span', { class: `f-aura aura-${k}`, 'aria-hidden': 'true' }))),
     h('div', { class: 'f-name' }, u.name),
     isMonster ? null : h('div', { class: 'f-sub' }, `${cls.name} · ${levelText(u)}`),
     who ? h('div', { class: `f-owner ${who.me ? 'is-me' : ''} ${who.auto ? 'is-auto' : ''}`, title: who.me ? 'Ce héros est à toi' : who.auto ? 'Son joueur est parti : le pilote automatique le joue' : `Joué par ${who.name}${who.online ? '' : ' (hors ligne)'}` },

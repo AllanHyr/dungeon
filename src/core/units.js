@@ -212,6 +212,8 @@ export function tickStatusEffects(state, unit) {
   for (const st of [...unit.statuses]) {
     if (!unit.alive) return;
     const caster = st.casterId ? unitById(state, st.casterId) : null;
+    const kind = dotKind(st);
+    if (kind) emit(state, { type: 'tick', target: unit.id, dot: kind, name: st.name || null }); // (l'interface joue l'animation de CET effet)
     if (st.id === 'poison') {
       const dmg = Math.max(1, Math.round(st.pct * unitStats(state, unit).hpMax));
       applyDamage(state, unit, dmg, caster, { nonLethal: true, ignoreGuard: true, describe: (real) => `${unit.name} souffre du poison (-${real} PV).`, kind: 'bad' });
@@ -227,6 +229,25 @@ export function tickStatusEffects(state, unit) {
       if (real > 0) log(state, `${unit.name} récupère ${real} PV (soin sur la durée).`, 'good');
     }
   }
+}
+
+/**
+ * La NATURE d'un effet sur la durée, pour son animation : poison · venom (venin) · burn (brûlure) · bleed (saignement) · shadow (douleur)
+ * · drain (toucher vampirique) · hot (soin sur la durée). Un effet peut l'imposer (champ `fx` d'un effet "dot" dans les JSON) ;
+ * sinon on la déduit de son nom (« Brûlure », « Venin »...). null : pas un effet qui agit à chaque tour.
+ */
+export function dotKind(st) {
+  if (!st) return null;
+  if (st.id === 'poison') return 'poison';
+  if (st.id === 'hot') return 'hot';
+  if (st.id !== 'dot') return null;
+  if (st.fx) return st.fx;
+  const text = `${st.name || ''} ${st.label || ''} ${st.key || ''}`.toLowerCase();
+  if (/br[uû]l|flamm|feu/.test(text)) return 'burn';
+  if (/venin/.test(text)) return 'venom';
+  if (/vid[eé]|vampir|drain/.test(text)) return 'drain';
+  if (/douleur|souffre/.test(text)) return 'shadow';
+  return 'bleed';
 }
 
 /** Soigne l'allié le plus blessé (en proportion) de `caster`, lui compris. */

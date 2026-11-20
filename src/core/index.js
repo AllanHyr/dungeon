@@ -27,7 +27,7 @@ export {
 export { canEquip, slotsFor, planEquip, equipFromBag, unequipToBag, wornFor, twoHandedWorn, itemPrice, itemSummary, itemDef, rarityOf, autoEquip } from './items.js';
 export { shopPrice, campDeckOptions } from './tiles.js';
 export { sellPrice } from './inventory.js';
-export { canBeRevived, canBeRaised, totalShield } from './units.js';
+export { canBeRevived, canBeRaised, totalShield, dotKind } from './units.js';
 export { unitById, otherRow } from './geometry.js';
 export { applyCharacterAction, CHARACTER_ACTIONS, MAX_CHARACTERS, characterSlots, cleanName } from './profile-actions.js';
 export { settleRun } from './settle.js';

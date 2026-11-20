@@ -355,7 +355,8 @@ function stateOf(u) {
 /**
  * Découpe les événements d'une action en « temps forts » :
  *   { type: 'cast', caster, skillId, outcome, total, announce, style, steps: [...] }   une compétence lancée
- *   { type: 'tick', unitId, cause, steps: [...] }                                        poison, saignement, soin sur la durée, piège...
+ *   { type: 'tick', unitId, cause, steps: [...] }                                        poison, venin, brûlure, saignement, soin sur la durée, piège...
+ *                                                                                        (cause : la nature de l'effet, dotKind du moteur)
  *   { type: 'advance', tileType }                                                       le groupe avance d'une case
  * Chaque étape (`step`) décrit un effet : { type: 'damage' | 'heal' | 'shield' | 'death' | 'revive' | 'resource' | 'status' | 'move', target, amount, ...,
  * before: {hp, max, shield, alive}, after: {...} } — les PV avant et après CET effet.
@@ -385,6 +386,12 @@ export function planBeats(events, snapshot, after, content) {
       case 'roll':
         if (!ev.minor) flush(); // (le dé montré en plein écran coupe l'action ; le petit jet d'une compétence, lui, fait partie d'elle)
         break;
+      case 'tick': {
+        // Un effet sur la durée agit (poison, brûlure, saignement, soin...) : un temps fort à lui, avec sa nature (animation propre)
+        flush();
+        cur = { type: 'tick', unitId: ev.target, cause: ev.dot, name: ev.name || null, steps: [] };
+        break;
+      }
       case 'advance':
         flush();
         beats.push({ type: 'advance', tileType: ev.tileType, index: ev.index });

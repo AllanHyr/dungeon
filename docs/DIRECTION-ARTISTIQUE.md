@@ -1,4 +1,32 @@
-# Direction artistique : « Lanterne »
+# Direction artistique : « Table pixel » (sur la base « Lanterne »)
+
+## 0. « Table pixel » : la partie se joue sur une table en bois, dessinée en pixel art
+
+Depuis la refonte de l'interface, le jeu porte la direction **« Table pixel »** : le fond est une **table en planches de bois**, tout ce qu'on lit
+est une **carte crème** posée dessus (bord brun foncé, liseré clair, ombre en escalier), l'action principale est un **dé rouge**, et les
+**portraits sont en pixel art** (32 × 32, dessinés forme par forme puis retouchés pixel par pixel).
+
+| Quoi | Où |
+| --- | --- |
+| Le thème (couleurs, polices, cartes, boutons, jauges, combat, téléphone) | `css/table-pixel.css`, chargé **après** `css/style.css` |
+| Le moteur des portraits (formes ombrées, contours, détails, sortie SVG) | `src/ui/art/pixel.js` |
+| Les 8 portraits de classes | `src/ui/art/pixel-heroes.js` |
+| Les 39 portraits de monstres (familles réglables : rats, squelettes, bandits, cochons, cultistes, ogres, spectres) | `src/ui/art/pixel-monsters.js` |
+
+Les règles : **aucun arrondi**, **aucune ombre floue**, **aucun dégradé doux** sur les cartes et boutons ; la lumière vient d'en haut à gauche.
+Les polices (Google Fonts) : **DotGothic16** pour le texte, **Jersey 10** pour les noms, titres de cartes et boutons (le gras), **Press Start 2P**
+pour les grands titres ; `font-size-adjust` les met à la même hauteur. Le texte posé directement sur le bois est clair, avec une ombre d'un pixel.
+
+* **Revenir à « Lanterne »** : retirer la ligne `css/table-pixel.css` de `index.html` et de `artifact.html` (les anciens portraits peints restent
+  dans `src/ui/art/heroes.js` et `monsters-*.js` : il suffit de ne plus préférer les portraits pixel dans `src/ui/art.js`).
+* **Les raretés** gardent leurs couleurs de `data/items.json`, assombries pour le texte (`--rar-ink`) afin de se lire sur le papier.
+* **Contrôle du contraste** : chaque écran a été vérifié automatiquement (tout texte doit avoir un contraste d'au moins 3:1 avec son fond).
+
+Le reste de ce document décrit la base « Lanterne » (`css/style.css`), dont « Table pixel » reprend toute la structure.
+
+---
+
+# La base : « Lanterne »
 
 Une nuit de donjon éclairée à la lanterne : un fond bleu-nuit presque noir, du **laiton** pour les cadres, et la **flamme
 orange** de la lanterne pour tout ce qu'on peut faire (boutons principaux, points d'action, case sélectionnée, héros qui joue).
@@ -267,6 +295,28 @@ d'affilée ne saturent jamais) → écrêtage doux, avec une petite salle de **r
 
 ## 4 ter. Les illustrations (`src/ui/art.js`, `src/ui/art/`)
 
+**Portraits en pixel art (« Table pixel »)** : `heroSvg` et `monsterSvg` (dans `art.js`) prennent d'abord le portrait pixel (`art/pixel-heroes.js`,
+`art/pixel-monsters.js`), et ne retombent sur l'ancien dessin peint que s'il n'y en a pas. Un portrait pixel se décrit avec quelques formes :
+
+```js
+guerrier: {
+  bg: ['#121828', '#1e2840', '#2e3c5c'],                    // le fond : sombre, moyen, halo derrière la tête
+  shapes: [
+    { e: [16, 34, 14, 10], c: 'steel', tex: 'mail' },      // ellipse (cx, cy, rx, ry) en acier, texture cotte de mailles
+    { e: [16, 15, 6, 7], c: 'skin', g: 'f' },              // la tête (groupe « f » : pas d'ombre entre la tête et le cou)
+    { r: [8, 11, 16, 2], c: 'steel', line: true },         // rectangle (x, y, largeur, hauteur), détaché par un trait sombre
+    { l: [[27, 17], [27, 23]], c: 'leather', w: 2 }        // un trait (la poignée de l'épée)
+  ],
+  px: [['#ff4030', [[13, 15], [18, 15]]]]                  // les détails pixel par pixel (ici : les yeux)
+}
+```
+
+Les rampes de couleurs (4 tons chacune : `skin`, `steel`, `gold`, `red`, `leaf`, `bone`...) sont dans `art/pixel.js` (`RAMPS`). Le moteur ombre
+chaque forme (une ellipse comme une boule, une forme plate avec un liseré clair en haut à gauche), pose les petites ombres portées et le contour
+sombre. Le visage est centré en x = 16 : les yeux vont par paires symétriques (12-13 / 18-19). Pour voir le résultat : `tools/galerie.html`.
+
+**Les dessins peints (« Lanterne »)**, gardés en secours :
+
 Les personnages, les monstres, les décors et les cases sont **dessinés en code** (SVG de 100 × 100) : aucune image à charger, ça passe à toutes les
 tailles, et la lumière vient toujours d'en haut à gauche (la lanterne), avec un reflet chaud sur les bords et un voile sombre qui unifie l'ensemble.
 
@@ -322,4 +372,4 @@ Changer une couleur de rareté = changer une ligne dans le JSON.
 L'interface est rangée en cinq lieux (`src/ui/screens/places.js`) : **Camp** (quoi faire maintenant, donjon conseillé),
 **Aventure** (donjons, farm, expéditions), **Héros** (la fiche en pleine page), **Forge** et **Grimoire** (donjons, bestiaire, règles).
 Grand écran : barre latérale fixe de 228 px. Téléphone (≤ 860 px) : la barre passe en bas de l'écran, la barre de lancement se pose juste au-dessus.
-Une pastille sur un lieu signale qu'il y a quelque chose à faire. Prochaine passe prévue : la direction « Table pixel » (portraits en pixel art dessinés à la main).
+Une pastille sur un lieu signale qu'il y a quelque chose à faire. La direction « Table pixel » (§ 0) habille ces cinq lieux.

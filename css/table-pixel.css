@@ -1,0 +1,285 @@
+/* ============================================================
+   table-pixel.css — « Table pixel » : la partie se joue sur une table en bois, dessinée en pixel art
+   ------------------------------------------------------------
+   Chargé APRÈS style.css : il change les variables (les couleurs, les polices, les arrondis) puis ajuste
+   les pièces qui en ont besoin. Les règles du jeu en pixel art :
+     - la TABLE : des planches de bois sombres (le fond de page) ;
+     - les CARTES posées dessus : crème, bord brun foncé, liseré clair, ombre en escalier (jamais floue) ;
+     - les BOUTONS : des tuiles crème ; l'action principale est un DÉ ROUGE ;
+     - aucun arrondi, aucune ombre floue, aucun dégradé doux : tout est en pixels nets ;
+     - polices : « DotGothic16 » pour le texte, « Jersey 10 » pour les noms, titres de cartes et boutons, « Press Start 2P »
+       pour les grands titres (toutes trois lisibles, accents compris ; font-size-adjust les met à la même hauteur).
+   Pour revenir à l'ancienne ambiance « Lanterne », il suffit de retirer ce fichier de index.html et artifact.html.
+   ============================================================ */
+
+:root {
+  /* Le papier des cartes (du plus enfoncé au plus clair) */
+  --ink-0: #d4b884; --ink-1: #e2cc9e; --ink-2: #ead7b0; --ink-3: #f2e2c0; --ink-4: #f8ecd2; --ink-5: #fff4dc;
+  --line: #2a1508; --line-2: #a8805a; --line-3: #6e4a2a;
+  /* Le bois de la table */
+  --wood-0: #1c0e06; --wood-1: #2e1a0c; --wood-2: #4a2a14; --wood-3: #5e3519; --wood-4: #6b3d1f;
+  /* Les accents : rouge (le dé), brun-or (les titres) */
+  --brass: #8a5a2a; --brass-2: #a4622a; --brass-3: #b0401e; --brass-4: #4a1e0c;
+  --lantern: #e43b44; --lantern-2: #f6575e; --lantern-ink: #fff4dc; --glow: rgba(228, 59, 68, 0.35);
+  /* Le texte (sombre, sur le papier) */
+  --text: #2a1508; --text-2: #3a2416; --muted: #6a4626; --faint: #8a6640;
+  /* Les rôles et les états */
+  --tank: #1a5a9a; --heal: #1e7050; --dps: #a82630;
+  --ember: #c0392b; --ember-2: #d8483a; --ember-text: #a81e1e;
+  --good: #2a7434; --good-2: #3e8948; --info: #1a5a9a; --violet: #68386c; --ghost: #3a5a8a;
+  --bad: var(--ember-text);
+  --radius: 0px;
+  --serif: 'Jersey 10', 'DotGothic16', 'Courier New', monospace;
+  --sans: 'DotGothic16', 'Courier New', monospace;
+  --title: 'Press Start 2P', 'Jersey 10', monospace;
+  --px-shadow: 4px 4px 0 rgba(20, 8, 2, 0.55);
+  --px-card: inset 2px 2px 0 var(--ink-5), inset -2px -2px 0 #d9bf8c;
+  color-scheme: light;
+}
+
+/* ---------------- La table ---------------- */
+html { scrollbar-color: var(--wood-4) var(--wood-1); }
+body {
+  background-color: var(--wood-3);
+  background-image:
+    repeating-linear-gradient(180deg, transparent 0 46px, var(--wood-1) 46px 50px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.1) 0 4px, transparent 4px 12px, rgba(255, 255, 255, 0.035) 12px 16px, transparent 16px 40px),
+    linear-gradient(180deg, var(--wood-4), var(--wood-3));
+  background-attachment: fixed;
+  font-size: 16px;
+  font-size-adjust: 0.52;
+  font-synthesis: none; /* (pas de faux gras : les mots en gras passent en Jersey 10) */
+}
+b, strong, th, .btn, h2, h3, h4 { font-family: var(--serif); font-weight: 400; letter-spacing: 0.02em; }
+h1, h2, h3, h4 { letter-spacing: 0.02em; }
+h1 { font-family: var(--title); font-weight: 400; font-size: 1.35rem; line-height: 1.45; color: var(--ink-5); text-shadow: 3px 3px 0 var(--wood-0); }
+h4 { color: var(--brass-3); }
+.loading, .fatal { color: var(--ink-5); text-shadow: 2px 2px 0 var(--wood-0); }
+:focus-visible { outline: 3px solid var(--lantern); outline-offset: 2px; }
+
+/* ---------------- Les cartes ---------------- */
+.panel, .card, .modal, .banner {
+  background: var(--ink-3);
+  border: 3px solid var(--line); border-radius: 0;
+  box-shadow: var(--px-card), var(--px-shadow);
+}
+.banner-gold { background: var(--ink-4); border-color: var(--brass-3); }
+.panel h2, .card h2, .modal h2 { color: var(--brass-3); }
+
+/* ---------------- Les boutons ---------------- */
+.btn {
+  border-radius: 0; border: 2px solid var(--line);
+  background: var(--ink-5); color: var(--text);
+  box-shadow: inset -2px -3px 0 #d9bf8c, 3px 3px 0 var(--line);
+  transition: transform 0.06s;
+}
+.btn:hover:not(:disabled) { border-color: var(--line); color: var(--brass-3); box-shadow: inset -2px -3px 0 #d9bf8c, 3px 3px 0 var(--line); background: #fffaf0; }
+.btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: inset -2px -3px 0 #d9bf8c, 1px 1px 0 var(--line); }
+.btn-primary {
+  background: var(--lantern); color: var(--lantern-ink); border-color: var(--line); letter-spacing: 0.03em;
+  box-shadow: inset -2px -3px 0 #a22633, inset 2px 2px 0 #f6757a, 3px 3px 0 var(--line);
+}
+.btn-primary:hover:not(:disabled) { background: var(--lantern-2); color: var(--lantern-ink); border-color: var(--line); filter: none; box-shadow: inset -2px -3px 0 #a22633, inset 2px 2px 0 #ff9a9e, 3px 3px 0 var(--line); }
+.btn-danger { background: #8a1e22; color: #fff4dc; border-color: var(--line); box-shadow: inset -2px -3px 0 #5a0e12, 3px 3px 0 var(--line); }
+.btn-danger:hover:not(:disabled) { background: #a82630; color: #fff4dc; }
+.btn-ghost { background: transparent; border-color: transparent; box-shadow: none; }
+.btn-ghost:hover:not(:disabled) { background: rgba(42, 21, 8, 0.08); border-color: var(--line-2); box-shadow: none; }
+.btn-xl { border-radius: 0; }
+.btn-ghostly { background: #dce6f4; border-color: var(--line); color: var(--ghost); }
+.btn-on { border-color: var(--lantern); color: var(--brass-3); box-shadow: inset -2px -3px 0 #d9bf8c, 3px 3px 0 var(--lantern); }
+.link-btn { border-radius: 0; }
+.link-btn:hover { color: var(--brass-3); background: rgba(42, 21, 8, 0.08); }
+.chip-btn { border-radius: 0; border: 2px solid var(--line); background: var(--ink-5); box-shadow: 2px 2px 0 var(--line); }
+.chip-btn.on { background: var(--lantern); color: var(--lantern-ink); border-color: var(--line); }
+
+/* ---------------- Champs, pastilles, jauges ---------------- */
+.input { background: #fffaf0; border: 2px solid var(--line); border-radius: 0; box-shadow: inset 2px 2px 0 #e8d3a8; }
+.input:focus { border-color: var(--lantern); box-shadow: inset 2px 2px 0 #e8d3a8; }
+.chip, .fx-chip, .fx-turns { border-radius: 0; }
+.chip { background: var(--ink-4); border: 2px solid var(--line-2); }
+.chip-bad { border-color: #c86a5a; background: #fde4dc; }
+.chip-good { border-color: #6aa060; background: #e4f2d8; }
+.chip-info { border-color: #6a9ac8; background: #e0ecf8; }
+.fx-chip { background: var(--ink-4); }
+.fx-chip.is-buff { background: #e4f2d8; border-color: #6aa060; }
+.fx-chip.is-debuff { background: #fde4dc; border-color: #c86a5a; }
+.fx-chip.is-neutral { background: #e0ecf8; border-color: #6a9ac8; }
+.fx-turns { background: var(--ink-5); }
+
+/* ---------------- Les portraits : des cadres carrés ---------------- */
+.portrait, .portrait.has-art {
+  border-radius: 0 !important; border: 3px solid var(--line) !important;
+  box-shadow: 0 0 0 2px var(--ink-5), 3px 3px 0 2px rgba(20, 8, 2, 0.5) !important;
+  background: var(--wood-1);
+}
+.portrait .art, .portrait .art svg, .portrait .art-img { border-radius: 0 !important; }
+.portrait .art-img { image-rendering: pixelated; }
+.portrait.is-monster { border-color: #5a0e12 !important; }
+.portrait.is-boss { border-color: var(--lantern) !important; box-shadow: 0 0 0 2px #ffe488, 3px 3px 0 2px rgba(20, 8, 2, 0.5) !important; }
+
+/* ---------------- Les couleurs de rareté, assombries pour se lire sur le papier ---------------- */
+.item-card, .dslot, .gear, .bag-row, .loot-card, .equip-slot, .rarity-pill, .bag-line1 { --rar-ink: color-mix(in srgb, var(--rar) 58%, #1a0a04); }
+.item-head, .rarity-pill, .bag-name, .loot-title, .gear-name, .dslot.filled .dslot-icon, .item-icon, .gear-icon, .bag-icon { color: var(--rar-ink, var(--rar)); }
+.rarity-pill { border-radius: 0; border-width: 2px; background: color-mix(in srgb, var(--rar) 14%, var(--ink-5)) !important; }
+.r-common { --rar-ink: #5a5a5a; } .r-uncommon { --rar-ink: #2a6a2e; } .r-rare { --rar-ink: #1a4e9a; } .r-epic { --rar-ink: #6a2aa8; } .r-legendary { --rar-ink: #a04a00; }
+.rarity-pill.r-common, .r-common .rarity-pill { color: #5a5a5a; } .rarity-pill.r-uncommon { color: #2a6a2e; } .rarity-pill.r-rare { color: #1a4e9a; } .rarity-pill.r-epic { color: #6a2aa8; } .rarity-pill.r-legendary { color: #a04a00; }
+.item-icon, .gear-icon, .bag-icon, .dslot-icon { border-radius: 0 !important; background: color-mix(in srgb, var(--rar) 12%, var(--ink-5)) !important; }
+.dslot-lvl { border-radius: 0; background: var(--ink-5); color: var(--text); }
+.item-card { background: var(--ink-4) !important; border: 2px solid color-mix(in srgb, var(--rar) 60%, var(--line)) !important; border-radius: 0; box-shadow: 3px 3px 0 rgba(42, 21, 8, 0.35) !important; }
+.loot-card { background: var(--ink-3) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--rar) 70%, transparent), var(--px-shadow) !important; }
+.equip-slot, .gear, .bag-row { border-radius: 0 !important; }
+
+/* ---------------- Jauges : des barres en pixels ---------------- */
+.hpbar, .xpbar, .progress { border-radius: 0; background: #3a2416; border: 2px solid var(--line); }
+.xpfill, .progress-fill { background: repeating-linear-gradient(90deg, #8a4aa8 0 6px, #b070d8 6px 8px); }
+.progress.done .progress-fill { background: repeating-linear-gradient(90deg, #c08a20 0 6px, #e8b840 6px 8px); }
+.hptext, .xptext, .progress-text { color: #fff4dc; text-shadow: 1px 1px 0 #1a0a04; font-weight: 600; }
+
+/* ---------------- Ce qui est posé directement sur la table (texte clair) ---------------- */
+.place-head h1 { font-family: var(--title); font-weight: 400; font-size: 1.35rem; line-height: 1.45; color: var(--ink-5); text-shadow: 3px 3px 0 var(--wood-0); letter-spacing: 0; }
+.place-head .eyebrow { color: #feae34; text-shadow: 2px 2px 0 var(--wood-0); letter-spacing: 0.1em; }
+.place-head p, .place-head .muted { color: #f2e2c0; text-shadow: 2px 2px 0 var(--wood-0); }
+.foot, .foot.muted, .app-shell .foot { color: #d9bf8c; text-shadow: 1px 1px 0 var(--wood-0); }
+.tabs.grimoire-tabs { border-bottom: 3px solid var(--wood-0); gap: 6px; }
+.grimoire-tabs .tab { background: #c9a878; color: var(--text); border: 2px solid var(--line); border-bottom: none; border-radius: 0; padding: 8px 16px; }
+.grimoire-tabs .tab.on { background: var(--ink-3); color: var(--brass-3); box-shadow: inset 0 3px 0 var(--lantern); }
+.hero-side, .forge-who-btn { background: var(--ink-4); border: 2px solid var(--line); border-radius: 0; box-shadow: 3px 3px 0 rgba(20, 8, 2, 0.5); color: var(--text); }
+.hero-side:hover, .forge-who-btn:hover { background: var(--ink-5); }
+.hero-side.on, .forge-who-btn.on { background: var(--ink-5); border-color: var(--lantern); box-shadow: 3px 3px 0 var(--lantern); }
+.hero-side .muted, .forge-who-btn .muted { color: var(--muted); }
+.hero-side-new { background: rgba(242, 226, 192, 0.18); border: 2px dashed #d9bf8c; color: #f2e2c0; box-shadow: none; }
+.hero-side-dot { border-radius: 0; box-shadow: none; }
+
+/* ---------------- La barre des lieux : le rebord de la table ---------------- */
+.place-nav { background: var(--wood-1); border: 0; border-right: 4px solid var(--wood-0); border-radius: 0; box-shadow: inset -4px 0 0 #3a1f0f, var(--px-shadow); }
+.nav-brand b { font-family: var(--title); font-size: 0.85rem; letter-spacing: 0; color: var(--ink-5); }
+.nav-brand-mark { border-radius: 0; background: var(--lantern); color: var(--ink-5); box-shadow: inset -3px -3px 0 #a22633, 3px 3px 0 var(--wood-0); transform: rotate(-6deg); }
+.nav-place { border-radius: 0; color: #e8d3a8; border: 3px solid transparent; }
+.nav-place:hover { background: #3a1f0f; color: var(--ink-5); }
+.nav-place-text b { font-family: var(--title); font-size: 0.62rem; line-height: 1.6; letter-spacing: 0; }
+.nav-place-text small { color: #b08860; }
+.nav-place.on { background: var(--ink-3); color: var(--text); border-color: var(--wood-0); box-shadow: 4px 4px 0 var(--wood-0); }
+.nav-place.on .nav-place-text small { color: var(--muted); }
+.nav-badge { border-radius: 0; box-shadow: 2px 2px 0 var(--wood-0); }
+.nav-foot { border-top: 3px solid #3a1f0f; }
+.nav-foot-btn { border-radius: 0; color: #b08860; }
+.nav-foot-btn:hover { background: #3a1f0f; color: var(--ink-5); }
+
+/* ---------------- La barre de lancement ---------------- */
+.launch-bar, .app-shell .launch-bar { background: var(--wood-1); border: 3px solid var(--wood-0); border-bottom: none; border-radius: 0; backdrop-filter: none; box-shadow: inset 0 3px 0 #4a2a14, 0 -4px 0 rgba(20, 8, 2, 0.4); color: var(--ink-5); }
+.launch-bar .muted, .launch-where { color: #d9bf8c; }
+.launch-heroes .portrait { box-shadow: 0 0 0 2px var(--wood-1) !important; }
+.launch-bar .fit { background: var(--ink-4); }
+
+/* ---------------- Les cartes du Camp, du Grimoire, des héros ---------------- */
+.todo-card, .camp-hero, .grimoire-dungeon, .bestiary-entry { background: var(--ink-5); border: 2px solid var(--line); border-radius: 0; box-shadow: inset -2px -2px 0 #e8d3a8, 3px 3px 0 rgba(42, 21, 8, 0.45); }
+.camp-hero:hover, .grimoire-dungeon:hover { border-color: var(--lantern); }
+.todo-ic { border-radius: 0; border: 2px solid var(--line); background: #fde0c8; color: var(--brass-3); }
+.todo-card.tone-good .todo-ic { background: #e4f2d8; } .todo-card.tone-violet .todo-ic { background: #efe0f4; } .todo-card.tone-info .todo-ic { background: #e0ecf8; }
+.camp-next { border-color: var(--lantern) !important; }
+.camp-next-art, .gd-art, .be-art { border-radius: 0; border: 3px solid var(--line); background: var(--wood-1); }
+.camp-next-body h3 { color: var(--text); }
+.status-chip { border-radius: 0; border-width: 2px; background: var(--ink-4); }
+.status-chip.tone-gold { color: var(--brass-3); }
+.journey-dot { border-radius: 0; border-width: 3px; background: var(--ink-5); }
+.journey-step.now .journey-dot { box-shadow: 3px 3px 0 var(--lantern); color: var(--lantern); }
+.journey-step::before { height: 3px; background: #c9a878; }
+.journey-step.done::before, .journey-step.now::before { background: var(--line); }
+
+/* ---------------- Onglets, cartes de sorts, cartes de spécialisation ---------------- */
+.tabs .tab { border-radius: 0; }
+.tab.on { color: var(--brass-3); }
+.deck-slot .deck-pa, .sc-state, .spec-cta { color: var(--brass-3); }
+.fixed-title { color: var(--brass-3); }
+.fit-deadly { background: #fde4dc; }
+
+/* ---------------- Les grands titres en « Press Start 2P » : pas d'ajustement de hauteur (la police est déjà très haute) ---------------- */
+h1, .place-head h1, .nav-brand b { font-size-adjust: none; }
+.nav-place-text b { font-family: var(--serif); font-size: 1.12rem; line-height: 1.1; letter-spacing: 0.03em; }
+.nav-brand b { font-size: 0.9rem; }
+
+/* ---------------- Les encarts dans les cartes : papier plus foncé (au lieu des encarts sombres de la Lanterne) ---------------- */
+.dungeon-brief, .guide-monster, .set-row, .guide-set, .tier-block, .deck-frame, .hb-deck, .fx-panel, .sd2-foot, .skill-detail {
+  background: var(--ink-2); border: 2px solid var(--line-2); border-radius: 0;
+}
+.guide-monster.is-boss { background: #f6dcc0; border-color: var(--lantern); }
+.view-tab { background: var(--ink-4); border: 2px solid var(--line); border-radius: 0; box-shadow: inset -2px -2px 0 #e8d3a8, 3px 3px 0 rgba(20, 8, 2, 0.5); color: var(--text); }
+.view-tab:hover { background: var(--ink-5); border-color: var(--line); }
+.view-tab.on { background: var(--ink-5); border-color: var(--line); color: var(--brass-3); box-shadow: inset 0 -4px 0 var(--lantern), 4px 4px 0 var(--lantern); }
+.view-tab-text b { color: var(--text); font-size: 1.25rem; }
+.view-tab.on .view-tab-text b { color: var(--brass-3); }
+.tc-icon, .exp-icon, .sd2-icon, .fx-row .fx-ico { border-radius: 0 !important; background: var(--ink-5) !important; }
+.node-face, .slot-face { background: var(--ink-5); }
+.pact-btn { border-radius: 0; }
+.sd2 { border-radius: 0; border: 3px solid var(--line); background: var(--ink-3); }
+
+/* ---------------- L'écran de partie ---------------- */
+.run-title .muted, .col-title { color: #e8d3a8; text-shadow: 2px 2px 0 var(--wood-0); }
+.run-header > .row .btn-ghost, .run-header .header-actions .btn-ghost, .run-header .btn-ghost { color: #f2e2c0; text-shadow: 1px 1px 0 var(--wood-0); }
+.run-header .btn-ghost:hover:not(:disabled) { background: rgba(255, 244, 220, 0.12); color: var(--ink-5); border-color: #d9bf8c; }
+.log-list { border-radius: 0; border: 2px solid var(--line); background: var(--ink-4); }
+.log-line { border-bottom-color: rgba(42, 21, 8, 0.1); }
+
+/* La frise (l'ordre de jeu) : une carte */
+.frise { background: var(--ink-3); border: 3px solid var(--line); border-radius: 0; box-shadow: var(--px-card), var(--px-shadow); }
+.tl-chip { border-radius: 0; background: var(--ink-5); border: 2px solid var(--line-2); color: var(--text); }
+.tl-chip.side-p { border-color: #4a6a9a; }
+.tl-chip.side-m { border-color: #a85a5a; background: #fbe4dc; }
+.tl-chip.current { border-color: var(--lantern); background: var(--ink-5); color: var(--brass-3); box-shadow: 3px 3px 0 var(--lantern); }
+
+/* Le champ de bataille : la scène reste dans la nuit, le texte y est clair */
+.stage { border: 3px solid var(--line); border-radius: 0; box-shadow: var(--px-shadow); color: var(--ink-5); }
+.stage .f-name { color: var(--ink-5); text-shadow: 2px 2px 0 #000; }
+.stage .fighter.monster .f-name, .stage .fighter.active .f-name { color: #ffd88a; }
+.stage .f-sub, .stage .f-hp { color: #e8d3a8; text-shadow: 1px 1px 0 #000; }
+.row-label, .front-line { color: #c9b08a; text-shadow: 1px 1px 0 #000; }
+.front-line::before, .front-line::after { border-top: 2px dashed rgba(232, 211, 168, 0.4); }
+.intent-tag { border-radius: 0; border-width: 2px; }
+
+/* Le bandeau du héros qui joue : une grande carte posée au bord de la table */
+.dock { background: var(--ink-3); border: 3px solid var(--line); border-bottom: 0; border-radius: 0; box-shadow: inset 2px 2px 0 var(--ink-5), 0 -4px 0 rgba(20, 8, 2, 0.45); }
+.dock-name { color: var(--brass-3); }
+.hb-group::before { color: var(--brass-3); }
+.hb-deck { background: var(--ink-2); border: 2px solid var(--line-2); border-radius: 0; }
+.hb-deck::before { background: var(--ink-3); }
+.hb-util { border-left: 2px solid var(--line-2); }
+.resource { border-radius: 0; background: var(--ink-5); border: 2px solid #8a6ab8; }
+.slot-key { border-radius: 0; background: var(--line); color: var(--ink-5); }
+.run-header .gold { color: #ffd88a; text-shadow: 2px 2px 0 var(--wood-0); }
+.k-system, .k-loot { color: var(--brass-3); } .k-combat { color: var(--text-2); } .k-social { color: var(--violet); }
+.fx-label { border-radius: 0; border-width: 2px; }
+.fx-label b { color: #9ad0ff; }
+.headline { border-radius: 0; border: 2px solid var(--line); background: var(--ink-4); }
+.headline.tone-good { background: #e4f2d8; color: var(--good); }
+.headline.tone-bad { background: #fde4dc; color: var(--ember-text); }
+.monster-row.preview .f-name, .monster-row.preview .f-sub { color: var(--ink-5); text-shadow: 2px 2px 0 var(--wood-0); }
+.stage .intent-tag { background: var(--ink-5); }
+
+
+/* ---------------- Téléphone et petite tablette ---------------- */
+@media (max-width: 860px) {
+  .place-nav { height: calc(58px + env(safe-area-inset-bottom, 0px)); border-right: 0; border-top: 4px solid var(--wood-0); box-shadow: inset 0 3px 0 #3a1f0f; }
+  body { font-size: 14px; }
+  .home-right h2, .home-heroes h2 { font-size: 1.05rem; }
+  .tranche-desc { font-size: 0.88rem; line-height: 1.3; }
+  .tranche-card { padding: 10px; }
+  .place-main { gap: 14px; }
+  .panel, .card { padding: 12px; }
+  .dock { padding-top: 8px; padding-bottom: 8px; }
+  .nav-place { padding: 4px 2px; border-width: 2px; }
+  .nav-place-text b { font-size: 0.92rem; line-height: 1; }
+  .nav-place.on { box-shadow: 2px 2px 0 var(--wood-0); }
+  .place-head h1 { font-size: 1rem; }
+  .view-tab-text b { font-size: 0.95rem; overflow-wrap: normal; }
+  .view-tab { padding: 6px 4px; }
+  h1 { font-size: 1rem; }
+}
+
+/* Les cartes de donjon (Aventure) */
+.tranche-card { border-radius: 0; border: 2px solid var(--line-2); background: var(--ink-4); }
+.tranche-card:hover { border-color: var(--line); }
+.tranche-card.selected { border-color: var(--line); background: var(--ink-5); box-shadow: inset 4px 0 0 var(--lantern), 3px 3px 0 var(--lantern); }
+.fit { border-radius: 0; }
+
+/* ---------------- En pixel art, rien n'est arrondi ---------------- */
+*, *::before, *::after { border-radius: 0 !important; }

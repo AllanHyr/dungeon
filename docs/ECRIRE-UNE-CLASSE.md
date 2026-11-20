@@ -575,7 +575,8 @@ Ses compétences se décrivent dans la section `skills` de `data/monsters.json` 
 `"boss": true` : résiste à l'étourdissement. `kind` : `undead`, `beast`, `humanoid`, `slime`, `demon`, `boss` (l'icône de repli, la voix et le geste :
 une bête griffe, un mort-vivant entaille, une gelée éclabousse, un boss écrase).
 
-**Son portrait** : chaque monstre fourni a un dessin (`src/ui/art/monsters-*.js`, clé = son `id`). Un monstre ajouté sans dessin garde l'icône de son
+**Son portrait** : chaque monstre fourni a un portrait en pixel art (`src/ui/art/pixel-monsters.js`, clé = son `id` ; un nouveau monstre d'une famille
+existante se fait en une ligne, ex. `bandit({ hood: 'moss', prop: 'vial' })`). Un monstre ajouté sans dessin garde l'icône de son
 `kind` ; pour lui donner une image, ajouter `"art": "img/mon-monstre.png"` à sa fiche (de même pour une classe : `"art"` dans sa définition).
 Voir `docs/DIRECTION-ARTISTIQUE.md` § 4 ter.
 Les monstres s'adaptent au **nombre** de joueurs (jamais à leur niveau) : `partyScaling` dans `rules.json`.

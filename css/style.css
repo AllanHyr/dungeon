@@ -585,6 +585,8 @@ button.hero-tag:hover { border-color: var(--brass-3); color: var(--brass-4); }
 
 /* --- Équipement : à gauche ce qu'on PORTE, à droite le SAC avec ce que chaque objet changerait --- */
 .equip-layout { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 22px; align-items: start; }
+/* (la poupée reste en vue quand on fait défiler le sac — et ne bouge pas sous la souris quand le détail change de hauteur) */
+.equip-layout > :first-child { position: sticky; top: 8px; }
 .equip-worn { display: flex; flex-direction: column; gap: 12px; }
 .doll-head { display: flex; align-items: center; justify-content: space-between; }
 .doll-head .sec-title { margin: 0; }
@@ -1837,6 +1839,7 @@ html.fx-playing .run { pointer-events: none; } /* (le temps d'une animation : un
   .tab { padding: 8px 12px; gap: 6px; }
   .sheet-modal .tab-body { padding: 12px 14px 16px; }
   .equip-layout { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .equip-layout > :first-child { position: static; }
   .gear { grid-template-columns: 46px minmax(0, 1fr) auto; gap: 10px; padding: 10px; }
   .gear-icon { width: 46px; height: 46px; }
   .gear-icon .icon svg { width: 24px; height: 24px; }

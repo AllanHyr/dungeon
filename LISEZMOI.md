@@ -207,7 +207,7 @@ Une nuit de donjon éclairée à la lanterne : fond bleu-nuit, cadres en **laito
 hors ligne le jeu retombe sur les polices du système).
 
 * Tout le style tient dans **`css/style.css`**, piloté par quelques variables au début du fichier : changer l'ambiance = changer ces variables.
-* Les **points d'action** s'affichent en petites flammes, les **personnages et monstres** en médaillons ronds **illustrés** (4 classes, 20 monstres, dessinés en code : SVG),
+* Les **points d'action** s'affichent en petites flammes, les **personnages et monstres** en cadres carrés **illustrés en pixel art** (8 classes, 39 monstres, dessinés en code),
   devant un **décor** par donjon (caves, crypte, profondeurs, terriers, salle d'entraînement). Chaque case a sa **vignette** (coffre, piège, fontaine, marchand, boss...).
 * Les **combats s'animent** : élan et entailles, projectiles, éclairs, boucliers, soins, étincelles, chiffres qui s'envolent, barres de vie qui descendent coup après coup. Trois styles
   (complètes, rapides, réduites) ; un clic saute l'animation. Chaque compétence a son geste, déduit de ses données ou écrit dans un champ `fx`.
@@ -249,7 +249,8 @@ donjon/
 ├── main.js               point d'entrée (charge les données puis lance le jeu)
 ├── artifact.html         la même page sans <html>/<head>/<body> (pour la publier sur la plateforme Claude)
 ├── serve.mjs             mini serveur de fichiers, pour jouer hors ligne (facultatif)
-├── css/style.css         l'apparence : la direction artistique « Lanterne » (couleurs, polices, briques, écrans)
+├── css/style.css         l'apparence de base (« Lanterne » : briques, écrans, mises en page)
+├── css/table-pixel.css   la direction artistique « Table pixel » (table en bois, cartes crème, polices pixel), posée par-dessus
 ├── server/               LE SERVEUR EN LIGNE (Node 22.13+, aucune dépendance) — voir docs/SERVEUR.md
 │   ├── server.mjs        le point d'entrée : `node server/server.mjs`
 │   ├── admin.mjs         l'outil d'administration : sauvegarde, mot de passe oublié, liste des comptes
@@ -291,7 +292,7 @@ donjon/
 │       ├── fx.js, fx-plan.js, fx-canvas.js   les animations de combat (scénario pur, mise en scène, particules)
 │       ├── status.js                         décrire un bonus ou un malus (nom, résumé, phrase qui l'explique, durée) — pur, sans navigateur
 │       ├── sound.js                          les 57 sons (synthèse Web Audio) ; screens/sound-lab.js : le banc d'essai
-│       └── art.js, art/                      les illustrations SVG : portraits, décors, vignettes (kit.js = la boîte à outils)
+│       └── art.js, art/                      les illustrations SVG : portraits en pixel art (pixel.js, pixel-heroes.js, pixel-monsters.js), décors, vignettes
 ├── tools/galerie.html    la galerie de toutes les illustrations (à ouvrir avec le serveur de fichiers)
 └── tests/                tests automatiques, simulateur, tests d'interface
 ```

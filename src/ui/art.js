@@ -13,6 +13,7 @@ import { MONSTERS_DONJONS } from './art/monsters-donjons.js';
 import { SCENES as SCENE_DRAWINGS, VIGNETTES as VIGNETTE_DRAWINGS } from './art/scenes.js';
 import { PIXEL_HEROES } from './art/pixel-heroes.js';
 import { PIXEL_MONSTERS } from './art/pixel-monsters.js';
+import { PIXEL_SCENES, PIXEL_VIGNETTES } from './art/pixel-scenes.js';
 
 const MONSTERS = { ...MONSTERS_CAVES, ...MONSTERS_CRYPT, ...MONSTERS_DEPTHS, ...MONSTERS_DONJONS };
 const SCENES = SCENE_DRAWINGS;
@@ -20,8 +21,8 @@ const VIGNETTES = VIGNETTE_DRAWINGS;
 
 export const heroIds = () => [...new Set([...Object.keys(PIXEL_HEROES), ...Object.keys(HEROES)])];
 export const monsterIds = () => [...new Set([...Object.keys(PIXEL_MONSTERS), ...Object.keys(MONSTERS)])];
-export const sceneIds = () => Object.keys(SCENES);
-export const vignetteIds = () => Object.keys(VIGNETTES);
+export const sceneIds = () => [...new Set([...Object.keys(PIXEL_SCENES), ...Object.keys(SCENES)])];
+export const vignetteIds = () => [...new Set([...Object.keys(PIXEL_VIGNETTES), ...Object.keys(VIGNETTES)])];
 
 // Les portraits : en pixel art (direction « Table pixel », art/pixel-*.js) ; l'ancien dessin peint ne sert plus que de secours.
 const pixelCache = new Map();
@@ -30,7 +31,7 @@ const cached = (key, draw) => { if (!pixelCache.has(key)) pixelCache.set(key, dr
 /** Le dessin SVG (en texte) d'une classe de héros, ou null s'il n'y en a pas. */
 export const heroSvg = (classId) => (PIXEL_HEROES[classId] ? cached('h:' + classId, PIXEL_HEROES[classId]) : HEROES[classId] ? HEROES[classId](uid()) : null);
 export const monsterSvg = (monsterId) => (PIXEL_MONSTERS[monsterId] ? cached('m:' + monsterId, PIXEL_MONSTERS[monsterId]) : MONSTERS[monsterId] ? MONSTERS[monsterId](uid()) : null);
-export const vignetteSvg = (id) => (VIGNETTES[id] ? VIGNETTES[id](uid()) : null);
+export const vignetteSvg = (id) => (PIXEL_VIGNETTES[id] ? cached('v:' + id, PIXEL_VIGNETTES[id]) : VIGNETTES[id] ? VIGNETTES[id](uid()) : null);
 const sceneCache = new Map();
 /**
  * Un décor, sous la forme d'une valeur CSS `url("data:image/svg+xml,...")` à poser en background-image.
@@ -40,7 +41,7 @@ export function sceneCss(id) {
   if (!id) return 'none';
   if (/[/.]/.test(id)) return `url("${String(id).replace(/"/g, '%22')}")`;
   if (!sceneCache.has(id)) {
-    const svg = SCENES[id]?.(uid());
+    const svg = PIXEL_SCENES[id] ? PIXEL_SCENES[id]() : SCENES[id]?.(uid()); // (le décor en pixel art d'abord)
     sceneCache.set(id, svg ? `url("data:image/svg+xml,${encodeURIComponent(svg)}")` : 'none');
   }
   return sceneCache.get(id);

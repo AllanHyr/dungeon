@@ -19,6 +19,7 @@ import { FX_VOCAB } from '../src/core/index.js';
 import { soundList, soundGroups, hasSound } from '../src/ui/sound.js';
 import { heroSvg, monsterSvg, vignetteSvg, sceneCss, sceneIdFor, heroIds, monsterIds, sceneIds, vignetteIds } from '../src/ui/art.js';
 import { SCENES as SCENE_DRAWINGS } from '../src/ui/art/scenes.js';
+import { PIXEL_SCENES } from '../src/ui/art/pixel-scenes.js';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1739,10 +1740,10 @@ test("les gestes des compétences (délivrance, impact) ont tous leur son", () =
 
 console.log('\n● Illustrations (les dessins SVG, sans navigateur)');
 /** Vérifie qu'un texte SVG est bien formé : balises appariées, identifiants uniques, chaque url(#...) pointe vers un dégradé qui existe. */
-function checkSvg(name, svg) {
+function checkSvg(name, svg, maxBytes = 24000) {
   assert(typeof svg === 'string' && svg.startsWith('<svg') && svg.trimEnd().endsWith('</svg>'), `${name} : pas un <svg> complet`);
   assert(!/NaN|undefined|\[object/.test(svg), `${name} : valeur invalide dans le dessin (NaN, undefined...)`);
-  assert(svg.length < 24000, `${name} : dessin trop lourd (${svg.length} octets)`);
+  assert(svg.length < maxBytes, `${name} : dessin trop lourd (${svg.length} octets)`);
   const stack = [];
   for (const m of svg.matchAll(/<(!--[\s\S]*?--|\/?([a-zA-Z][\w:-]*)((?:"[^"]*"|'[^']*'|[^>"'])*)(\/?))>/g)) {
     if (m[1].startsWith('!--')) continue;
@@ -1769,11 +1770,12 @@ test('chaque classe a son portrait et chaque monstre le sien (SVG bien formés)'
 test('chaque type de case a sa vignette, et chaque décor existe', () => {
   for (const id of Object.keys(content.tiles)) {
     assert(vignetteIds().includes(id), `pas de vignette pour la case « ${id} »`);
-    checkSvg(`vignette ${id}`, vignetteSvg(id));
+    checkSvg(`vignette ${id}`, vignetteSvg(id), 40000); // (une vignette pixel : 120 × 40 pixels)
   }
   for (const id of ['caves', 'crypt', 'depths', 'terriers', 'training']) {
     assert(sceneIds().includes(id), `pas de décor « ${id} »`);
     checkSvg(`décor ${id}`, SCENE_DRAWINGS[id]('t'));
+    checkSvg(`décor pixel ${id}`, PIXEL_SCENES[id](), 90000); // (un décor pixel : 160 × 65 pixels)
     assert(sceneCss(id).startsWith('url("data:image/svg+xml,'), `décor ${id} : valeur CSS`);
   }
 });

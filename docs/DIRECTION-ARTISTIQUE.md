@@ -13,6 +13,7 @@ est une **carte crème** posée dessus (bord brun foncé, liseré clair, ombre e
 | Les 8 portraits de classes | `src/ui/art/pixel-heroes.js` |
 | Les 39 portraits de monstres (familles réglables : rats, squelettes, bandits, cochons, cultistes, ogres, spectres) | `src/ui/art/pixel-monsters.js` |
 | Les 86 icônes en pixel art (16 × 16 : cases, sorts, équipement, statuts, boutons) | `src/ui/pixel-icons.js` |
+| Les 5 décors (160 × 65) et les 9 vignettes de cases (120 × 40) en pixel art | `src/ui/art/pixel-scenes.js` |
 
 Les règles : **aucun arrondi**, **aucune ombre floue**, **aucun dégradé doux** sur les cartes et boutons ; la lumière vient d'en haut à gauche.
 Les polices (Google Fonts) : **DotGothic16** pour le texte, **Jersey 10** pour les noms, titres de cartes et boutons (le gras), **Press Start 2P**
@@ -20,6 +21,9 @@ pour les grands titres ; `font-size-adjust` les met à la même hauteur. Le text
 
 * **Revenir à « Lanterne »** : retirer la ligne `css/table-pixel.css` de `index.html` et de `artifact.html` (les anciens portraits peints restent
   dans `src/ui/art/heroes.js` et `monsters-*.js` : il suffit de ne plus préférer les portraits pixel dans `src/ui/art.js`).
+* **Les décors et vignettes** (`src/ui/art/pixel-scenes.js`) sont peints sur une petite toile de pixels avec quelques outils : dégradé tramé
+  (`vgrad`), rectangle, ellipse, polygone, trait, halo de lumière par paliers (`glow`), mur de briques (`bricks`). Ils restent sombres et peu
+  contrastés : ils passent derrière les combattants. `sceneCss` et `vignetteSvg` (dans `art.js`) prennent la version pixel d'abord.
 * **Les icônes** (`src/ui/pixel-icons.js`) : 16 × 16, faites de formes ombrées comme les portraits, mais dans la **couleur du texte** autour
   (une icône d'objet prend la couleur de sa rareté). `icon(nom, taille)` donne la version pixel dès 14 px ; en dessous, le dessin au trait
   (`src/ui/icons.js`) reste plus lisible. **Chaque objet a l'icône de son type**, déduite de son nom (`itemIconName`) : hache, dague, bâton,

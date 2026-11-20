@@ -208,8 +208,8 @@ C'est l'outil prévu pour écrire les classes : guide complet dans **[`docs/ECRI
 ## 3 ter. L'interface : la direction artistique « Lanterne »
 
 Une nuit de donjon éclairée à la lanterne : fond bleu-nuit, cadres en **laiton**, et la **flamme orange** pour tout ce qu'on peut faire
-(boutons principaux, points d'action, héros qui joue). Titres en *Cinzel*, texte en *Alegreya Sans* (chargées depuis Google Fonts ;
-hors ligne le jeu retombe sur les polices du système).
+(boutons principaux, points d'action, héros qui joue). Polices pixel (DotGothic16, Jersey 10, Press Start 2P) et *Alegreya Sans* pour les longs textes, **hébergées avec le jeu**
+(`css/fonts/` + `css/fonts.css`, licence OFL) : la version serveur n'appelle aucun site extérieur. Seule la version publiée (`artifact.html`) les prend chez Google Fonts.
 
 * Tout le style tient dans **`css/style.css`**, piloté par quelques variables au début du fichier : changer l'ambiance = changer ces variables.
 * Les **points d'action** s'affichent en petites flammes, les **personnages et monstres** en cadres carrés **illustrés en pixel art** (8 classes, 39 monstres, dessinés en code),

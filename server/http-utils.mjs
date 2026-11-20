@@ -94,14 +94,14 @@ export function sendJson(res, status, body, headers = {}) {
 // ---------------- En-têtes de sécurité ----------------
 
 /**
- * Ce que le navigateur a le droit de charger : uniquement ce site, plus les polices Google (Cinzel, Alegreya Sans).
+ * Ce que le navigateur a le droit de charger : uniquement ce site (les polices sont hébergées avec le jeu, dans css/fonts/).
  * Même si une faille laissait passer du code dans une page, il ne pourrait pas appeler d'autres sites.
  */
 const CSP = [
   "default-src 'self'",
   "script-src 'self'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self'",
   "img-src 'self' data:",
   "connect-src 'self'",
   "object-src 'none'",
@@ -125,7 +125,8 @@ export function securityHeaders(https) {
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.png': 'image/png',
-  '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.avif': 'image/avif'
+  '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.avif': 'image/avif',
+  '.woff2': 'font/woff2'
 };
 
 /** Les seuls fichiers publics : la page, le code du navigateur, les styles, les données et les images du jeu. JAMAIS server/, tests/, var/ (la base)... */

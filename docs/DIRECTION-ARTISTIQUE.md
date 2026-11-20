@@ -12,6 +12,7 @@ est une **carte crème** posée dessus (bord brun foncé, liseré clair, ombre e
 | Le moteur des portraits (formes ombrées, contours, détails, sortie SVG) | `src/ui/art/pixel.js` |
 | Les 8 portraits de classes | `src/ui/art/pixel-heroes.js` |
 | Les 39 portraits de monstres (familles réglables : rats, squelettes, bandits, cochons, cultistes, ogres, spectres) | `src/ui/art/pixel-monsters.js` |
+| Les 86 icônes en pixel art (16 × 16 : cases, sorts, équipement, statuts, boutons) | `src/ui/pixel-icons.js` |
 
 Les règles : **aucun arrondi**, **aucune ombre floue**, **aucun dégradé doux** sur les cartes et boutons ; la lumière vient d'en haut à gauche.
 Les polices (Google Fonts) : **DotGothic16** pour le texte, **Jersey 10** pour les noms, titres de cartes et boutons (le gras), **Press Start 2P**
@@ -19,6 +20,11 @@ pour les grands titres ; `font-size-adjust` les met à la même hauteur. Le text
 
 * **Revenir à « Lanterne »** : retirer la ligne `css/table-pixel.css` de `index.html` et de `artifact.html` (les anciens portraits peints restent
   dans `src/ui/art/heroes.js` et `monsters-*.js` : il suffit de ne plus préférer les portraits pixel dans `src/ui/art.js`).
+* **Les icônes** (`src/ui/pixel-icons.js`) : 16 × 16, faites de formes ombrées comme les portraits, mais dans la **couleur du texte** autour
+  (une icône d'objet prend la couleur de sa rareté). `icon(nom, taille)` donne la version pixel dès 14 px ; en dessous, le dessin au trait
+  (`src/ui/icons.js`) reste plus lisible. **Chaque objet a l'icône de son type**, déduite de son nom (`itemIconName`) : hache, dague, bâton,
+  masse, marteau, faux, hallebarde, sceptre, pioche, gourdin ; bouclier, rondache, grimoire, orbe ; fiole, œil, larme, sablier, cœur, calice.
+  Un objet peut imposer la sienne : champ `"icon"` dans `data/items.json`.
 * **Les raretés** gardent leurs couleurs de `data/items.json`, assombries pour le texte (`--rar-ink`) afin de se lire sur le papier.
 * **Contrôle du contraste** : chaque écran a été vérifié automatiquement (tout texte doit avoir un contraste d'au moins 3:1 avec son fond).
 

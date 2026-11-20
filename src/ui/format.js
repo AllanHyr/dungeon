@@ -4,6 +4,7 @@
 
 import { h } from './dom.js';
 import { icon } from './icons.js';
+import { itemIconName } from './pixel-icons.js';
 import { rarityOf, describeStats, itemSummary } from '../core/index.js';
 import { statLabel, statusInfo, turnsText } from './status.js';
 
@@ -225,7 +226,7 @@ export function itemCard(content, inst, opts = {}) {
   return h(
     'div',
     { class: `item-card r-${rarity.id} ${opts.compact ? 'compact' : ''} ${inactive ? 'is-inactive' : ''}`, style: { '--rar': rarity.color }, title: def.desc || '' },
-    h('div', { class: 'item-icon' }, icon(def.slot, opts.compact ? 20 : 24)),
+    h('div', { class: 'item-icon' }, icon(itemIconName(def), opts.compact ? 20 : 24)),
     h('div', { class: 'item-main' },
       h('div', { class: 'item-head' },
         h('span', { class: 'item-name' }, def.name),

@@ -8,6 +8,7 @@
 
 import { h, mount } from './dom.js';
 import { icon } from './icons.js';
+import { itemIconName } from './pixel-icons.js';
 import { EQUIP_SLOTS } from '../core/content.js';
 import { canEquip, slotsFor, planEquip, twoHandedWorn, rarityOf, itemSummary, gearLevel, itemView, salvageValue } from '../core/index.js';
 import { statEntries, compareItems, typeLabel } from './format.js';
@@ -117,7 +118,7 @@ export function equipmentView({ content, holder, view, tranche = null, actions, 
     const inactive = tranche && def.level > tranche;
     const cursed = holder.cursedUid && holder.cursedUid === inst.uid;
     return h('div', { class: `gear r-${rarity.id} ${inactive ? 'is-inactive' : ''}`, style: { '--rar': rarity.color } },
-      h('div', { class: 'gear-icon' }, icon(SLOT_ICON[slot], 26)),
+      h('div', { class: 'gear-icon' }, icon(itemIconName(def), 26)),
       h('div', { class: 'gear-main' },
         h('div', { class: 'gear-slot' }, name, ' · ', `niveau ${def.level}`, h('span', { class: 'rarity-pill' }, rarity.name)),
         h('div', { class: 'gear-name' }, itemName(def)),
@@ -158,7 +159,7 @@ export function equipmentView({ content, holder, view, tranche = null, actions, 
       onClick: () => select(slot), onMouseenter: () => showDetail(slot), onMouseleave: resetDetail, onFocus: () => showDetail(slot)
     },
       h('span', { class: 'dslot-icon' },
-        icon(off ? 'weapon' : SLOT_ICON[slot], 'fluid'),
+        icon(off ? itemIconName(defOf(content, equipment.mainHand)) : def ? itemIconName(def) : SLOT_ICON[slot], 'fluid'),
         def && !off ? h('span', { class: 'dslot-lvl', title: `Niveau ${def.level}` }, def.level) : null,
         off ? h('span', { class: 'dslot-note' }, '2 mains') : null),
       h('span', { class: 'dslot-name' }, content.slotNames[slot]));
@@ -230,7 +231,7 @@ export function equipmentView({ content, holder, view, tranche = null, actions, 
       class: `bag-row r-${rarity.id} ${check.ok ? '' : 'is-locked'}`, style: { '--rar': rarity.color }, dataset: { item: inst.id },
       onMouseenter: () => markTargets(plan), onMouseleave: () => markTargets(null)
     },
-      h('div', { class: 'bag-icon' }, icon(def.slot, 22)),
+      h('div', { class: 'bag-icon' }, icon(itemIconName(def), 22)),
       h('div', { class: 'bag-main' },
         head(typeLabel(content, def) + ` · niveau ${def.level}`),
         statPills(content, def),

@@ -5,6 +5,7 @@
 // qui les entoure (currentColor), donc on peut les colorier en CSS.
 
 import { h } from './dom.js';
+import { pixelIconBody } from './pixel-icons.js';
 
 const S = 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
 
@@ -98,14 +99,17 @@ const PATHS = {
  * de son parent (utile pour les médaillons dont la taille s'adapte à l'écran).
  */
 export function icon(name, size = 20, cls = '') {
-  const body = PATHS[name] || PATHS.unknown;
   const fluid = typeof size === 'string';
   const px = fluid ? '100%' : size;
+  // En pixel art dès 14 px (en dessous, les pixels seraient plus petits qu'un point d'écran : on garde le dessin au trait)
+  const pixel = (fluid || size >= 14) && pixelIconBody(PATHS[name] || pixelIconBody(name) ? name : 'unknown');
   return h('span', {
-    class: `icon ${fluid ? 'fluid ' : ''}${cls}`.trim(),
+    class: `icon ${fluid ? 'fluid ' : ''}${pixel ? 'is-pixel ' : ''}${cls}`.trim(),
     style: fluid ? null : { width: size + 'px', height: size + 'px' },
     'aria-hidden': 'true',
-    html: `<svg viewBox="0 0 32 32" width="${px}" height="${px}" ${S}>${body}</svg>`
+    html: pixel
+      ? `<svg viewBox="0 0 16 16" width="${px}" height="${px}" shape-rendering="crispEdges">${pixel}</svg>`
+      : `<svg viewBox="0 0 32 32" width="${px}" height="${px}" ${S}>${PATHS[name] || PATHS.unknown}</svg>`
   });
 }
 
@@ -114,4 +118,4 @@ export function tileIcon(content, type, size = 24) {
   return icon(content.tiles[type]?.icon || 'unknown', size);
 }
 
-export const hasIcon = (name) => !!PATHS[name];
+export const hasIcon = (name) => !!PATHS[name] || !!pixelIconBody(name);

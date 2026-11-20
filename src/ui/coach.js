@@ -52,16 +52,22 @@ export function combatCoach(root) {
         }
       }, last ? 'Compris !' : 'Suivant')));
   root.appendChild(bubble);
-  // La bulle se place juste au-dessus de ce qu'elle montre (ou en dessous, s'il n'y a pas la place), sans sortir de l'écran.
+  // La bulle se place près de ce qu'elle montre, mais JAMAIS sur un combattant, un sort ou « Fin du tour » (on doit pouvoir jouer en la lisant) :
+  // on essaie au-dessus, en dessous, puis dans les coins du champ de bataille, et on garde la première place libre.
   const place = () => {
     if (!bubble.isConnected) return;
     const r = target.getBoundingClientRect(), b = bubble.getBoundingClientRect();
-    const margin = 10;
-    let top = r.top - b.height - margin;
-    if (top < margin) top = Math.min(window.innerHeight - b.height - margin, r.bottom + margin);
-    const left = Math.max(margin, Math.min(window.innerWidth - b.width - margin, r.left + r.width / 2 - b.width / 2));
-    bubble.style.top = `${Math.max(margin, top)}px`;
-    bubble.style.left = `${left}px`;
+    const m = 10, W = window.innerWidth, H = window.innerHeight;
+    const stage = root.querySelector('.stage')?.getBoundingClientRect();
+    const center = r.left + r.width / 2 - b.width / 2;
+    const spots = [[center, r.top - b.height - m], [center, r.bottom + m]];
+    if (stage) spots.push([stage.right - b.width - m, stage.top + m], [stage.left + m, stage.top + m], [stage.right - b.width - m, stage.bottom - b.height - m], [stage.left + m, stage.bottom - b.height - m]);
+    const blockers = [...root.querySelectorAll('.fighter, .hotbar, .end-turn, .frise')].filter((e) => e !== target).map((e) => e.getBoundingClientRect());
+    const clamp = ([x, y]) => [Math.max(m, Math.min(W - b.width - m, x)), Math.max(m, Math.min(H - b.height - m, y))];
+    const overlaps = ([x, y]) => blockers.some((o) => x < o.right && x + b.width > o.left && y < o.bottom && y + b.height > o.top);
+    const free = spots.map(clamp).find((p) => !overlaps(p)) || clamp(spots[0]);
+    bubble.style.left = `${free[0]}px`;
+    bubble.style.top = `${free[1]}px`;
   };
   requestAnimationFrame(place);
 }

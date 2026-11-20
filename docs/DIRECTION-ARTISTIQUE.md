@@ -240,10 +240,10 @@ Rien ne change pour celui qui joue seul ; à plusieurs :
 
 **Les effets sur la durée** (poison, venin, brûlure, saignement, douleur, drain, soin) ont chacun leur animation : le moteur annonce chaque
 effet qui agit par un événement `tick` avec sa **nature** (`dotKind`, déduite du nom de l'effet ou imposée par le champ `fx` d'un effet `dot`
-dans les JSON : `poison`, `venom`, `burn`, `bleed`, `shadow`, `drain`, `hot`). L'écran joue alors flammes, bulles, gouttes, volutes ou feuilles
-(`fx-canvas.js` : `flames`, `bubbles`, `drips`, `wisps`), teinte le portrait un instant, puis fait bouger la barre de vie. Tant qu'un effet
-dure, il se voit aussi en continu sur le portrait : une petite animation en pixel art de deux images (`.f-aura` dans `css/table-pixel.css`),
-étourdissement compris.
+dans les JSON : `poison`, `venom`, `burn`, `bleed`, `shadow`, `drain`, `hot`). L'écran joue alors, EN PIXEL ART (blocs carrés posés sur
+une grille, mouvement saccadé à 12 images par seconde, aucun flou ni halo), des flammes, des bulles, des gouttes, des volutes ou des feuilles
+(`fx-canvas.js` : `pxFlames`, `pxBubbles`, `pxDrips`, `pxWisps`, `pxLeaves`), encadre le portrait de la couleur de l'effet, puis fait bouger
+la barre de vie. Entre deux tours, l'effet se lit sur ses pastilles (sous le combattant).
 
 Le moteur répond à une action par **une liste d'événements** (qui a lancé quoi, qui a perdu combien de PV...) et par l'état final. L'interface
 ne se redessine **pas** tout de suite : elle **rejoue d'abord l'action, coup par coup, sur l'ancien écran**, puis affiche le résultat.

@@ -351,7 +351,7 @@ async function damageStep(step, a, ctx) {
   const dir = casterA && a && casterA.id !== a.id ? angleOf(casterA, a) : Math.PI / 2;
   const blocked = (step.amount || 0) === 0 && (step.absorbed || 0) > 0;
 
-  if (a && mode !== 'min') hitFx(hit, a, dir, mag, crit, element);
+  if (a && mode !== 'min' && !ctx.pixelOnly) hitFx(hit, a, dir, mag, crit, element); // (un effet sur la durée a déjà joué son animation en pixels)
   const pan = panOf(a);
   sfx(blocked ? 'block' : HIT_SOUND[hit] || 'hit_slash', { element, vol: 0.8 + 0.1 * mag, pan });
   if (crit) sfx('crit_hit', { pan });
@@ -369,7 +369,7 @@ async function healStep(step, a, ctx) {
   if (!a) return;
   const element = ctx.element || ctx.style?.element || 'heal';
   const green = element === 'shadow' ? 'shadow' : 'heal';
-  if (mode !== 'min') {
+  if (mode !== 'min' && !ctx.pixelOnly) {
     cv.flash(a.x, a.y, { r: a.r * 2.4, element: green, alpha: 0.7, dur: 0.6 });
     cv.rise(a.x, a.y + a.r * 0.4, { kind: element === 'nature' ? 'leaf' : 'plus', element: element === 'nature' ? 'nature' : green, n: 12, spread: a.r * 0.9, height: a.r * 2.2, size: 9 });
     cv.ring(a.x, a.y + a.r * 0.6, { r0: a.r * 0.3, r1: a.r * 1.7, w: 5, element: green, squash: 0.4, dur: 0.6 });
@@ -720,47 +720,30 @@ const TICKS = {
   hurt: { hit: 'blast', element: 'physical', tint: null, sound: null }
 };
 
-/** L'animation propre à un effet sur la durée, posée sur la cible avant la perte (ou le gain) de PV. */
+/** L'animation propre à un effet sur la durée, EN PIXELS, posée sur la cible avant la perte (ou le gain) de PV. */
 function tickFx(cause, a) {
   const { x, y, r } = a;
   switch (cause) {
-    case 'burn':
-      cv.flames(x, y, { r, n: 7, dur: 0.85 });
-      cv.flash(x, y + r * 0.3, { r: r * 1.3, element: 'fire', dur: 0.3, alpha: 0.55 });
-      break;
-    case 'poison':
-      cv.bubbles(x, y, { r, n: 11, dur: 1, element: 'poison' });
-      cv.dust(x, y + r * 0.2, { n: 6, r: r * 0.5, element: 'poison', alpha: 0.35, rise: r * 0.8 });
-      break;
+    case 'burn': cv.pxFlames(x, y, { r, dur: 0.9 }); break;
+    case 'poison': cv.pxBubbles(x, y, { r, n: 11, dur: 1 }); break;
     case 'venom':
-      cv.drips(x, y, { r, n: 6, dur: 0.95, element: 'venom' });
-      cv.bubbles(x, y + r * 0.3, { r: r * 0.8, n: 6, dur: 0.9, element: 'venom' });
+      cv.pxDrips(x, y, { r, n: 5, dur: 0.95, colors: ['#5b2a8a', '#a8e03c', '#f2ffd8'] });
+      cv.pxBubbles(x, y + r * 0.3, { r: r * 0.8, n: 4, dur: 0.9, colors: ['#5b2a8a', '#a8e03c', '#f2ffd8'] });
       break;
-    case 'bleed':
-      cv.drips(x, y, { r, n: 8, dur: 0.85, element: 'blood' });
-      cv.claws(x, y, { size: r * 0.9, element: 'blood', width: 4 });
-      break;
-    case 'shadow':
-      cv.wisps(x, y, { r, n: 7, dur: 0.85, element: 'shadow' });
-      cv.later(0.5, () => cv.flash(x, y, { r: r * 1.2, element: 'shadow', dur: 0.25, alpha: 0.6 }));
-      break;
-    case 'drain':
-      cv.wisps(x, y, { r, n: 6, dur: 1, element: 'blood', to: { x, y: y - r * 3 } });
-      break;
-    case 'hot':
-      cv.rise(x, y + r * 0.5, { kind: 'leaf', element: 'heal', n: 9, spread: r * 0.8, height: r * 1.6, size: 7, dur: 1, soft: 0.25 });
-      cv.ring(x, y + r * 0.7, { r0: r * 0.3, r1: r * 1.3, w: 3, element: 'heal', squash: 0.35, dur: 0.6 });
-      break;
-    default:
-      break;
+    case 'bleed': cv.pxDrips(x, y, { r, n: 7, dur: 0.85 }); break;
+    case 'shadow': cv.pxWisps(x, y, { r, n: 7, dur: 0.85 }); break;
+    case 'drain': cv.pxWisps(x, y, { r, n: 6, dur: 1, out: true, colors: ['#5a0e14', '#e0303a', '#ffb0a0'] }); break;
+    case 'hot': cv.pxLeaves(x, y, { r, n: 7, dur: 1 }); break;
+    default: break;
   }
 }
 
-/** Le portrait prend la teinte de l'effet un instant (vert du poison, orange de la brûlure...). */
+/** Le portrait s'encadre un instant de la couleur de l'effet (un cadre net qui clignote deux fois, pas de halo flou). */
 function tintPulse(a, color) {
   const el = a?.medal;
   if (!el?.animate || !color || reduceMotion()) return;
-  el.animate([{ filter: 'none' }, { filter: `drop-shadow(0 0 6px ${color}) drop-shadow(0 0 2px ${color}) saturate(1.4)` }, { filter: 'none' }], { duration: 700 * speed(), easing: 'ease-in-out' });
+  el.animate([{ outline: `3px solid ${color}`, outlineOffset: '1px' }, { outline: '3px solid transparent', outlineOffset: '1px' }, { outline: `3px solid ${color}`, outlineOffset: '1px' }, { outline: '3px solid transparent', outlineOffset: '1px' }],
+    { duration: 640 * speed(), easing: 'steps(1, end)' });
 }
 
 async function runTick(beat, ctx) {
@@ -774,7 +757,7 @@ async function runTick(beat, ctx) {
       await sleep(beat.cause === 'hot' ? 220 : 320); // (l'effet se montre, PUIS la barre de vie bouge)
     }
   }
-  await runSteps(beat.steps, { ...ctx, style: { weight: 1, element: mapped.element }, casterA: null, beat: { outcome: 'hit' }, hit: mapped.hit, element: mapped.element }, 80);
+  await runSteps(beat.steps, { ...ctx, style: { weight: 1, element: mapped.element }, casterA: null, beat: { outcome: 'hit' }, hit: mapped.hit, element: mapped.element, pixelOnly: TICKS[beat.cause] && beat.cause !== 'hurt' }, 80);
 }
 
 // ---------------- L'entrée en scène ----------------

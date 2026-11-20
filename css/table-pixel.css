@@ -294,3 +294,14 @@ h1, .place-head h1, .nav-brand b { font-size-adjust: none; }
 .coach-actions { display: flex; justify-content: space-between; gap: 8px; }
 .coach-target { outline: 3px solid var(--lantern) !important; outline-offset: 3px; }
 
+
+/* Un objet ramassé : son nom monte au-dessus du héros, dans la couleur de sa rareté */
+.fx-num.loot { white-space: nowrap; color: #fff4dc; text-shadow: 2px 2px 0 #120904; --fx-glow: transparent; }
+.fx-num.loot.r-uncommon { color: #8ae070; } .fx-num.loot.r-rare { color: #6ab8ff; } .fx-num.loot.r-epic { color: #d08cff; } .fx-num.loot.r-legendary { color: #ffb040; }
+#loot-feed { position: fixed; right: 16px; top: 140px; align-items: flex-end; z-index: 900; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+.loot-toast { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--ink-5); color: var(--text); border: 3px solid var(--line);
+  border-left: 6px solid var(--rar-ink, #5a5a5a); box-shadow: 4px 4px 0 rgba(20, 8, 2, 0.6); font-size: 0.92rem; transition: opacity 0.4s; }
+.loot-toast b { color: var(--rar-ink, var(--text)); }
+.loot-toast small { color: var(--muted); }
+.loot-toast.out { opacity: 0; }
+@media (max-width: 860px) { #loot-feed { top: 8px; right: 8px; left: 8px; align-items: stretch; } }

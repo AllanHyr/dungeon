@@ -26,6 +26,7 @@ import { fileURLToPath } from 'node:url';
 import { rollFarmItem, rollChoices } from '../src/core/farm.js';
 import { applyPrefs, emptyProfile } from '../src/net/common.js';
 import { rollItem, rollShopItem } from '../src/core/loot.js';
+import { queueLoot } from '../src/core/flow.js';
 import { makeMonster, spawnMonsters, planMonsters, endCombat } from '../src/core/combat.js';
 import { nextFloat } from '../src/core/rng.js';
 import { reviveUnit, applyDamage } from '../src/core/units.js';
@@ -4116,6 +4117,19 @@ test('les effets sur la durée ont une NATURE (pour leur animation) et chacun an
   const beats = planBeats([{ type: 'turn', unitId: 'm1' }, { type: 'tick', target: 'm1', dot: 'burn' }, { type: 'damage', target: 'm1', amount: 5 }, { type: 'tick', target: 'm1', dot: 'poison' }, { type: 'damage', target: 'm1', amount: 3 }],
     { units: { m1: { id: 'm1', kind: 'monster', hp: 50, max: 50, shield: 0, alive: true, statuses: [] } }, combat: true }, null, content);
   eq(beats.map((b) => `${b.type}:${b.cause}:${b.steps.length}`), ['tick:burn:1', 'tick:poison:1'], 'un temps fort par effet, chacun avec sa nature');
+});
+test('le butin va directement dans le sac du héros qui le trouve (pas de question) ; loot.ask = true rétablit la question', () => {
+  const party = makeParty(content, ['guerrier', 'pretre'], 1, 'none', 3);
+  const st = createRun(content, { tranche: 1, mode: 'tranche' }, party, 5);
+  const finder = st.players[st.spotlight];
+  queueLoot(st, [{ uid: 'L1', id: 'dague_os' }]);
+  assert(finder.bag.some((i) => i.uid === 'L1') && !st.lootQueue.length, 'dans le sac, sans file d\'attente');
+  assert(st.events.some((e) => e.type === 'loot' && e.target === finder.id && e.itemId === 'dague_os'), 'un événement « loot » pour l\'écran');
+  content.rules.loot.ask = true;
+  try {
+    queueLoot(st, [{ uid: 'L2', id: 'dague_os' }]);
+    eq(st.lootQueue.map((i) => i.uid), ['L2'], 'avec ask : la question revient');
+  } finally { content.rules.loot.ask = false; }
 });
 test('« Équiper le meilleur » : seulement ce qui est clairement meilleur (rien en baisse), les emplacements vides, jamais un objet trop haut', () => {
   const ch = createCharacter(content, { id: 'q', name: 'Q', classId: 'guerrier' });

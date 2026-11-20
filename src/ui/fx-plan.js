@@ -417,10 +417,11 @@ export function planBeats(events, snapshot, after, content) {
       case 'resource':
       case 'status':
       case 'shieldBreak':
+      case 'loot':
       case 'move': {
         if (!cur) {
           const u = ledger.get(ev.target);
-          const cause = ev.type === 'heal' ? 'hot'
+          const cause = ev.type === 'loot' ? 'loot' : ev.type === 'heal' ? 'hot'
             : u?.statuses?.includes('poison') ? 'poison' : u?.statuses?.includes('dot') ? 'bleed' : 'hurt';
           cur = { type: 'tick', unitId: turnOf || ev.target, cause, steps: [] };
         }

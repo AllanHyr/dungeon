@@ -11,6 +11,7 @@
 
 import { h, mount } from '../dom.js';
 import { icon } from '../icons.js';
+import { itemIconName } from '../pixel-icons.js';
 import { app, toast, openModal, closeModal, confirmBox } from '../state.js';
 import { redraw, lockedCharIds, characterAction } from '../controller.js';
 import { portrait, xpBar, previewStats, progressBar } from '../components.js';
@@ -241,7 +242,7 @@ export function forgeTab(ch, api, state, locked) {
     const chk = canUpgrade(content, ch, inst);
     const maxed = (inst.plus || 0) >= f.upgradeMax;
     return h('div', { class: `forge-row r-${rarity.id}`, style: { '--rar': rarity.color }, dataset: { uid: inst.uid } },
-      h('div', { class: 'bag-icon' }, icon(SLOT_ICON[where] || def.slot, 22)),
+      h('div', { class: 'bag-icon' }, icon(itemIconName(def), 22)),
       h('div', { class: 'bag-main' },
         h('div', { class: 'bag-line1' }, h('b', { class: 'bag-name' }, itemName(def)), h('span', { class: 'rarity-pill' }, rarity.name),
           h('span', { class: 'bag-meta' }, where === 'bag' ? 'dans le sac' : `porté · ${content.slotNames[where]}`)),
@@ -268,7 +269,7 @@ export function forgeTab(ch, api, state, locked) {
     const rarity = rarityOf(content, x.def);
     const can = !locked && !x.locked && shards >= x.cost && !full;
     return h('div', { class: `forge-row r-${rarity.id}`, style: { '--rar': rarity.color }, dataset: { craft: x.id } },
-      h('div', { class: 'bag-icon' }, icon(x.def.slot, 22)),
+      h('div', { class: 'bag-icon' }, icon(itemIconName(x.def), 22)),
       h('div', { class: 'bag-main' },
         h('div', { class: 'bag-line1' }, h('b', { class: 'bag-name' }, x.def.name), h('span', { class: 'rarity-pill' }, rarity.name), h('span', { class: 'bag-meta' }, `niveau ${x.def.level}`)),
         statPills(content, x.def),

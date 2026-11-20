@@ -82,7 +82,7 @@ function colorOf(c) {
   return rampOf(r)[Number(t)] ?? c;
 }
 
-function inPoly(x, y, pts) {
+export function inPoly(x, y, pts) {
   let c = false;
   for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
     const [xi, yi] = pts[i], [xj, yj] = pts[j];
@@ -92,7 +92,7 @@ function inPoly(x, y, pts) {
 }
 
 /** Les pixels d'un trait (algorithme de Bresenham), en suivant tous les points donnés. */
-function linePixels(pts, w = 1) {
+export function linePixels(pts, w = 1) {
   const out = [];
   for (let k = 0; k + 1 < pts.length; k++) {
     let [x0, y0] = pts[k].map(Math.round); const [x1, y1] = pts[k + 1].map(Math.round);

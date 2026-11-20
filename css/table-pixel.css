@@ -304,6 +304,11 @@ h1, .place-head h1, .nav-brand b { font-size-adjust: none; }
 .loot-toast b { color: var(--rar-ink, var(--text)); }
 .loot-toast small { color: var(--muted); }
 .loot-toast.out { opacity: 0; }
+/* À plusieurs : mon butin en avant, celui des autres en discret */
+.loot-toast.mine { border-top-color: var(--lantern); border-right-color: var(--lantern); border-bottom-color: var(--lantern); font-size: 1rem; padding: 8px 14px; }
+.loot-toast .loot-mine { font-style: normal; font-family: var(--serif); color: var(--ember-text, var(--lantern-ink)); margin-right: 6px; text-transform: uppercase; letter-spacing: .04em; }
+.loot-toast.other { opacity: 0.72; font-size: 0.78rem; padding: 3px 9px; border-width: 2px; border-left-width: 4px; box-shadow: 2px 2px 0 rgba(20, 8, 2, 0.45); }
+.loot-toast.other.out { opacity: 0; }
 @media (max-width: 860px) { #loot-feed { top: 8px; right: 8px; left: 8px; align-items: stretch; } }
 
 /* En-tête de partie : les réglages (animations, son) ont une étiquette courte, cachée sur téléphone */

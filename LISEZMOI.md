@@ -155,6 +155,12 @@ Le **Stasis** est la fin de partie : seul, ses trois niveaux de difficulté rapp
 Un légendaire ne se **forge** qu'après avoir terminé son donjon en Stasis **à plusieurs**. Tout est dans `data/modes.json`
 (`maxRarity`, `soloMaxRarity`, `legendaryMinPlayers`, `rarityWeights` : l'épique est 4 fois plus rare hors Stasis).
 Le butin d'un donjon suit la taille du groupe (`partyScaling` dans `data/rules.json` : `loot`, `bossDrops`) : chaque héros ramasse à peu près autant, seul ou à plusieurs.
+Chaque objet ramassé s'annonce dans le **fil du butin** (en haut à droite) ; à plusieurs, ce que **tes** héros ramassent est mis en avant
+(« Pour toi », reste plus longtemps) et le butin des autres passe en discret. Au **niveau maximum** (`levelCap`), l'écran de fin affiche
+« Niveau max » au lieu de l'XP gagnée : la suite, ce sont les objets, la forge et le Stasis.
+
+Le bouton **Réglages** (accueil et pied des lieux) regroupe le son et le volume, le **minuteur de tour en solo** (60 s ou sans limite)
+et **« Revoir les conseils »** (le guide du premier combat et les bulles des cases repartent de zéro).
 
 Le jeu distingue toujours le **niveau réel** (sauvegardé) du **niveau effectif** (celui utilisé dans le donjon :
 en Tranche et Stasis, c'est `min(niveau réel, tranche)`).

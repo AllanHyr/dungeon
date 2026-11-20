@@ -325,3 +325,15 @@ h1, .place-head h1, .nav-brand b { font-size-adjust: none; }
 /* Les noms des sorts sous leurs cases : un peu plus de place (trois lignes, plus large) pour ne plus les couper */
 .slot-label { max-width: calc(var(--slot-w) + 26px); -webkit-line-clamp: 3; line-height: 1.12; }
 @media (max-width: 860px) { .slot-label { -webkit-line-clamp: 2; } }
+
+/* ---------------- Les LONGS textes dans une police lisible ----------------
+   Le pixel reste pour les titres, les noms, les boutons et les étiquettes ; les paragraphes qu'on lit vraiment (règles, descriptions de sorts,
+   de classes, de donjons, d'objets, conseils) passent en Alegreya Sans, plus reposante, un peu plus grande. */
+.help, .help p, .help li, .tc-desc, .mode-desc, .branch-desc, .welcome-lead, .spec-desc, .sd2-desc, .sd-desc, .sc-desc, .mo-desc, .item-desc, .guide-desc,
+.gear-desc, .cs-desc, .confirm-text, .coach-text, .camp-next-desc, .tranche-desc, .todo-body p, .place-head p, .dungeon-brief p, .gm-trait span {
+  font-family: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+  font-size-adjust: none;
+  font-size: 1.02em;
+  letter-spacing: 0;
+  line-height: 1.38;
+}

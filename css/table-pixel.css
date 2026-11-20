@@ -347,3 +347,6 @@ h1, .place-head h1, .nav-brand b { font-size-adjust: none; }
 
 /* Réglages : la rangée « Revoir les conseils » */
 .lab-tips { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* Écran de fin : héros au niveau maximum (l’XP ne s’accumule plus) */
+.xp-maxed { white-space: nowrap; }

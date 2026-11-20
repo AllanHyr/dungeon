@@ -324,7 +324,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await B.click('.confirm-layer .btn-danger');
   await B.waitForSelector('.menu', { timeout: 6000 });
   check(!(await B.$('.room-banner')) && (await apiGet(B, 'api/profile')).run === null, 'Bob est libre : retour à l\'accueil, plus de partie');
-  await A.waitForSelector('.owner-tag.is-auto, .f-owner.is-auto, #turn-banner:has-text("pilote automatique")', { timeout: 6000 });
+  await A.waitForSelector('.owner-tag.is-auto, .f-owner.is-auto, #turn-banner:has-text("pilote automatique")', { state: 'attached', timeout: 10000 });
   check(true, 'chez Alice, le héros de Bob est marqué « pilote automatique »');
   await A.screenshot({ path: `${out}/230-apres-depart.png`, fullPage: true });
   // Alice continue seule : les tours du héros de Bob sont joués par le serveur

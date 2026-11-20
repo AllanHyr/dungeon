@@ -102,11 +102,11 @@ export function sheetBody(charId, state, api, opts = {}) {
             h('span', { class: `role-tag role-${cls.role}` }, ROLE_FR[cls.role] || cls.role),
             h('span', { class: 'hero-level' }, `niveau ${ch.level}`)),
           xpBar(ch)),
-        h('label', { class: 'hero-view', title: "Dans un donjon de tranche, ton niveau et tes objets sont limités à la tranche : choisis ici ce que tu verrais." },
-          h('span', { class: 'muted small' }, 'Stats vues en'),
+        h('label', { class: 'hero-view', title: "Dans un donjon, ton niveau et tes objets sont ramenés au niveau du donjon (un héros niveau 8 compte niveau 4 dans un donjon de niveau 4) : choisis ici ce que tu verrais." },
+          h('span', { class: 'muted small' }, 'Voir mes stats'),
           h('select', { id: 'sheet-view', class: 'input small', onChange: (e) => { state.view = e.target.value; api.refresh(); } },
-            h('option', { value: 'basic', selected: state.view === 'basic' }, 'mode Basic'),
-            availableTranches(content).map((t) => h('option', { value: t.id, selected: String(state.view) === String(t.id) }, `Tranche ${t.id} (niv. ${Math.min(ch.level, t.id)})`)))),
+            h('option', { value: 'basic', selected: state.view === 'basic' }, 'telles quelles'),
+            availableTranches(content).map((t) => h('option', { value: t.id, selected: String(state.view) === String(t.id) }, `en donjon de niveau ${t.id} (compte niv. ${Math.min(ch.level, t.id)})`)))),
         h('div', { class: 'stat-strip' },
           STAT_ROWS.map(({ key, label, ic, tip }) => {
             const bonus = Math.round((stats[key] - bare[key]) * 10) / 10;

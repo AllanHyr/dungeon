@@ -321,3 +321,7 @@ h1, .place-head h1, .nav-brand b { font-size-adjust: none; }
 .blow-target { color: var(--violet); }
 .lobby-code { background: var(--ink-5); border: 2px dashed var(--line); color: var(--brass-3); box-shadow: 3px 3px 0 rgba(20, 8, 2, 0.5); }
 .lobby-code:hover { background: #fffaf0; }
+
+/* Les noms des sorts sous leurs cases : un peu plus de place (trois lignes, plus large) pour ne plus les couper */
+.slot-label { max-width: calc(var(--slot-w) + 26px); -webkit-line-clamp: 3; line-height: 1.12; }
+@media (max-width: 860px) { .slot-label { -webkit-line-clamp: 2; } }

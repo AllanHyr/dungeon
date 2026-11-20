@@ -19,8 +19,8 @@ Les règles : **aucun arrondi**, **aucune ombre floue**, **aucun dégradé doux*
 Les polices (Google Fonts) : **DotGothic16** pour le texte, **Jersey 10** pour les noms, titres de cartes et boutons (le gras), **Press Start 2P**
 pour les grands titres ; `font-size-adjust` les met à la même hauteur. Le texte posé directement sur le bois est clair, avec une ombre d'un pixel.
 
-* **Revenir à « Lanterne »** : retirer la ligne `css/table-pixel.css` de `index.html` et de `artifact.html` (les anciens portraits peints restent
-  dans `src/ui/art/heroes.js` et `monsters-*.js` : il suffit de ne plus préférer les portraits pixel dans `src/ui/art.js`).
+* **Revenir à « Lanterne »** : retirer la ligne `css/table-pixel.css` de `index.html` et de `artifact.html` (les couleurs et la mise en page reviennent ;
+  les illustrations, elles, restent en pixel art : les anciens dessins peints ont été retirés, on les retrouve dans l'historique git si besoin).
 * **Les décors et vignettes** (`src/ui/art/pixel-scenes.js`) sont peints sur une petite toile de pixels avec quelques outils : dégradé tramé
   (`vgrad`), rectangle, ellipse, polygone, trait, halo de lumière par paliers (`glow`), mur de briques (`bricks`). Ils restent sombres et peu
   contrastés : ils passent derrière les combattants. `sceneCss` et `vignetteSvg` (dans `art.js`) prennent la version pixel d'abord.
@@ -313,7 +313,7 @@ d'affilée ne saturent jamais) → écrêtage doux, avec une petite salle de **r
 ## 4 ter. Les illustrations (`src/ui/art.js`, `src/ui/art/`)
 
 **Portraits en pixel art (« Table pixel »)** : `heroSvg` et `monsterSvg` (dans `art.js`) prennent d'abord le portrait pixel (`art/pixel-heroes.js`,
-`art/pixel-monsters.js`), et ne retombent sur l'ancien dessin peint que s'il n'y en a pas. Un portrait pixel se décrit avec quelques formes :
+`art/pixel-monsters.js`). Un portrait pixel se décrit avec quelques formes :
 
 ```js
 guerrier: {
@@ -332,29 +332,18 @@ Les rampes de couleurs (4 tons chacune : `skin`, `steel`, `gold`, `red`, `leaf`,
 chaque forme (une ellipse comme une boule, une forme plate avec un liseré clair en haut à gauche), pose les petites ombres portées et le contour
 sombre. Le visage est centré en x = 16 : les yeux vont par paires symétriques (12-13 / 18-19). Pour voir le résultat : `tools/galerie.html`.
 
-**Les dessins peints (« Lanterne »)**, gardés en secours :
-
-Les personnages, les monstres, les décors et les cases sont **dessinés en code** (SVG de 100 × 100) : aucune image à charger, ça passe à toutes les
-tailles, et la lumière vient toujours d'en haut à gauche (la lanterne), avec un reflet chaud sur les bords et un voile sombre qui unifie l'ensemble.
-
-| Quoi | Où | Combien |
-| --- | --- | --- |
-| Portraits des **classes** | `art/heroes.js` | 4 (Berserker, Veilleur, Druide, Duelliste) |
-| Portraits des **monstres** | `art/monsters-caves.js` · `-crypt.js` · `-depths.js` | 20 (un par monstre, mannequins compris) |
-| **Décors** du champ de bataille | `art/scenes.js` (`SCENES`) | 5 : caves, crypte, profondeurs, terriers (farm), salle d'entraînement |
-| **Vignettes** des cases | `art/scenes.js` (`VIGNETTES`) | 8 : embuscade, trésor, piège, 2 fontaines, coup bas, marchand, boss |
+**Les anciens dessins peints (« Lanterne »)** ont été retirés : tout est en pixel art.
 
 * Le **décor** suit la profondeur du donjon (tranche ≥ 8 : profondeurs, ≥ 4 : crypte, sinon caves), la zone de farm, ou la salle d'entraînement. Le JSON peut en imposer un :
   champ `scene` d'une tranche (`data/tranches.json`) ou d'une zone de farm (`data/farm.json`).
 * La **vignette** d'une case s'affiche en bandeau sur sa carte (coffre, piège, fontaine...) ; l'écran « Avancer » montre le couloir de la tranche.
 * **La galerie** : ouvre `tools/galerie.html` (avec `node serve.mjs`, adresse `/tools/galerie.html`) pour voir tous les dessins à plusieurs tailles ;
-  `?only=berserker` n'en montre qu'un, en grand.
+  `?only=guerrier` n'en montre qu'un, en grand.
 * **Remplacer un dessin par une vraie image** (PNG, JPG, WebP, SVG...) : ajouter `"art": "img/berserker.png"` à une classe, à un monstre ou à un type de case
   (`data/tiles.json`), ou `"scene": "img/mes-caves.jpg"` à une tranche ou à une zone de farm. Le fichier se pose où l'on veut (par exemple un dossier `img/`).
-  Les portraits sont rognés en rond : prévoir un sujet centré, carré.
-* **Ajouter un portrait** : une fonction dans le fichier de la bonne série, qui prend le préfixe unique `u` et renvoie `wrap(u, { defs, inner, bg, at })`
-  (voir `art/kit.js` : dégradés `lin` / `rad`, halos `glow`). Puis l'inscrire dans la table de la série. Un monstre ou une classe sans portrait garde
-  son icône dans le médaillon : rien ne casse. Le test `tests/run-tests.mjs` vérifie que chaque dessin est bien formé et que chaque dégradé cité existe.
+  Les portraits sont carrés : prévoir un sujet centré.
+* **Ajouter un portrait** : une entrée dans `art/pixel-heroes.js` ou `art/pixel-monsters.js` (formes et détails, voir plus haut). Un monstre ou une classe
+  sans portrait garde son icône dans le médaillon : rien ne casse. Le test `tests/run-tests.mjs` vérifie que chaque dessin est bien formé.
 
 ---
 

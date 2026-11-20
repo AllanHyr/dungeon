@@ -1,37 +1,27 @@
 // ============================================================
-//  art.js — Les illustrations du jeu (dessinées en code : aucun fichier image à charger)
+//  art.js — Les illustrations du jeu, en pixel art (dessinées en code : aucun fichier image à charger)
 // ============================================================
-// Quatre portraits de classes, un portrait par monstre, des décors de donjon et des vignettes de cases, tous en SVG.
+// Un portrait par classe et par monstre (art/pixel-heroes.js, art/pixel-monsters.js), des décors de donjon et des vignettes de cases
+// (art/pixel-scenes.js), tous en SVG faits de carrés de couleur. Une classe ou un monstre sans portrait garde son icône.
 // Pour remplacer un dessin par une vraie image : voir « art » dans docs/ECRIRE-UNE-CLASSE.md (champ `art` d'une classe ou d'un monstre).
 
-import { uid } from './art/kit.js';
-import { HEROES } from './art/heroes.js';
-import { MONSTERS_CAVES } from './art/monsters-caves.js';
-import { MONSTERS_CRYPT } from './art/monsters-crypt.js';
-import { MONSTERS_DEPTHS } from './art/monsters-depths.js';
-import { MONSTERS_DONJONS } from './art/monsters-donjons.js';
-import { SCENES as SCENE_DRAWINGS, VIGNETTES as VIGNETTE_DRAWINGS } from './art/scenes.js';
 import { PIXEL_HEROES } from './art/pixel-heroes.js';
 import { PIXEL_MONSTERS } from './art/pixel-monsters.js';
 import { PIXEL_SCENES, PIXEL_VIGNETTES } from './art/pixel-scenes.js';
 
-const MONSTERS = { ...MONSTERS_CAVES, ...MONSTERS_CRYPT, ...MONSTERS_DEPTHS, ...MONSTERS_DONJONS };
-const SCENES = SCENE_DRAWINGS;
-const VIGNETTES = VIGNETTE_DRAWINGS;
+export const heroIds = () => Object.keys(PIXEL_HEROES);
+export const monsterIds = () => Object.keys(PIXEL_MONSTERS);
+export const sceneIds = () => Object.keys(PIXEL_SCENES);
+export const vignetteIds = () => Object.keys(PIXEL_VIGNETTES);
 
-export const heroIds = () => [...new Set([...Object.keys(PIXEL_HEROES), ...Object.keys(HEROES)])];
-export const monsterIds = () => [...new Set([...Object.keys(PIXEL_MONSTERS), ...Object.keys(MONSTERS)])];
-export const sceneIds = () => [...new Set([...Object.keys(PIXEL_SCENES), ...Object.keys(SCENES)])];
-export const vignetteIds = () => [...new Set([...Object.keys(PIXEL_VIGNETTES), ...Object.keys(VIGNETTES)])];
-
-// Les portraits : en pixel art (direction « Table pixel », art/pixel-*.js) ; l'ancien dessin peint ne sert plus que de secours.
+// (chaque dessin n'est calculé qu'une fois)
 const pixelCache = new Map();
 const cached = (key, draw) => { if (!pixelCache.has(key)) pixelCache.set(key, draw()); return pixelCache.get(key); };
 
 /** Le dessin SVG (en texte) d'une classe de héros, ou null s'il n'y en a pas. */
-export const heroSvg = (classId) => (PIXEL_HEROES[classId] ? cached('h:' + classId, PIXEL_HEROES[classId]) : HEROES[classId] ? HEROES[classId](uid()) : null);
-export const monsterSvg = (monsterId) => (PIXEL_MONSTERS[monsterId] ? cached('m:' + monsterId, PIXEL_MONSTERS[monsterId]) : MONSTERS[monsterId] ? MONSTERS[monsterId](uid()) : null);
-export const vignetteSvg = (id) => (PIXEL_VIGNETTES[id] ? cached('v:' + id, PIXEL_VIGNETTES[id]) : VIGNETTES[id] ? VIGNETTES[id](uid()) : null);
+export const heroSvg = (classId) => (PIXEL_HEROES[classId] ? cached('h:' + classId, PIXEL_HEROES[classId]) : null);
+export const monsterSvg = (monsterId) => (PIXEL_MONSTERS[monsterId] ? cached('m:' + monsterId, PIXEL_MONSTERS[monsterId]) : null);
+export const vignetteSvg = (id) => (PIXEL_VIGNETTES[id] ? cached('v:' + id, PIXEL_VIGNETTES[id]) : null);
 const sceneCache = new Map();
 /**
  * Un décor, sous la forme d'une valeur CSS `url("data:image/svg+xml,...")` à poser en background-image.
@@ -41,7 +31,7 @@ export function sceneCss(id) {
   if (!id) return 'none';
   if (/[/.]/.test(id)) return `url("${String(id).replace(/"/g, '%22')}")`;
   if (!sceneCache.has(id)) {
-    const svg = PIXEL_SCENES[id] ? PIXEL_SCENES[id]() : SCENES[id]?.(uid()); // (le décor en pixel art d'abord)
+    const svg = PIXEL_SCENES[id] ? PIXEL_SCENES[id]() : null;
     sceneCache.set(id, svg ? `url("data:image/svg+xml,${encodeURIComponent(svg)}")` : 'none');
   }
   return sceneCache.get(id);

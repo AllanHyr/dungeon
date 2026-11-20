@@ -582,6 +582,7 @@ export function buildContent(raw) {
   for (const key of ['basic', 'tranche', 'stasis']) if (!c.modes[key]) fail(`le mode "${key}" est manquant.`);
   for (const [key, m] of Object.entries(c.modes)) {
     if (m.maxRarity && c.rarityIndex[m.maxRarity] === undefined) fail(`mode "${key}" : maxRarity "${m.maxRarity}" inconnue.`);
+    if (m.soloMaxRarity && c.rarityIndex[m.soloMaxRarity] === undefined) fail(`mode "${key}" : soloMaxRarity "${m.soloMaxRarity}" inconnue.`);
     for (const r of Object.keys(m.rarityWeights || {})) if (c.rarityIndex[r] === undefined) fail(`mode "${key}" : rareté "${r}" inconnue dans rarityWeights.`);
   }
 
@@ -607,7 +608,10 @@ export function getModeParams(content, setup) {
   if (!mode) fail(`mode "${setup.mode}" inconnu.`);
   if (setup.mode === 'stasis') {
     const lvl = mode.levels.find((l) => l.level === setup.stasisLevel) || mode.levels[0];
-    return { restrict: mode.restrict, maxRarity: mode.maxRarity, rarityWeights: mode.rarityWeights, minPlayers: mode.minPlayers, ...lvl };
+    // Seul (moins de legendaryMinPlayers joueurs différents), le butin s'arrête à soloMaxRarity : les légendaires se gagnent à plusieurs.
+    const group = (setup.players || 1) >= (mode.legendaryMinPlayers || 1);
+    const maxRarity = !group && mode.soloMaxRarity ? mode.soloMaxRarity : mode.maxRarity;
+    return { restrict: mode.restrict, maxRarity, rarityWeights: mode.rarityWeights, minPlayers: mode.minPlayers, group, ...lvl };
   }
   const { levels, ...rest } = mode;
   return { ...rest };

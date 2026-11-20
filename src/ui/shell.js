@@ -2,6 +2,7 @@
 //  shell.js — Démarre l'interface et choisit l'écran à afficher
 // ============================================================
 
+import { combatCoach } from './coach.js';
 import { clear } from './dom.js';
 import { app, toast } from './state.js';
 import { renderMenu } from './screens/menu.js';
@@ -39,6 +40,7 @@ export function startApp(root, content, gateway, { screen = 'menu' } = {}) {
     const keep = el && el.id && /^(INPUT|TEXTAREA)$/.test(el.tagName) && root.contains(el) ? { id: el.id, start: el.selectionStart, end: el.selectionEnd } : null;
     clear(root);
     (SCREENS[app.screen] || renderMenu)(root);
+    if (app.screen === 'run') combatCoach(root); // (le premier combat guidé, une seule fois)
     document.title = titleFor();
     const again = keep && document.getElementById(keep.id);
     if (again) {

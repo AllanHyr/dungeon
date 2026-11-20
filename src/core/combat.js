@@ -365,14 +365,22 @@ export function endCombat(state) {
   }
 
   const boost = state.params.rarityBoost;
+  // Le butin suit la taille du groupe (rules.json > partyScaling : loot = multiplicateur des chances de butin, bossDrops = objets du boss en plus) :
+  // sans cela, à trois, chacun ramasserait trois fois moins pour une partie plus longue.
+  const party = state.content.rules.partyScaling[String(state.players.length)] || state.content.rules.partyScaling['4'];
   if (c.boss) {
     state.bossDefeated = true;
     const items = [];
     // Le boss lâche d'abord un objet de la TABLE DU DONJON (s'il en a une), puis du butin ordinaire.
-    for (let i = 0; i < (tr.bossDrops || 1); i++) items.push(rollItem(state, { boost: boost * 1.5, minRarity: 'uncommon', exclusiveOnly: i === 0 }));
+    const drops = (tr.bossDrops || 1) + (party.bossDrops || 0);
+    for (let i = 0; i < drops; i++) items.push(rollItem(state, { boost: boost * 1.5, minRarity: 'uncommon', exclusiveOnly: i === 0 }));
     queueLoot(state, items);
-  } else if (nextFloat(state) < (tr.lootChance ?? 0.3) * state.params.dropChance) {
-    queueLoot(state, [rollItem(state, { boost })]);
+  } else {
+    // (une chance au-delà de 100 % donne un objet sûr, puis une chance d'en avoir un second)
+    let chance = (tr.lootChance ?? 0.3) * state.params.dropChance * (party.loot ?? 1);
+    const items = [];
+    while (chance > 0) { if (chance >= 1 || nextFloat(state) < chance) items.push(rollItem(state, { boost })); chance -= 1; }
+    if (items.length) queueLoot(state, items);
   }
   if (tile) finishTile(state);
 }

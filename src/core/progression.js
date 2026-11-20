@@ -46,6 +46,7 @@ export function newCharacterStats() {
     expeditions: 0, // expéditions terminées
     dungeons: {}, // donjons terminés, un par un : { "gouffre_aux_ogres": 2 }
     stasisClears: {}, // ... dont en Stasis (à plusieurs) : la forge des légendaires en dépend
+    stasisSoloClears: {}, // ... et en Stasis joué seul (sans légendaire)
     bestiary: {}, // monstres vaincus : { "rat_geant": 14 }
     found: {}, // objets exclusifs déjà rapportés : { "massue_de_gromm": true }
     clears: {} // donjons terminés : { "1": { total: 3, group: 1 } } (group = avec au moins 2 personnages)

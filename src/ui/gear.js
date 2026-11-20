@@ -10,7 +10,7 @@ import { h, mount } from './dom.js';
 import { icon } from './icons.js';
 import { itemIconName } from './pixel-icons.js';
 import { EQUIP_SLOTS } from '../core/content.js';
-import { canEquip, slotsFor, planEquip, twoHandedWorn, rarityOf, itemSummary, gearLevel, itemView, salvageValue } from '../core/index.js';
+import { canEquip, slotsFor, planEquip, twoHandedWorn, rarityOf, itemSummary, gearLevel, itemView, salvageValue, autoEquip } from '../core/index.js';
 import { statEntries, compareItems, typeLabel } from './format.js';
 
 /** L'icône de chaque emplacement. */
@@ -261,9 +261,19 @@ export function equipmentView({ content, holder, view, tranche = null, actions, 
     .map((type) => ({ type, list: shown.filter((i) => defOf(content, i).slot === type) }))
     .filter((s) => s.list.length);
 
+  // « Équiper le meilleur » : on essaie sur une copie pour savoir combien d'objets seraient équipés (0 : bouton grisé)
+  const better = actions.autoEquip ? autoEquip(content, { equipment: { ...equipment }, bag: [...holder.bag], realLevel: holder.realLevel, cursedUid: holder.cursedUid }) : [];
+  const autoBtn = actions.autoEquip
+    ? h('button', {
+        type: 'button', class: 'btn btn-small btn-primary auto-equip', disabled: actions.locked || !better.length,
+        title: actions.locked ? actions.lockedReason : better.length ? `Équipe ce qui est clairement meilleur (aucune caractéristique en baisse) : ${better.map((i) => itemName(defOf(content, i))).join(', ')}` : 'Rien dans le sac n\'est clairement meilleur que ce que tu portes.',
+        onClick: () => actions.autoEquip()
+      }, icon('up', 14), better.length ? `Équiper le meilleur (${better.length})` : 'Équiper le meilleur')
+    : null;
   const bag = h('section', { class: 'equip-bag' },
     h('div', { class: 'sec-head' },
       h('h4', { class: 'sec-title' }, `Sac (${items.length})`),
+      autoBtn,
       view.sel
         ? h('button', { type: 'button', class: 'chip-btn on', title: 'Revoir tout le sac', onClick: () => { view.sel = null; rerender(); } }, `Pour : ${content.slotNames[view.sel]} ✕`)
         : h('div', { class: 'filters', role: 'group', 'aria-label': 'Filtrer le sac' },

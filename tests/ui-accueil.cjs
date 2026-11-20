@@ -101,8 +101,10 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
 
   console.log('\n● La difficulté');
   check((await page.$$('.mode-opt')).length === 3 && !!(await page.$('.mode-opt.on:has-text("Tranche")')), 'trois positions, « Tranche » par défaut');
-  check(await page.$eval('.mode-opt[data-mode="stasis"]', (b) => b.disabled), 'hors ligne, le Stasis est grisé (il se joue à plusieurs)');
-  check(/Stasis.*plusieurs/.test(await page.textContent('.mode-multi-note')), 'une note explique pourquoi');
+  check(!(await page.$eval('.mode-opt[data-mode="stasis"]', (b) => b.disabled)), 'hors ligne, le Stasis se joue aussi (seul)');
+  await page.click('.mode-opt[data-mode="stasis"]');
+  check(/épique.*légendaires.*plusieurs/.test(await page.textContent('.mode-multi-note')), 'une note explique que, seul, le butin s\'arrête à l\'épique');
+  await page.click('.mode-opt[data-mode="tranche"]');
   await page.click('.mode-opt:has-text("Basic")');
   check(!(await page.$('.stasis-levels')) && /restriction/i.test(await page.textContent('.mode-desc')), 'Basic explique ce qu\'il change');
   await page.click('.mode-opt:has-text("Tranche")');

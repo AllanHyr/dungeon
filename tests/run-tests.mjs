@@ -4078,7 +4078,7 @@ test('trois zones ; chacune exige un niveau ; plus haut = plus d\'éclats et des
   const s = createFarm(content, hero, { zoneId: 'fosses', seed: 3 });
   assert(content.farm.zones.fosses.monsterPool.includes(s.combat.monsters[0].defId), 'des ogres');
   winWave(s);
-  eq(s.farm.shards, 3, '3 éclats par vague aux Fosses');
+  eq(s.farm.shards, z8.rewards.shardsPerWave, 'les éclats par vague des Fosses viennent de farm.json');
   dispatch(s, { type: 'FARM_STOP' });
   assert(s.result.choices.every((it) => content.items[it.id].level <= 8));
   // la force des monstres est réglable par zone (waves.scale)
@@ -4096,17 +4096,32 @@ console.log('\n● Raretés par mode ; le Stasis à plusieurs');
 test('hors Stasis : jamais de légendaire, l\'épique très rare ; en Stasis, le légendaire tombe (y compris les exclusifs)', () => {
   const party = makeParty(content, ['guerrier', 'pretre', 'assassin'], 8, 'none', 1);
   const count = (mode) => {
-    const st = createRun(content, { tranche: 8, dungeon: 'gouffre_aux_ogres', mode, stasisLevel: 3 }, party, 11);
+    const st = createRun(content, { tranche: 8, dungeon: 'gouffre_aux_ogres', mode, stasisLevel: 3, players: mode === 'stasis-solo' ? 1 : 2, ...(mode === 'stasis-solo' ? { mode: 'stasis' } : {}) }, party, 11);
     const seen = {};
     for (let i = 0; i < 3000; i++) { const it = rollItem(st, { boost: 1 }); seen[content.items[it.id].rarity] = (seen[content.items[it.id].rarity] || 0) + 1; }
     for (let i = 0; i < 300; i++) { const it = rollItem(st, { boost: 1.5, exclusiveOnly: true, minRarity: 'uncommon' }); seen[content.items[it.id].rarity] = (seen[content.items[it.id].rarity] || 0) + 1; }
     return seen;
   };
-  const normal = count('tranche'), basic = count('basic'), stasis = count('stasis');
+  const normal = count('tranche'), basic = count('basic'), stasis = count('stasis'), solo = count('stasis-solo');
   assert(!normal.legendary && !basic.legendary, `jamais de légendaire hors Stasis : ${JSON.stringify(normal)}`);
   assert(normal.epic > 0 && normal.epic < 3300 * 0.03, `épique possible mais très rare : ${normal.epic}`);
   assert(stasis.legendary > 0, `légendaire en Stasis : ${JSON.stringify(stasis)}`);
-  eq([content.modes.stasis.minPlayers, content.modes.tranche.maxRarity, content.modes.stasis.maxRarity], [2, 'epic', 'legendary']);
+  assert(!solo.legendary && solo.epic > normal.epic, `Stasis joué seul : jusqu'à l'épique, plus souvent qu'en Tranche : ${JSON.stringify(solo)}`);
+  eq([content.modes.stasis.minPlayers, content.modes.tranche.maxRarity, content.modes.stasis.maxRarity, content.modes.stasis.soloMaxRarity], [undefined, 'epic', 'legendary', 'epic']);
+});
+test('« Équiper le meilleur » : seulement ce qui est clairement meilleur (rien en baisse), les emplacements vides, jamais un objet trop haut', () => {
+  const ch = createCharacter(content, { id: 'q', name: 'Q', classId: 'guerrier' });
+  const highHead = Object.values(content.items).find((x) => x.slot === 'head' && x.level >= 8).id;
+  ch.equipment.head = { uid: 'h0', id: 'capuchon_de_cuir_cloue' };
+  ch.inventory = [{ uid: 'h1', id: 'heaume_de_fer_noirci' }, { uid: 'h2', id: 'heaume_du_fossoyeur' }, { uid: 'h3', id: 'heaume_de_l_aube' },
+    { uid: 'r1', id: 'anneau_sang' }, { uid: 'r2', id: 'anneau_de_jade' }, { uid: 'hx', id: highHead }, { uid: 'p1', id: 'potion_mineure' }];
+  const r = applyCharacterAction(content, [ch], { type: 'CHAR_AUTO_EQUIP', charId: 'q' });
+  assert(r.ok, r.error);
+  eq(ch.equipment.head.id, 'heaume_du_fossoyeur', 'le casque au plus gros gain sans perte');
+  eq([ch.equipment.ring1?.id, ch.equipment.ring2?.id].sort(), ['anneau_de_jade', 'anneau_sang'], 'les deux anneaux dans les emplacements vides');
+  assert(ch.inventory.some((i) => i.id === 'heaume_de_l_aube') && ch.inventory.some((i) => i.id === highHead) && ch.inventory.some((i) => i.uid === 'h0'), 'le reste revient au sac (l\'Aube est « différent », le casque haut niveau trop haut)');
+  const again = applyCharacterAction(content, [ch], { type: 'CHAR_AUTO_EQUIP', charId: 'q' });
+  assert(!again.ok && /Rien de mieux/.test(again.error), 'deuxième fois : rien de mieux');
 });
 test('forge : un objet légendaire ne se forge qu\'après avoir terminé son donjon en Stasis', () => {
   const ch = createCharacter(content, { id: 'f', name: 'F', classId: 'guerrier' });

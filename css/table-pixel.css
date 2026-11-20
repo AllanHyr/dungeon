@@ -283,3 +283,13 @@ h1, .place-head h1, .nav-brand b { font-size-adjust: none; }
 
 /* ---------------- En pixel art, rien n'est arrondi ---------------- */
 *, *::before, *::after { border-radius: 0 !important; }
+
+/* ---------------- Le premier combat guidé (coach.js) ---------------- */
+.coach { position: fixed; z-index: 1000; width: min(340px, calc(100vw - 20px)); padding: 12px 14px; background: var(--ink-5); color: var(--text);
+  border: 3px solid var(--line); box-shadow: inset -2px -2px 0 #e8d3a8, 4px 4px 0 var(--lantern); pointer-events: none; }
+.coach .coach-actions .btn { pointer-events: auto; } /* (seuls les boutons captent la souris : on peut jouer en lisant) */
+.coach-count { font-size: 0.78rem; color: var(--brass-3); letter-spacing: 0.06em; text-transform: uppercase; }
+.coach-title { display: block; font-size: 1.2rem; margin: 2px 0 4px; }
+.coach-text { margin: 0 0 10px; font-size: 0.95rem; line-height: 1.35; }
+.coach-actions { display: flex; justify-content: space-between; gap: 8px; }
+.coach-target { outline: 3px solid var(--lantern) !important; outline-offset: 3px; }

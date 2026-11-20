@@ -208,14 +208,15 @@ const main = async () => {
   });
 
   console.log('\n● La partie à plusieurs');
-  await test('le Stasis ne se lance qu\'à plusieurs : seul, refusé ; à deux, accepté', async () => {
+  await test('le Stasis : seul, il se lance mais s\'arrête à l\'épique ; à deux joueurs, les légendaires sont possibles', async () => {
     const { ps } = await lobby(base, 1, { turnSeconds: 0, mode: 'stasis', stasisLevel: 1 });
     const solo = await ps[0].b.post('/api/room/start');
-    assert(solo.status === 409 && /Stasis se joue à plusieurs/.test(solo.json.error), solo.text);
+    assert(solo.status === 200 && solo.json.run.run.setup.players === 1, solo.text.slice(0, 300));
+    await ps[0].b.post('/api/run/discard');
     await ps[0].b.post('/api/room/leave');
     const duo = await lobby(base, 2, { turnSeconds: 0, mode: 'stasis', stasisLevel: 1 });
     const go = await duo.ps[0].b.post('/api/room/start');
-    assert(go.status === 200 && go.json.run.run.setup.mode === 'stasis', go.text.slice(0, 300));
+    assert(go.status === 200 && go.json.run.run.setup.mode === 'stasis' && go.json.run.run.setup.players === 2, go.text.slice(0, 300));
     await duo.ps[0].b.post('/api/run/discard');
     for (const p of duo.ps) await p.b.post('/api/room/leave');
   });

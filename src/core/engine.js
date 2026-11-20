@@ -100,7 +100,8 @@ function makePlayer(state, ch, index) {
 /**
  * Crée une nouvelle run.
  * @param content     le contenu du jeu (voir content.js)
- * @param setup       { tranche: 1|4|8..., dungeon?: 'id du donjon' (sinon le premier de la tranche), mode: 'basic'|'tranche'|'stasis', stasisLevel: 1..3 }
+ * @param setup       { tranche: 1|4|8..., dungeon?: 'id du donjon' (sinon le premier de la tranche), mode: 'basic'|'tranche'|'stasis', stasisLevel: 1..3,
+ *                      players?: nombre de joueurs DIFFÉRENTS (en ligne ; 1 par défaut : le Stasis joué seul s'arrête à l'épique) }
  * @param characters  1 à 4 personnages sauvegardés (distincts)
  * @param seed        graine du hasard (pour rejouer / tester)
  */
@@ -121,7 +122,7 @@ export function createRun(content, setup, characters, seed = Math.floor(Math.ran
     seed: seed >>> 0,
     rng: seed >>> 0,
     nextUid: 1,
-    setup: { tranche: setup.tranche, dungeon: dungeon.id, mode: setup.mode, stasisLevel: setup.mode === 'stasis' ? setup.stasisLevel || 1 : 0, restrict: true },
+    setup: { tranche: setup.tranche, dungeon: dungeon.id, mode: setup.mode, stasisLevel: setup.mode === 'stasis' ? setup.stasisLevel || 1 : 0, restrict: true, players: Math.max(1, Math.floor(setup.players) || 1) }, // players : joueurs DIFFÉRENTS (en ligne)
     params: null,
     dungeon: { trancheId: tranche.id, id: dungeon.id, name: dungeon.name, board: [], position: -1 },
     players: [],

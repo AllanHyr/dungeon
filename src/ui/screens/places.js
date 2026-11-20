@@ -231,8 +231,8 @@ function campPage() {
     h('ol', { class: 'journey' },
       steps.map((s, i) => h('li', { class: `journey-step ${s.done ? 'done' : i === now ? 'now' : ''}` },
         h('span', { class: 'journey-dot' }, s.done ? icon('check', 14) : s.mark), h('b', null, s.label), h('small', null, s.sub))),
-      h('li', { class: 'journey-step' }, h('span', { class: 'journey-dot' }, icon('lock', 14)), h('b', null, 'Stasis'), h('small', null, 'à plusieurs, en ligne'))),
-    h('p', { class: 'muted small' }, 'Le Stasis (monstres bien plus coriaces) ne se joue qu\'à plusieurs : c\'est là que tombent les objets légendaires.'));
+      h('li', { class: 'journey-step' }, h('span', { class: 'journey-dot' }, icon('lock', 14)), h('b', null, 'Stasis'), h('small', null, 'trois niveaux de difficulté'))),
+    h('p', { class: 'muted small' }, 'Le Stasis (monstres bien plus coriaces) : seul, jusqu\'à l\'épique ; à plusieurs, en ligne, c\'est là que tombent les objets légendaires.'));
 
   return [
     h('header', { class: 'place-head' }, h('div', { class: 'eyebrow' }, 'Le camp'), h('h1', null, 'Bon retour, aventurier'), h('p', { class: 'muted' }, 'Ce qui t\'attend, en un coup d\'œil. Chaque carte mène directement au bon endroit.')),

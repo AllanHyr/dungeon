@@ -308,7 +308,7 @@ export class RoomService {
       const setup = JSON.parse(room.setup);
       let state;
       try {
-        state = createRun(this.game.content(), { tranche: setup.tranche, dungeon: this.game.content().dungeons[setup.dungeon]?.tranche === setup.tranche ? setup.dungeon : undefined, mode: setup.mode, stasisLevel: setup.stasisLevel }, heroes, randomSeed());
+        state = createRun(this.game.content(), { tranche: setup.tranche, dungeon: this.game.content().dungeons[setup.dungeon]?.tranche === setup.tranche ? setup.dungeon : undefined, mode: setup.mode, stasisLevel: setup.stasisLevel, players }, heroes, randomSeed());
       } catch (e) {
         if (e instanceof GameError) throw new HttpError(400, e.message);
         throw e;

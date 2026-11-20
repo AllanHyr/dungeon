@@ -17,7 +17,7 @@
 // Ce fichier ne touche ni à l'écran, ni au navigateur, ni aux fichiers.
 
 import { createCharacter, learnSkill, resetSkills, setSpec, setDeck } from './progression.js';
-import { equipFromBag, unequipToBag } from './items.js';
+import { equipFromBag, unequipToBag, autoEquip } from './items.js';
 import { pickLoot } from './farm.js';
 import { startExpedition, claimExpedition, cancelExpedition } from './expeditions.js';
 import { salvageValue, canUpgrade, craftableItems, bulkSalvageList, ownedItems, forgeRules } from './forge.js';
@@ -26,7 +26,7 @@ import { EQUIP_SLOTS } from './content.js';
 import { GameError, assert } from './util.js';
 
 /** Les actions acceptées (le champ `type` d'une demande). */
-export const CHARACTER_ACTIONS = ['CHAR_CREATE', 'CHAR_DELETE', 'CHAR_EQUIP', 'CHAR_UNEQUIP', 'CHAR_LEARN', 'CHAR_RESET_SKILLS', 'CHAR_SET_SPEC', 'CHAR_SET_DECK', 'CHAR_PICK_LOOT', 'CHAR_EXPEDITION_START', 'CHAR_EXPEDITION_CLAIM', 'CHAR_EXPEDITION_CANCEL',
+export const CHARACTER_ACTIONS = ['CHAR_CREATE', 'CHAR_DELETE', 'CHAR_EQUIP', 'CHAR_AUTO_EQUIP', 'CHAR_UNEQUIP', 'CHAR_LEARN', 'CHAR_RESET_SKILLS', 'CHAR_SET_SPEC', 'CHAR_SET_DECK', 'CHAR_PICK_LOOT', 'CHAR_EXPEDITION_START', 'CHAR_EXPEDITION_CLAIM', 'CHAR_EXPEDITION_CANCEL',
   'CHAR_SALVAGE', 'CHAR_SALVAGE_BULK', 'CHAR_LOCK', 'CHAR_UPGRADE', 'CHAR_CRAFT'];
 
 /** Combien de personnages au maximum (une limite de sécurité pour une base de données partagée). */
@@ -80,6 +80,11 @@ export function applyCharacterAction(content, characters, action, ctx = {}) {
         assert(action.slot === undefined || action.slot === null || EQUIP_SLOTS.includes(action.slot), 'Emplacement inconnu.');
         const res = equipFromBag(content, { equipment: ch.equipment, bag: ch.inventory, realLevel: ch.level }, action.uid, action.slot ?? null);
         assert(res.ok, res.reason);
+        break;
+      }
+      case 'CHAR_AUTO_EQUIP': {
+        const done = autoEquip(content, { equipment: ch.equipment, bag: ch.inventory, realLevel: ch.level });
+        assert(done.length, 'Rien de mieux dans le sac.');
         break;
       }
       case 'CHAR_UNEQUIP': {

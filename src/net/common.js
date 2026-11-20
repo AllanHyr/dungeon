@@ -75,7 +75,8 @@ export function applyPrefs(profile, raw) {
     view: ['farm', 'expeditions'].includes(s.view) ? s.view : 'dungeon',
     farmChar: typeof s.farmChar === 'string' ? s.farmChar : null,
     farmZone: typeof s.farmZone === 'string' ? s.farmZone : null,
-    place: ['camp', 'aventure', 'heros', 'forge', 'grimoire'].includes(s.place) ? s.place : null
+    place: ['camp', 'aventure', 'heros', 'forge', 'grimoire'].includes(s.place) ? s.place : null,
+    coachCombat: !!s.coachCombat
   };
   if (Array.isArray(raw.lastTeam)) profile.lastTeam = raw.lastTeam.filter((id) => typeof id === 'string').slice(0, 4);
   if (raw.lastSetup && typeof raw.lastSetup === 'object') {

@@ -173,6 +173,13 @@ function equipTab(ch, api, state, tranche, locked) {
         const res = await characterAction({ type: 'CHAR_UNEQUIP', charId: ch.id, slot });
         if (res.ok) api.refresh();
       },
+      autoEquip: async () => {
+        const res = await characterAction({ type: 'CHAR_AUTO_EQUIP', charId: ch.id });
+        if (res.ok) {
+          play('click');
+          api.refresh();
+        }
+      },
       isLocked: (inst) => (ch.locked || []).includes(inst.uid),
       lock: async (inst) => {
         const res = await characterAction({ type: 'CHAR_LOCK', charId: ch.id, uid: inst.uid });

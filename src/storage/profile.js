@@ -67,7 +67,7 @@ export function createEmptyProfile() {
     version: 1,
     nextCharNumber: 1,
     characters: [],
-    settings: { sound: false, volume: 0.7, fx: null, turnSeconds: 0, training: null, view: 'dungeon', farmChar: null, farmZone: null, place: null },
+    settings: { sound: false, volume: 0.7, fx: null, turnSeconds: 0, training: null, view: 'dungeon', farmChar: null, farmZone: null, place: null, coachCombat: false },
     lastTeam: [],
     lastSetup: { tranche: 1, dungeon: null, mode: 'tranche', stasisLevel: 1 }
   };
@@ -108,8 +108,8 @@ export function sanitizeCharacter(content, raw) {
     if (content.tranches[tranche]) ch.stats.clears[tranche] = { total: n(rec?.total), group: Math.min(n(rec?.group), n(rec?.total)) };
   }
   // La collection de l'encyclopédie : donjons terminés, monstres vaincus, objets exclusifs trouvés (on ne garde que ce qui existe encore)
-  ch.stats.dungeons = {}; ch.stats.bestiary = {}; ch.stats.found = {}; ch.stats.stasisClears = {};
-  for (const [id, k] of Object.entries(st.stasisClears && typeof st.stasisClears === 'object' ? st.stasisClears : {})) if (content.dungeons[id] && n(k)) ch.stats.stasisClears[id] = n(k);
+  ch.stats.dungeons = {}; ch.stats.bestiary = {}; ch.stats.found = {}; ch.stats.stasisClears = {}; ch.stats.stasisSoloClears = {};
+  for (const key of ['stasisClears', 'stasisSoloClears']) for (const [id, k] of Object.entries(st[key] && typeof st[key] === 'object' ? st[key] : {})) if (content.dungeons[id] && n(k)) ch.stats[key][id] = n(k);
   const obj = (v) => (v && typeof v === 'object' ? v : {});
   for (const [id, k] of Object.entries(obj(st.dungeons))) if (content.dungeons[id] && n(k)) ch.stats.dungeons[id] = n(k);
   for (const [id, k] of Object.entries(obj(st.bestiary))) if (content.monsters[id] && n(k)) ch.stats.bestiary[id] = n(k);
@@ -228,6 +228,7 @@ export function sanitizeProfile(content, raw) {
     training: raw.settings?.training && Array.isArray(raw.settings.training.specs) ? raw.settings.training : null, // dernière salle d'entraînement
     view: ['farm', 'expeditions'].includes(raw.settings?.view) ? raw.settings.view : 'dungeon', // onglet de l'Aventure : donjon en équipe, farm solo ou expéditions
     place: ['camp', 'aventure', 'heros', 'forge', 'grimoire'].includes(raw.settings?.place) ? raw.settings.place : null, // le lieu de l'accueil
+    coachCombat: !!raw.settings?.coachCombat, // le premier combat guidé a déjà été vu (ou passé)
     farmChar: ids.has(raw.settings?.farmChar) ? raw.settings.farmChar : null, // dernier personnage envoyé au farm
     farmZone: typeof raw.settings?.farmZone === 'string' && content.farm.zones[raw.settings.farmZone] ? raw.settings.farmZone : null // dernière zone de farm
   };

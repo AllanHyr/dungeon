@@ -28,10 +28,10 @@ const B = {
   pretre: { spec: 'sacre', learn: ['pretre_hymne'], deck: ['pretre_chatiment', 'pretre_soin', 'pretre_soin_superieur', 'pretre_hymne'], low: ['pretre_chatiment', 'pretre_soin', 'pretre_soin_superieur', 'pretre_bouclier'] },
   assassin: { spec: 'executeur', learn: ['assassin_boucherie'], deck: ['assassin_boucherie', 'assassin_estoc', 'assassin_dos', 'assassin_coup_de_grace'], low: ['assassin_garrot', 'assassin_estoc', 'assassin_dos', 'assassin_coup_de_grace'] }
 };
-function party(classes, level, seed) {
+function party(classes, level, seed, gear = 'decent') {
   const builds = classes.map((c) => (level >= 4 ? B[c] : null));
   const extra = { specs: builds.map((b) => b?.spec ?? null), decks: builds.map((b) => (b ? (level >= 8 ? b.deck : b.low ?? b.deck) : null)), learns: builds.map((b) => (level >= 8 ? b?.learn : null) ?? []) };
-  return makeParty(content, classes, level, 'decent', seed, extra);
+  return makeParty(content, classes, level, gear, seed, extra);
 }
 
 // ------------------------------------------------------------ Donjons
@@ -94,4 +94,23 @@ console.log('\n=== COMBIEN DE DONJONS (TRIO) POUR MONTER D\'UN NIVEAU ? ===');
 for (const row of dungeonRows.filter((r) => r.label === 'trio')) {
   const lv = row.d.tranche, need = xpForNext(content, lv);
   console.log(`${(row.d.tranche + ' ' + row.d.name).slice(0, 29).padEnd(30)} niveau ${lv} → ${lv + 1} : ${need ? `${need} XP, soit ${fmt(need / Math.max(1, row.xp))} parties (${fmt((need / Math.max(1, row.xp)) * row.mins, 0)} mn)` : 'niveau max'}`);
+}
+
+// ------------------------------------------------------------ Le Stasis joué seul (fin de partie solo : jusqu'à l'épique)
+console.log('\n=== STASIS JOUÉ SEUL (tranche 8, héros niveau 8, BON équipement : rare/épique) : victoire et objets épiques par partie ===');
+for (const d of content.dungeonList.filter((x) => x.tranche === 8 && x.available !== false)) {
+  for (const lvl of [1, 2, 3]) {
+    const cells = [];
+    for (const [label, classes] of [['trio', ['guerrier', 'pretre', 'assassin']], ['solo', ['guerrier']]]) {
+      let wins = 0, epics = 0, legend = 0, actions = 0;
+      for (let i = 0; i < N; i++) {
+        const { state, actions: a } = playRun(content, { tranche: 8, dungeon: d.id, mode: 'stasis', stasisLevel: lvl, players: 1 }, party(classes, 8, i + 1, 'good'), 9000 + i * 7919);
+        actions += a;
+        if (state.result.won) wins++;
+        for (const p of state.result.players) for (const it of p.loot || []) { const r = rarityOf(it.id); if (r === 'epic') epics++; if (r === 'legendary') legend++; }
+      }
+      cells.push(`${label} ${String(Math.round((100 * wins) / N)).padStart(3)} % · ${fmt(epics / N, 2)} épique · ${fmt(minutes(actions / N))} mn${legend ? ` · ${legend} LÉGENDAIRE(S) !` : ''}`);
+    }
+    console.log(`${d.name.slice(0, 26).padEnd(27)} Stasis ${lvl}   ${cells.join('   |   ')}`);
+  }
 }

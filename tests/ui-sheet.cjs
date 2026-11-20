@@ -129,6 +129,11 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
     await page.keyboard.press('Escape');
     await page.click('.char-card:has-text("Pip") >> text=Fiche');
     await page.waitForSelector('.sheet-modal');
+    // « Équiper le meilleur » : Pip a un bâton dans le sac et les mains vides
+    check(/Équiper le meilleur \(1\)/.test(await page.textContent('.sheet-modal .auto-equip')), '« Équiper le meilleur (1) » : un objet à équiper');
+    await page.click('.sheet-modal .auto-equip');
+    await sleep(200);
+    check(!!(await page.$('.sheet-modal .dslot[data-slot="mainHand"].filled')) && await page.$eval('.sheet-modal .auto-equip', (b) => b.disabled), 'le bâton est équipé ; le bouton se grise (plus rien de mieux)');
     await page.click('.sheet-modal .tab[data-tab="skills"]');
     await sleep(200);
     check(await page.$('.sec-rewards .talent-card[data-skill="pretre_cantique"][data-state="locked"]') !== null, 'Pip (Prêtre) voit le Cantique de hâte, verrouillé par un succès');

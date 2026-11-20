@@ -7,6 +7,7 @@
 
 import { EQUIP_SLOTS, ITEM_TYPES } from './content.js';
 import { describeStats } from './stats.js';
+import { itemView } from './forge.js';
 
 /** Fabrique un nouvel exemplaire d'objet avec un numéro unique. */
 export function newItem(state, itemId) {
@@ -133,4 +134,47 @@ export function findOwned(player, uid) {
     if (player.equipment[slot]?.uid === uid) return { inst: player.equipment[slot], where: slot };
   }
   return null;
+}
+
+/**
+ * « Équiper le meilleur » : équipe, un par un, les objets du sac qui sont STRICTEMENT meilleurs que ce qu'ils remplaceraient
+ * (au moins une caractéristique en hausse, aucune en baisse, améliorations de la forge comprises), ou qui vont dans un
+ * emplacement vide. Un objet « différent » (un gain, une perte) reste un choix du joueur : on n'y touche pas.
+ * Un objet maudit, un objet trop haut pour le niveau du héros ou une potion sont ignorés. Renvoie la liste des objets équipés.
+ */
+export function autoEquip(content, holder) {
+  const statsOf = (inst) => itemView(content, inst)?.stats || {};
+  const sum = (insts, k) => insts.reduce((t, i) => t + (statsOf(i)[k] || 0), 0);
+  const gainOf = (inst, plan) => {
+    const olds = plan.remove.map((s) => holder.equipment[s]).filter(Boolean);
+    const keys = new Set([...Object.keys(statsOf(inst)), ...olds.flatMap((o) => Object.keys(statsOf(o)))]);
+    let up = 0, down = false;
+    for (const k of keys) {
+      const d = (statsOf(inst)[k] || 0) - sum(olds, k);
+      if (d > 1e-9) up += d; else if (d < -1e-9) down = true;
+    }
+    if (!olds.length) return up > 0 || Object.keys(statsOf(inst)).length ? up + 1000 : -1; // (un emplacement vide : toujours bon à prendre)
+    return down || up <= 0 ? -1 : up;
+  };
+  const equipped = [];
+  for (let guard = 0; guard < 40; guard++) {
+    let best = null;
+    for (const inst of holder.bag) {
+      const def = content.items[inst.id];
+      if (!def || def.consumable || !slotsFor(def).length) continue;
+      if (!canEquip(content, holder.realLevel, def).ok) continue;
+      if (holder.cursedUid && holder.cursedUid === inst.uid) continue;
+      for (const slot of slotsFor(def)) {
+        const plan = planEquip(content, holder.equipment, def, slot);
+        if (!plan.ok) continue;
+        const g = gainOf(inst, plan);
+        if (g > 0 && (!best || g > best.gain)) best = { inst, slot, gain: g };
+      }
+    }
+    if (!best) break;
+    const res = equipFromBag(content, holder, best.inst.uid, best.slot);
+    if (!res.ok) break;
+    equipped.push(best.inst);
+  }
+  return equipped;
 }

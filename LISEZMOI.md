@@ -98,8 +98,9 @@ En bas de la barre : l'Atelier de classes, la Sauvegarde (ou ton Compte en ligne
    (+dégâts, PV, protection) ; mais le coup peut se retourner contre lui (5 ou moins au dé), et la **victime a un droit de réponse** : un jet d'esquive (14 ou plus).
    La même case propose aussi des **pactes** (un coût tout de suite, un bonus pour les prochains combats) : ils marchent seul, sans victime.
    *(Ou, dans Aventure, l'onglet **Zone de farm solo** : un seul personnage, des vagues de monstres, un objet au choix — voir §3.)*
+3 bis. **Le premier combat est guidé** : cinq bulles montrent l'ordre de jeu, le champ de bataille, les points d'action, les sorts et la fin du tour (une seule fois, « Passer le guide » pour le fermer).
 4. Un mort devient **fantôme** : il peut encore aider. Il peut être ressuscité (fontaine de vie ou compétence du Veilleur), **une seule fois par run**.
-5. **L'équipement** : 14 emplacements (tête, épaules, dos, torse, mains, ceinture, jambes, pieds, cou, 2 anneaux, relique, main droite et main gauche). Une arme à
+5. **L'équipement** (bouton **Équiper le meilleur** : il équipe tout ce qui est clairement meilleur, sans aucune caractéristique en baisse) : 14 emplacements (tête, épaules, dos, torse, mains, ceinture, jambes, pieds, cou, 2 anneaux, relique, main droite et main gauche). Une arme à
    **deux mains** occupe les deux mains ; sinon, deux armes à une main, ou une arme et un bouclier. Détails : [`docs/EQUIPEMENT.md`](docs/EQUIPEMENT.md).
 6. Fin de run : **victoire** = XP et butin ajoutés à tes personnages. **Défaite / abandon** = tu perds la run, mais **jamais** ton personnage ni son équipement.
 
@@ -146,11 +147,13 @@ Les **modes** :
 | --- | --- | --- | --- | --- | --- |
 | **Basic** | seul ou à plusieurs | aucune restriction | très réduits | épique (très rare) | normale |
 | **Tranche** | seul ou à plusieurs | niveau ≤ tranche du donjon | normaux | épique (très rare) | normale |
-| **Stasis 1 / 2 / 3** | **à plusieurs seulement** (2 joueurs ou plus, en ligne) | comme Tranche | bien meilleurs (qualité, pas niveau) | **légendaire** | très élevée |
+| **Stasis 1 / 2 / 3** | seul ou à plusieurs | comme Tranche | bien meilleurs (qualité, pas niveau) | seul : **épique** ; à plusieurs (2 joueurs ou plus, en ligne) : **légendaire** | très élevée |
 
-Jouer à plusieurs débloque le plus beau contenu : le **Stasis**, et avec lui les **objets légendaires** (y compris ceux des tables de donjon).
-Hors ligne, le Stasis est grisé. Un légendaire ne se **forge** qu'après avoir terminé son donjon en Stasis. Tout est dans `data/modes.json`
-(`minPlayers`, `maxRarity`, `rarityWeights` : l'épique est 4 fois plus rare hors Stasis).
+Le **Stasis** est la fin de partie : seul, ses trois niveaux de difficulté rapportent des objets jusqu'à l'**épique** (bien plus souvent qu'en Tranche) ;
+à plusieurs (2 joueurs différents ou plus, en ligne), il donne aussi les **objets légendaires** (y compris ceux des tables de donjon).
+Un légendaire ne se **forge** qu'après avoir terminé son donjon en Stasis **à plusieurs**. Tout est dans `data/modes.json`
+(`maxRarity`, `soloMaxRarity`, `legendaryMinPlayers`, `rarityWeights` : l'épique est 4 fois plus rare hors Stasis).
+Le butin d'un donjon suit la taille du groupe (`partyScaling` dans `data/rules.json` : `loot`, `bossDrops`) : chaque héros ramasse à peu près autant, seul ou à plusieurs.
 
 Le jeu distingue toujours le **niveau réel** (sauvegardé) du **niveau effectif** (celui utilisé dans le donjon :
 en Tranche et Stasis, c'est `min(niveau réel, tranche)`).
@@ -368,6 +371,7 @@ node tests/mage-sim.mjs 40           # équilibrage du Mage : chaque école en d
 node tests/assassin-sim.mjs 60       # équilibrage de l'Assassin : le compare au Duelliste, avec chaque spécialisation (équipe de 3, Caves / Crypte / Profondeurs, et en solo)
 node tests/sacrieur-sim.mjs 60       # équilibrage du Sacrieur : le compare au Berserker, avec chaque spécialisation (équipe de 3, Caves / Crypte / Profondeurs)
 node tests/simulate.mjs 100     # des robots jouent des centaines de runs : taux de victoire, durée, morts...
+node tests/economie-sim.mjs 30   # l'ÉCONOMIE : ce que rapporte chaque activité (donjon, farm, expéditions, Stasis seul) par minute de jeu
 node tests/farm-sim.mjs 60      # robots dans la zone de farm : vagues atteintes, XP et objets par session (pour régler data/farm.json)
 node tests/smoke.mjs 4 berserker,veilleur,duelliste   # joue UNE run et affiche son journal
 node tests/find-stuck.mjs       # cherche une partie qui ne se termine pas
@@ -385,6 +389,7 @@ node tests/ui-tour.cjs http://localhost:8765/ /tmp      # fiches, fenêtres, sc�
 node tests/ui-expeditions.cjs http://localhost:8765/ /tmp    # expéditions : onglet, envoyer, héros bloqué (donjon, farm), retour et récompenses, rappeler, téléphone
 node tests/ui-farm.cjs http://localhost:8765/ /tmp      # farm : onglet, XP de rattrapage, vagues et éclats, 1 objet au choix parmi 3, succès, mort, reprise, ancien coffre, téléphone
 node tests/ui-sheet.cjs http://localhost:8765/ /tmp     # la fiche : stats, poupée d'équipement, sac par sections, arbre de compétences, téléphone
+node tests/ui-coach.cjs http://localhost:8765/ /tmp     # le premier combat guidé : cinq bulles une seule fois, « Passer le guide »
 node tests/ui-spec.cjs http://localhost:8765/ /tmp     # spécialisation et deck : cartes, choix unique, sort évolué, équiper / retirer, téléphone
 node tests/ui-donjons.cjs http://localhost:8765/ /tmp  # les donjons : choix par tranche, « à savoir », encyclopédie (bestiaire, butin exclusif), partie dans le donjon choisi, particularités en combat, téléphone
 node tests/ui-templier.cjs http://localhost:8765/ /tmp # le Templier : fiche (sorts évolués selon la spé, palier 8), combat (puissance sacrée, sorts grisés, choix de l'aura en un clic, aura visible sur les alliés), téléphone

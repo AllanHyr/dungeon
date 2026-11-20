@@ -76,10 +76,10 @@
   "shop": {"stockSize": 3, "sellRate": 0.35, "haggleBase": 1.25, "haggleStep": 0.02, "levelPriceStep": 0.3},
 
   "partyScaling": {
-    "_note": "Les monstres s'adaptent au NOMBRE de joueurs (jamais à leur niveau).",
-    "1": {"count": [1, 1], "hp": 0.5, "atk": 0.7, "pa": 0.67},
-    "2": {"count": [1, 2], "hp": 0.85, "atk": 0.87, "pa": 0.9},
-    "3": {"count": [2, 3], "hp": 1.0, "atk": 1.0, "pa": 1.0},
-    "4": {"count": [2, 4], "hp": 1.1, "atk": 1.0, "pa": 1.0}
+    "_note": "Les monstres s'adaptent au NOMBRE de joueurs (jamais à leur niveau). Le butin aussi : 'loot' multiplie la chance qu'un combat lâche un objet (au-delà de 1, un objet sûr puis une chance d'un second), 'bossDrops' ajoute des objets au boss. Ainsi chaque héros ramasse à peu près autant, seul ou à plusieurs.",
+    "1": {"count": [1, 1], "hp": 0.5, "atk": 0.7, "pa": 0.67, "loot": 1, "bossDrops": 0},
+    "2": {"count": [1, 2], "hp": 0.85, "atk": 0.87, "pa": 0.9, "loot": 1.8, "bossDrops": 1},
+    "3": {"count": [2, 3], "hp": 1.0, "atk": 1.0, "pa": 1.0, "loot": 3.2, "bossDrops": 2},
+    "4": {"count": [2, 4], "hp": 1.1, "atk": 1.0, "pa": 1.0, "loot": 4, "bossDrops": 2}
   }
 }

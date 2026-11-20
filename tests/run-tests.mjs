@@ -4078,7 +4078,7 @@ test('trois zones ; chacune exige un niveau ; plus haut = plus d\'éclats et des
   const s = createFarm(content, hero, { zoneId: 'fosses', seed: 3 });
   assert(content.farm.zones.fosses.monsterPool.includes(s.combat.monsters[0].defId), 'des ogres');
   winWave(s);
-  eq(s.farm.shards, 3, '3 éclats par vague aux Fosses');
+  eq(s.farm.shards, z8.rewards.shardsPerWave, 'les éclats par vague des Fosses viennent de farm.json');
   dispatch(s, { type: 'FARM_STOP' });
   assert(s.result.choices.every((it) => content.items[it.id].level <= 8));
   // la force des monstres est réglable par zone (waves.scale)

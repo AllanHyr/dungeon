@@ -27,7 +27,7 @@
         "_note": "XP : xpMult x XP des monstres, +xpPerWave par vague, x catchUpXpMult ; UNIQUEMENT pour un héros plus bas que le meilleur héros du joueur, et jamais au-delà de son niveau (rattrapage). Éclats : shardsPerWave par vague vaincue, bossShards en plus pour un boss. Fin de session (au moins une vague vaincue) : choiceCount objets au choix ; la rareté suit le palier 'choiceTiers' atteint (waves = vagues vaincues). Un objet de niveau <= itemMaxLevel, jamais un objet exclusif de donjon.",
         "xpMult": 1.0,
         "xpPerWave": 0.08,
-        "catchUpXpMult": 1.5,
+        "catchUpXpMult": 1.0,
         "shardsPerWave": 1,
         "bossShards": 4,
         "choiceCount": 3,
@@ -52,8 +52,8 @@
       "waves": { "scale": { "hp": 0.65, "atk": 0.7 }, "countStart": 1, "extraMonsterEvery": 3, "countMax": 3, "hpPerWave": 0.07, "atkPerWave": 0.05, "bossEvery": 5, "bossScale": { "hp": 0.65, "atk": 0.85 } },
       "healBetweenWavesPct": 0.2,
       "rewards": {
-        "xpMult": 1.0, "xpPerWave": 0.08, "catchUpXpMult": 1.5,
-        "shardsPerWave": 2, "bossShards": 6,
+        "xpMult": 1.0, "xpPerWave": 0.08, "catchUpXpMult": 1.0,
+        "shardsPerWave": 1, "bossShards": 6,
         "choiceCount": 3, "itemMaxLevel": 4,
         "choiceTiers": [
           { "waves": 1, "rarityWeights": { "common": 60, "uncommon": 35, "rare": 5 } },
@@ -75,8 +75,8 @@
       "waves": { "scale": { "hp": 0.7, "atk": 0.7 }, "countStart": 1, "extraMonsterEvery": 3, "countMax": 3, "hpPerWave": 0.07, "atkPerWave": 0.05, "bossEvery": 5, "bossScale": { "hp": 0.6, "atk": 0.8 } },
       "healBetweenWavesPct": 0.2,
       "rewards": {
-        "xpMult": 1.0, "xpPerWave": 0.08, "catchUpXpMult": 1.5,
-        "shardsPerWave": 3, "bossShards": 10,
+        "xpMult": 1.0, "xpPerWave": 0.08, "catchUpXpMult": 1.0,
+        "shardsPerWave": 1, "bossShards": 8,
         "choiceCount": 3, "itemMaxLevel": 8,
         "choiceTiers": [
           { "waves": 1, "rarityWeights": { "common": 50, "uncommon": 42, "rare": 8 } },

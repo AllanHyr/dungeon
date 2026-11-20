@@ -321,3 +321,26 @@ h1, .place-head h1, .nav-brand b { font-size-adjust: none; }
 .blow-target { color: var(--violet); }
 .lobby-code { background: var(--ink-5); border: 2px dashed var(--line); color: var(--brass-3); box-shadow: 3px 3px 0 rgba(20, 8, 2, 0.5); }
 .lobby-code:hover { background: #fffaf0; }
+
+/* Les noms des sorts sous leurs cases : un peu plus de place (trois lignes, plus large) pour ne plus les couper */
+@media (min-width: 861px) { .slot-label { max-width: calc(var(--slot-w) + 26px); -webkit-line-clamp: 3; line-height: 1.12; } }
+
+/* ---------------- Les LONGS textes dans une police lisible ----------------
+   Le pixel reste pour les titres, les noms, les boutons et les étiquettes ; les paragraphes qu'on lit vraiment (règles, descriptions de sorts,
+   de classes, de donjons, d'objets, conseils) passent en Alegreya Sans, plus reposante, un peu plus grande. */
+.help, .help p, .help li, .tc-desc, .mode-desc, .branch-desc, .welcome-lead, .spec-desc, .sd2-desc, .sd-desc, .sc-desc, .mo-desc, .item-desc, .guide-desc,
+.gear-desc, .cs-desc, .confirm-text, .coach-text, .camp-next-desc, .tranche-desc, .todo-body p, .place-head p, .dungeon-brief p, .gm-trait span {
+  font-family: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+  font-size-adjust: none;
+  font-size: 1.02em;
+  letter-spacing: 0;
+  line-height: 1.38;
+}
+
+/* ---------------- Téléphone : fiche et bandeau de combat ---------------- */
+@media (max-width: 860px) {
+  .hero-view { display: flex; flex-direction: column; align-items: stretch; gap: 2px; width: 100%; }
+  .hero-view .input { width: 100%; }
+  .dock .end-turn { min-height: 42px; font-size: 1rem; }
+  .dock .flames .icon { width: 20px !important; height: 20px !important; }
+}

@@ -26,6 +26,78 @@ const finish = () => {
   document.querySelector('.coach')?.remove();
 };
 
+/**
+ * Place une bulle près de ce qu'elle montre, mais JAMAIS sur un combattant, un sort, un bouton ou une case du plateau (on doit pouvoir
+ * jouer en la lisant) : on essaie au-dessus, en dessous, puis dans les coins du champ de bataille et de l'écran, et on garde la première place libre.
+ */
+function placeBubble(root, bubble, target) {
+  requestAnimationFrame(() => {
+    if (!bubble.isConnected) return;
+    const r = target.getBoundingClientRect(), b = bubble.getBoundingClientRect();
+    const m = 10, W = window.innerWidth, H = window.innerHeight;
+    const stage = root.querySelector('.stage')?.getBoundingClientRect();
+    const center = r.left + r.width / 2 - b.width / 2;
+    const spots = [[center, r.top - b.height - m], [center, r.bottom + m], [r.right + m, r.top], [r.left - b.width - m, r.top]];
+    if (stage) spots.push([stage.right - b.width - m, stage.top + m], [stage.left + m, stage.top + m], [stage.right - b.width - m, stage.bottom - b.height - m], [stage.left + m, stage.bottom - b.height - m]);
+    spots.push([W - b.width - m, H - b.height - m], [m, H - b.height - m], [W - b.width - m, m]);
+    const blockers = [...root.querySelectorAll('.fighter, .hotbar, .end-turn, .frise, .run .btn, .tile, .unit')]
+      .filter((e) => e !== target && !bubble.contains(e)).map((e) => e.getBoundingClientRect()).filter((o) => o.width && o.height);
+    const clamp = ([x, y]) => [Math.max(m, Math.min(W - b.width - m, x)), Math.max(m, Math.min(H - b.height - m, y))];
+    const overlaps = ([x, y]) => blockers.some((o) => x < o.right && x + b.width > o.left && y < o.bottom && y + b.height > o.top);
+    const free = spots.map(clamp).find((p) => !overlaps(p)) || clamp(spots[0]);
+    bubble.style.left = `${free[0]}px`;
+    bubble.style.top = `${free[1]}px`;
+  });
+}
+
+// ------------------------------------------------------------ Les cases du plateau
+// La PREMIÈRE fois qu'on tombe sur un type de case, une bulle dit à quoi elle sert (une seule fois ; « Plus de conseils » les coupe toutes).
+// Ce qui a déjà été vu : profile.settings.coachTiles (une liste de types de cases ; '*' = plus aucun conseil).
+export const TILE_TIPS = {
+  board: ['Le plateau', 'Chaque tour, le héros « sous les projecteurs » avance d\'une case. Les cases restent cachées (?) jusqu\'à ce qu\'on y arrive ; le boss attend au bout. À gauche ton équipe et ses sacs, à droite le journal.'],
+  combat: ['Une rencontre', 'Avant le combat, un D20 décide qui frappe en premier. Vaincre les monstres rapporte de l\'XP (gagnée à la fin du donjon) et parfois un objet.'],
+  treasure: ['Un coffre', 'Le D20 décide de la qualité du butin : plus il est haut, mieux c\'est. Un 20 donne deux objets... un 1 déclenche un piège.'],
+  trap: ['Un piège', 'Un jet de sauvegarde pour l\'éviter. Raté, le héros perd des PV.'],
+  xp_fountain: ['Une fontaine d\'expérience', 'Boire rapporte de l\'XP à tout le groupe... sauf si l\'eau est empoisonnée (5 ou moins au dé).'],
+  life_fountain: ['Une fontaine de vie', 'Rare et précieuse : elle soigne, et peut même ramener un héros tombé... si l\'eau n\'est pas souillée.'],
+  low_blow: ['Le coup bas', 'Jouer un sale tour à un allié pour un petit gain, ou passer un pacte avec les ombres. Rien n\'oblige : on peut rester honnête.'],
+  merchant: ['Le marchand', 'Un jet de marchandage fixe les prix, puis chacun achète avec l\'or de la partie. L\'or qui reste est perdu à la fin du donjon : dépense-le !'],
+  camp: ['Le feu de camp', 'Chaque héros peut changer ses sorts équipés, puis choisir une activité : se reposer, affûter ses armes ou monter la garde.'],
+  boss: ['Le boss', 'Le dernier combat. Le vaincre termine le donjon : tes héros gardent alors leur XP et leur butin.']
+};
+
+const seenTiles = () => app.profile.settings.coachTiles || [];
+const markTile = (key) => {
+  app.profile.settings.coachTiles = [...new Set([...seenTiles(), key])];
+  persistProfile();
+  document.querySelector('.coach')?.remove();
+  document.querySelectorAll('.coach-target').forEach((e) => e.classList.remove('coach-target'));
+};
+
+/** À appeler après chaque dessin de l'écran de partie (hors combat) : la bulle de la case, la première fois. */
+export function tileCoach(root) {
+  const run = app.run;
+  if (!run || run.training || run.farm || run.combat || seenTiles().includes('*')) return;
+  if (root.querySelector('.coach')) return;
+  const tile = run.dungeon?.board?.[run.dungeon.position];
+  // le plateau d'abord (la toute première « Avancer »), puis la case sur laquelle on vient d'arriver
+  const key = run.pending?.kind === 'advance' && !seenTiles().includes('board') ? 'board' : run.pending?.kind !== 'advance' && tile && !tile.resolved ? tile.type : null;
+  if (!key || !TILE_TIPS[key] || seenTiles().includes(key)) return;
+  const target = key === 'board' ? root.querySelector('.board') : root.querySelector('.tile-card');
+  if (!target) return;
+  const [title, text] = TILE_TIPS[key];
+  target.classList.add('coach-target');
+  const bubble = h('div', { class: 'coach coach-tile', role: 'dialog', 'aria-label': `Conseil : ${title}` },
+    h('div', { class: 'coach-count' }, 'Première fois'),
+    h('b', { class: 'coach-title' }, title),
+    h('p', { class: 'coach-text' }, text),
+    h('div', { class: 'coach-actions' },
+      h('button', { type: 'button', class: 'btn btn-small btn-ghost coach-skip', onClick: () => markTile('*') }, 'Plus de conseils'),
+      h('button', { type: 'button', class: 'btn btn-small btn-primary coach-next', onClick: () => markTile(key) }, 'Compris !')));
+  root.appendChild(bubble);
+  placeBubble(root, bubble, target);
+}
+
 /** À appeler après chaque dessin de l'écran de partie : pose la bulle du guide si c'est le moment. */
 export function combatCoach(root) {
   const run = app.run;
@@ -52,22 +124,5 @@ export function combatCoach(root) {
         }
       }, last ? 'Compris !' : 'Suivant')));
   root.appendChild(bubble);
-  // La bulle se place près de ce qu'elle montre, mais JAMAIS sur un combattant, un sort ou « Fin du tour » (on doit pouvoir jouer en la lisant) :
-  // on essaie au-dessus, en dessous, puis dans les coins du champ de bataille, et on garde la première place libre.
-  const place = () => {
-    if (!bubble.isConnected) return;
-    const r = target.getBoundingClientRect(), b = bubble.getBoundingClientRect();
-    const m = 10, W = window.innerWidth, H = window.innerHeight;
-    const stage = root.querySelector('.stage')?.getBoundingClientRect();
-    const center = r.left + r.width / 2 - b.width / 2;
-    const spots = [[center, r.top - b.height - m], [center, r.bottom + m]];
-    if (stage) spots.push([stage.right - b.width - m, stage.top + m], [stage.left + m, stage.top + m], [stage.right - b.width - m, stage.bottom - b.height - m], [stage.left + m, stage.bottom - b.height - m]);
-    const blockers = [...root.querySelectorAll('.fighter, .hotbar, .end-turn, .frise')].filter((e) => e !== target).map((e) => e.getBoundingClientRect());
-    const clamp = ([x, y]) => [Math.max(m, Math.min(W - b.width - m, x)), Math.max(m, Math.min(H - b.height - m, y))];
-    const overlaps = ([x, y]) => blockers.some((o) => x < o.right && x + b.width > o.left && y < o.bottom && y + b.height > o.top);
-    const free = spots.map(clamp).find((p) => !overlaps(p)) || clamp(spots[0]);
-    bubble.style.left = `${free[0]}px`;
-    bubble.style.top = `${free[1]}px`;
-  };
-  requestAnimationFrame(place);
+  placeBubble(root, bubble, target);
 }

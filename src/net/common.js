@@ -76,7 +76,8 @@ export function applyPrefs(profile, raw) {
     farmChar: typeof s.farmChar === 'string' ? s.farmChar : null,
     farmZone: typeof s.farmZone === 'string' ? s.farmZone : null,
     place: ['camp', 'aventure', 'heros', 'forge', 'grimoire'].includes(s.place) ? s.place : null,
-    coachCombat: !!s.coachCombat
+    coachCombat: !!s.coachCombat,
+    coachTiles: Array.isArray(s.coachTiles) ? s.coachTiles.filter((t) => typeof t === 'string').slice(0, 30) : []
   };
   if (Array.isArray(raw.lastTeam)) profile.lastTeam = raw.lastTeam.filter((id) => typeof id === 'string').slice(0, 4);
   if (raw.lastSetup && typeof raw.lastSetup === 'object') {

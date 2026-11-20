@@ -71,6 +71,25 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   check(!(await page.$('.coach')), '« Passer le guide » le ferme');
   check(await page.evaluate(async () => (await import('/src/ui/state.js')).app.profile.settings.coachCombat === true), 'pour de bon');
 
+  console.log('\n● Les cases : une bulle la première fois');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.waitForSelector('.menu');
+  await page.click("text=Créer 3 héros d'exemple");
+  await page.waitForSelector('.place-nav');
+  await page.click('.nav-place[data-place="aventure"]');
+  await page.click('text=Lancer la run');
+  await page.waitForSelector('.coach-tile');
+  check(/plateau/i.test(await page.textContent('.coach-title')) && !!(await page.$('.board.coach-target')), 'au départ : « Le plateau », qui encadre le plateau');
+  await page.click('.coach-next');
+  check(!(await page.$('.coach')), '« Compris ! » la ferme');
+  await page.evaluate(async () => { const { app } = await import('/src/ui/state.js'); app.run.dungeon.board[0].type = 'treasure'; app.render(); });
+  await page.click('.advance-card .btn-primary');
+  await page.waitForSelector('.coach-tile');
+  check(/coffre/i.test(await page.textContent('.coach-title')), 'sur un coffre : « Un coffre »');
+  await page.click('.coach-skip');
+  check(await page.evaluate(async () => (await import('/src/ui/state.js')).app.profile.settings.coachTiles.join(',')) === 'board,*', '« Plus de conseils » les coupe toutes');
+
   console.log(errors.length ? 'ERREURS:\n' + errors.join('\n') : '  ✅ aucune erreur JavaScript');
   await browser.close();
   const bad = failures.length + errors.length;

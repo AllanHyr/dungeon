@@ -146,7 +146,9 @@ export function endFarmWave(state) {
 
   const max = unitStats(state, p).hpMax;
   const before = p.hp;
-  p.hp = Math.min(max, p.hp + Math.max(1, Math.round(max * zone.healBetweenWavesPct)));
+  // (un dps fragile tient moins longtemps seul : farm.json > roleHeal lui donne un peu plus de soin entre les vagues)
+  const extra = state.content.farm.roleHeal?.[state.content.classes[p.classId]?.role] || 0;
+  p.hp = Math.min(max, p.hp + Math.max(1, Math.round(max * (zone.healBetweenWavesPct + extra))));
 
   state.phase = 'farm';
   state.pending = { kind: 'farm', actor: p.id };

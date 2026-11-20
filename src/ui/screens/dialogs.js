@@ -434,7 +434,7 @@ export function helpContent() {
         h('h3', null, 'Les cases'),
         h('ul', null,
           h('li', null, h('b', null, 'Combat'), ' : au tour par tour. Le D20 d\'initiative peut donner l\'avantage (17+) ou vous faire surprendre (4 ou moins).'),
-          h('li', null, h('b', null, 'Trésor'), ' : le butin va au joueur actif, qui le garde ou le donne. Plus le dé est haut, meilleur est l\'objet.'),
+          h('li', null, h('b', null, 'Trésor'), ' : le butin va dans le sac du joueur actif (il peut le donner ensuite, depuis son sac). Plus le dé est haut, meilleur est l\'objet.'),
           h('li', null, h('b', null, 'Piège'), ' : jet de sauvegarde au D20. Un échec fait mal.'),
           h('li', null, h('b', null, 'Fontaine d\'XP'), ' : tout garder ou partager ? Mais l\'eau est peut-être empoisonnée…'),
           h('li', null, h('b', null, 'Fontaine de vie'), ' : rare. Ressuscite un allié (une seule résurrection par joueur et par run).'),

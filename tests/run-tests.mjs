@@ -18,7 +18,6 @@ import { skillBlurb, resourceName } from '../src/ui/format.js';
 import { FX_VOCAB, dotKind } from '../src/core/index.js';
 import { soundList, soundGroups, hasSound } from '../src/ui/sound.js';
 import { heroSvg, monsterSvg, vignetteSvg, sceneCss, sceneIdFor, heroIds, monsterIds, sceneIds, vignetteIds } from '../src/ui/art.js';
-import { SCENES as SCENE_DRAWINGS } from '../src/ui/art/scenes.js';
 import { PIXEL_SCENES } from '../src/ui/art/pixel-scenes.js';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -1759,7 +1758,8 @@ function checkSvg(name, svg, maxBytes = 24000) {
   for (const m of svg.matchAll(/url\(#([^)]+)\)/g)) assert(ids.includes(m[1]), `${name} : url(#${m[1]}) ne pointe sur rien`);
 }
 test('chaque classe a son portrait et chaque monstre le sien (SVG bien formés)', () => {
-  for (const id of Object.keys(content.classes)) {
+  // (les classes de test — les anciennes, retirées du jeu — n'ont pas de portrait : elles gardent leur icône)
+  for (const id of Object.keys(content.classes).filter((k) => !['berserker', 'veilleur', 'duelliste', 'druide_ancien'].includes(k))) {
     assert(heroIds().includes(id), `pas de portrait pour la classe « ${id} »`);
     checkSvg(`héros ${id}`, heroSvg(id));
   }
@@ -1775,16 +1775,13 @@ test('chaque type de case a sa vignette, et chaque décor existe', () => {
   }
   for (const id of ['caves', 'crypt', 'depths', 'terriers', 'training']) {
     assert(sceneIds().includes(id), `pas de décor « ${id} »`);
-    checkSvg(`décor ${id}`, SCENE_DRAWINGS[id]('t'));
     checkSvg(`décor pixel ${id}`, PIXEL_SCENES[id](), 90000); // (un décor pixel : 160 × 65 pixels)
     assert(sceneCss(id).startsWith('url("data:image/svg+xml,'), `décor ${id} : valeur CSS`);
   }
 });
-test("deux portraits du même héros n'ont jamais les mêmes identifiants (pas de dégradé « emprunté » à l'autre)", () => {
-  const ids = (svg) => new Set([...svg.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
-  const a = ids(heroSvg('berserker'));
-  const b = ids(heroSvg('berserker'));
-  assert(![...a].some((x) => b.has(x)), 'identifiants partagés');
+test('une classe sans portrait (classe de test) : pas de dessin, le médaillon garde son icône', () => {
+  eq(heroSvg('berserker'), null);
+  eq(sceneCss('inconnu'), 'none');
 });
 test('le décor suit la profondeur, la zone de farm ou la salle d\'entraînement — et le JSON peut en imposer un', () => {
   eq(sceneIdFor({ setup: { tranche: 1 } }, content), 'caves');

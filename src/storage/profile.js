@@ -67,7 +67,7 @@ export function createEmptyProfile() {
     version: 1,
     nextCharNumber: 1,
     characters: [],
-    settings: { sound: false, volume: 0.7, fx: null, turnSeconds: 0, training: null, view: 'dungeon', farmChar: null, farmZone: null, place: null, coachCombat: false },
+    settings: { sound: false, volume: 0.7, fx: null, turnSeconds: 0, training: null, view: 'dungeon', farmChar: null, farmZone: null, place: null, coachCombat: false, coachTiles: [] },
     lastTeam: [],
     lastSetup: { tranche: 1, dungeon: null, mode: 'tranche', stasisLevel: 1 }
   };
@@ -229,6 +229,7 @@ export function sanitizeProfile(content, raw) {
     view: ['farm', 'expeditions'].includes(raw.settings?.view) ? raw.settings.view : 'dungeon', // onglet de l'Aventure : donjon en équipe, farm solo ou expéditions
     place: ['camp', 'aventure', 'heros', 'forge', 'grimoire'].includes(raw.settings?.place) ? raw.settings.place : null, // le lieu de l'accueil
     coachCombat: !!raw.settings?.coachCombat, // le premier combat guidé a déjà été vu (ou passé)
+    coachTiles: Array.isArray(raw.settings?.coachTiles) ? raw.settings.coachTiles.filter((t) => typeof t === 'string').slice(0, 30) : [], // les cases déjà expliquées ('*' : plus de conseils)
     farmChar: ids.has(raw.settings?.farmChar) ? raw.settings.farmChar : null, // dernier personnage envoyé au farm
     farmZone: typeof raw.settings?.farmZone === 'string' && content.farm.zones[raw.settings.farmZone] ? raw.settings.farmZone : null // dernière zone de farm
   };

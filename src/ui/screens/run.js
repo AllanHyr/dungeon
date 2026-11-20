@@ -172,6 +172,9 @@ function runHeader(run, middle = null) {
         : null));
 }
 
+/** Le nom d'un sort sous sa case : « Mot de l'ombre : Douleur » devient « Douleur » (la partie qui les distingue ; le nom complet est au survol). */
+export const shortSkillName = (name) => (name.includes(' : ') ? name.split(' : ').pop() : name);
+
 /** Le bouton « Animations » : complètes → rapides → réduites. (« Réduites » : les chiffres, les barres de vie et les sons, sans mouvement.) */
 const FX_MODES = {
   full: ['bolt', 'Animations complètes', 'Anim. complètes'],
@@ -964,7 +967,7 @@ function skillSlot(run, actor, s, index, ctx) {
   const slot = h('div', {
     class: `slot kind-${skillKind(def)} ${picked ? 'is-selected' : ''} ${armed ? 'is-armed' : ''} ${s.usable ? '' : 'unusable'} ${s.recommended ? 'recommended' : ''}`,
     onMouseenter: () => ctx.show(s), onMouseleave: () => ctx.reset()
-  }, h('div', { class: 'slot-glow' }, btn), h('span', { class: 'slot-label' }, s.name));
+  }, h('div', { class: 'slot-glow' }, btn), h('span', { class: 'slot-label', title: s.name }, shortSkillName(s.name)));
   return slot;
 }
 

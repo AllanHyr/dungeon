@@ -4,7 +4,7 @@
 // Un TOUR = un joueur "sous les projecteurs" fait avancer le groupe d'une case
 // et décide de ce qu'on fait du résultat. À la fin du tour, on passe au suivant.
 
-import { log, social, getPlayer, livingPlayers, currentTile, spotlightPlayer, assert } from './util.js';
+import { log, emit, social, getPlayer, livingPlayers, currentTile, spotlightPlayer, assert } from './util.js';
 import { consumeStun, tickPoison, hasStatus } from './units.js';
 import { unitStats } from './stats.js';
 import { endRun } from './results.js';
@@ -64,9 +64,26 @@ export function endTurn(state) {
 
 // ---------------- Butin ----------------
 
-/** Ajoute des objets à répartir : le joueur actif décidera de les garder ou de les donner. */
+/**
+ * Le butin trouvé. Par défaut, il va DIRECTEMENT dans le sac du héros qui le trouve (aucune question : une partie à plusieurs en donne
+ * une dizaine) ; on peut toujours le donner ensuite depuis son sac. Avec rules.json > loot.ask = true, on revient à l'ancienne façon :
+ * le joueur actif décide, objet par objet, de le garder ou de le donner.
+ */
 export function queueLoot(state, items) {
-  for (const it of items) if (it) state.lootQueue.push(it);
+  const list = items.filter(Boolean);
+  if (!list.length) return;
+  if (state.content.rules.loot?.ask) {
+    for (const it of list) state.lootQueue.push(it);
+    return;
+  }
+  const actor = decider(state);
+  if (!actor) return;
+  for (const it of list) {
+    actor.bag.push(it);
+    const def = state.content.items[it.id];
+    emit(state, { type: 'loot', target: actor.id, itemId: it.id, rarity: def?.rarity || 'common' });
+    log(state, `${actor.name} ramasse ${def?.name || 'un objet'}.`, 'loot');
+  }
 }
 
 /** Construit la question "garder ou donner ?" pour un objet. */

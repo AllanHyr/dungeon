@@ -56,7 +56,7 @@
   "ghost": {"successMin": 8, "bonus": 2},
   "antiCarry": {"lossPerLevel": 0.3, "minFactor": 0.05},
   "contribution": {"tankedWeight": 0.5, "minMult": 0.5, "maxMult": 1.5},
-  "loot": {"lowerLevelWeight": 0.3, "rarityRollStep": 0.04, "dungeonTableChance": 0.3, "_dungeonTableChance": "Dans un donjon qui a sa table de butin (dungeons.json, champ loot), chaque objet trouvé a 30 % de chances de venir de cette table (objets qui ne tombent que là) ; le reste est du butin ordinaire. Le premier objet du boss en vient toujours."},
+  "loot": {"ask": false, "_ask": "false : un objet trouvé va directement dans le sac du héros qui le trouve (on peut le donner ensuite depuis son sac). true : une question « garder ou donner » pour chaque objet.", "lowerLevelWeight": 0.3, "rarityRollStep": 0.04, "dungeonTableChance": 0.3, "_dungeonTableChance": "Dans un donjon qui a sa table de butin (dungeons.json, champ loot), chaque objet trouvé a 30 % de chances de venir de cette table (objets qui ne tombent que là) ; le reste est du butin ordinaire. Le premier objet du boss en vient toujours."},
   "camp": {
     "_note": "FEU DE CAMP : une case GARANTIE au milieu de chaque donjon (une tranche ou un donjon peut l'enlever avec \"camp\": false). Chaque héros vivant, à son tour, peut changer ses sorts équipés puis choisit UNE activité. 'combats' : le bonus dure tant de combats.",
     "activities": {

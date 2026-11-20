@@ -131,11 +131,11 @@ function stackIndex(id) {
 }
 
 /** Un chiffre qui jaillit, monte en arc et s'éteint. kind : dmg · crit · heal · shield · miss · info · poison */
-function number(a, text, kind, { big = 1, delay = 0 } = {}) {
+function number(a, text, kind, { big = 1, delay = 0, dx = 0 } = {}) {
   if (!a) return;
   const stack = stackIndex(a.id);
   const el = h('div', { class: `fx-num ${kind}` }, text);
-  el.style.left = `${a.x + (stack % 2 ? 14 : -14) * Math.min(stack, 1)}px`;
+  el.style.left = `${a.x + dx + (stack % 2 ? 14 : -14) * Math.min(stack, 1)}px`;
   el.style.top = `${a.y - a.r * 0.35 - stack * 26}px`;
   el.style.fontSize = `${Math.round(26 * big)}px`;
   layer().append(el);
@@ -153,6 +153,24 @@ function number(a, text, kind, { big = 1, delay = 0 } = {}) {
     { opacity: 0, transform: `translate(-50%, -50%) translate(${drift}px, ${-rise}px) scale(0.9)` }
   ], { duration: (kind === 'crit' ? 1500 : 1200) * (mode === 'fast' ? 0.8 : 1), delay, easing: 'ease-out', fill: 'backwards' });
   anim.finished.catch(() => {}).finally(() => el.remove());
+}
+
+/**
+ * Le fil du butin : en bas à gauche de l'écran, une petite carte par objet ramassé (« Thorne · Lame cryptique · Rare »), dans la couleur de
+ * sa rareté. Elles s'empilent et s'effacent seules au bout de quelques secondes : rien à cliquer, rien qui bloque la partie.
+ */
+function lootFeed(def, rarity, content, heroId) {
+  let box = document.getElementById('loot-feed');
+  if (!box) {
+    box = h('div', { id: 'loot-feed', role: 'status', 'aria-live': 'polite' });
+    document.body.append(box);
+  }
+  const hero = document.querySelector(`[data-unit="${CSS.escape(heroId || '')}"] .unit-name, [data-unit="${CSS.escape(heroId || '')}"] .f-name`)?.textContent || '';
+  const rar = content?.rarities?.find((r) => r.id === rarity);
+  const card = h('div', { class: `loot-toast r-${rarity}` }, icon('gift', 16), h('span', null, hero ? `${hero} · ` : '', h('b', null, def.name)), rar ? h('small', null, rar.name) : null);
+  box.prepend(card);
+  while (box.children.length > 5) box.lastChild.remove();
+  setTimeout(() => { card.classList.add('out'); setTimeout(() => card.remove(), 400); }, 4200);
 }
 
 /** Le nom de la compétence, au-dessus de celui qui la lance. */
@@ -447,6 +465,13 @@ async function runStep(step, ctx) {
     case 'status': // un bonus ou un malus vient d'être posé : on l'annonce au-dessus du combattant (« Poison », « Dégâts +15 % »)
       if (a && step.label) number(a, step.label, step.tone === 'debuff' ? 'debuff' : step.tone === 'buff' ? 'buff' : 'info', { big: 0.72 });
       return undefined;
+    case 'loot': { // un objet ramassé : son nom monte au-dessus du héros, dans la couleur de sa rareté
+      const def = ctx.content?.items?.[step.itemId];
+      if (a && def) number(a, `+ ${def.name}`, `loot r-${step.rarity || 'common'}`, { big: 0.6, dx: a.r + 60 });
+      if (def) lootFeed(def, step.rarity || 'common', ctx.content, step.target);
+      sfx('loot', { pan: panOf(a) });
+      return sleep(120);
+    }
     case 'resource':
       if (a && mode !== 'min') cv.rise(a.x, a.y, { kind: 'star', element: 'holy', n: 3, spread: a.r * 0.5, height: a.r * 1.2, size: 5, dur: 0.6, soft: 0 });
       sfx('resource', { pan: panOf(a) });

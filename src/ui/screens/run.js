@@ -147,9 +147,9 @@ function runHeader(run, middle = null) {
           }, icon('timer', 18), secs ? `${secs} s` : 'Minuteur'),
       fxButton(),
       h('button', {
-        class: 'btn btn-ghost btn-icon', title: isSoundEnabled() ? 'Couper le son' : 'Activer le son', 'aria-label': 'Son',
+        class: 'btn btn-ghost hdr-toggle', id: 'sound-toggle', title: isSoundEnabled() ? 'Couper le son' : 'Activer le son', 'aria-label': isSoundEnabled() ? 'Son activé' : 'Son coupé',
         onClick: () => { app.profile.settings.sound = !isSoundEnabled(); setSoundEnabled(app.profile.settings.sound); persistProfile(); redraw(); }
-      }, icon(isSoundEnabled() ? 'sound_on' : 'sound_off', 20)),
+      }, icon(isSoundEnabled() ? 'sound_on' : 'sound_off', 20), h('span', { class: 'hdr-label' }, isSoundEnabled() ? 'Son' : 'Son coupé')),
       room && running
         ? h('button', {
             class: 'btn btn-ghost', id: 'room-leave', title: 'Quitter la partie : ton héros reste dans le donjon, joué par le pilote automatique',
@@ -174,16 +174,16 @@ function runHeader(run, middle = null) {
 
 /** Le bouton « Animations » : complètes → rapides → réduites. (« Réduites » : les chiffres, les barres de vie et les sons, sans mouvement.) */
 const FX_MODES = {
-  full: ['bolt', 'Animations complètes'],
-  fast: ['wind', 'Animations rapides'],
-  min: ['moon', 'Animations réduites']
+  full: ['bolt', 'Animations complètes', 'Anim. complètes'],
+  fast: ['wind', 'Animations rapides', 'Anim. rapides'],
+  min: ['moon', 'Animations réduites', 'Anim. réduites']
 };
 const FX_NEXT = { full: 'fast', fast: 'min', min: 'full' };
 function fxButton() {
   const mode = resolveMode(app.profile.settings.fx);
-  const [ic, label] = FX_MODES[mode];
+  const [ic, label, short] = FX_MODES[mode];
   return h('button', {
-    class: 'btn btn-ghost btn-icon', id: 'fx-toggle', title: `${label} — cliquer pour changer (un clic pendant une animation la saute)`, 'aria-label': label,
+    class: 'btn btn-ghost hdr-toggle', id: 'fx-toggle', title: `${label} — cliquer pour changer (un clic pendant une animation la saute)`, 'aria-label': label,
     onClick: () => {
       const next = FX_NEXT[mode];
       app.profile.settings.fx = next;
@@ -191,7 +191,7 @@ function fxButton() {
       toast(FX_MODES[next][1], 'info');
       redraw();
     }
-  }, icon(ic, 20));
+  }, icon(ic, 20), h('span', { class: 'hdr-label' }, short));
 }
 
 /** La barre de l'atelier : statistiques de test et boutons. */
@@ -1022,7 +1022,8 @@ function actionDock(run, actor, view) {
   let tip = null;
   if (watching) tip = null;
   else if (support && hurtAllies.length) tip = `${hurtAllies.map((p) => p.name).join(', ')} ${hurtAllies.length > 1 ? 'sont bien blessés' : 'est bien blessé'} : « ${support.name} » peut aider !`;
-  else if (!run.training && (!run.farm || run.farm.wave === 1) && run.xpPool === 0 && c.round === 1) tip = 'Sous chaque compétence, la bande de dé montre ses risques : rouge = échec critique, doré = critique.';
+  // (l'astuce de la bande de dé : seulement tant que le guide du premier combat — qui l'explique déjà — n'a pas été vu)
+  else if (!run.training && !app.profile.settings.coachCombat && (!run.farm || run.farm.wave === 1) && run.xpPool === 0 && c.round === 1) tip = 'Sous chaque compétence, la bande de dé montre ses risques : rouge = échec critique, doré = critique.';
 
   // Le DÉTAIL d'une compétence (nom, coût, portée, description, dé).
   //  - grand écran : un panneau toujours visible (la compétence survolée, sinon la dernière utilisée) ;

@@ -102,6 +102,7 @@ En bas de la barre : l'Atelier de classes, la Sauvegarde (ou ton Compte en ligne
 4. Un mort devient **fantôme** : il peut encore aider. Il peut être ressuscité (fontaine de vie ou compétence du Veilleur), **une seule fois par run**.
 5. **L'équipement** (bouton **Équiper le meilleur** : il équipe tout ce qui est clairement meilleur, sans aucune caractéristique en baisse) : 14 emplacements (tête, épaules, dos, torse, mains, ceinture, jambes, pieds, cou, 2 anneaux, relique, main droite et main gauche). Une arme à
    **deux mains** occupe les deux mains ; sinon, deux armes à une main, ou une arme et un bouclier. Détails : [`docs/EQUIPEMENT.md`](docs/EQUIPEMENT.md).
+5 bis. **Le butin** va directement dans le sac du héros qui le trouve (son nom s'affiche à l'écran, dans la couleur de sa rareté) ; on peut le **donner** à un allié depuis son sac, hors combat. (`loot.ask` dans `data/rules.json` rétablit la question « garder ou donner » à chaque objet.)
 6. Fin de run : **victoire** = XP et butin ajoutés à tes personnages. **Défaite / abandon** = tu perds la run, mais **jamais** ton personnage ni son équipement.
 
 ### Le combat

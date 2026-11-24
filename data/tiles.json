@@ -1,8 +1,9 @@
 {
-  "_note": "TYPES DE CASES : nom affiché, icône, textes d'ambiance. 'max' = nombre maximum par donjon, 'minPlayers' = nombre de joueurs minimum pour que la case puisse apparaître.",
+  "_note": "TYPES DE CASES : nom affiché, icône, textes d'ambiance. 'hint' = ce qu'on y trouve, en une phrase (affiché aux bifurcations). 'max' = nombre maximum par donjon, 'minPlayers' = nombre de joueurs minimum pour que la case puisse apparaître.",
   "tiles": {
     "combat": {
       "name": "Embuscade",
+      "hint": "Des ennemis : de l'XP, de l'or et du butin… et des coups à encaisser.",
       "icon": "combat",
       "flavor": [
         "Des bruits de pas résonnent dans l'obscurité...",
@@ -13,6 +14,7 @@
     },
     "treasure": {
       "name": "Trésor",
+      "hint": "Un coffre : de l'or et un objet. Un 1 au dé le fait exploser.",
       "icon": "treasure",
       "flavor": [
         "Un coffre poussiéreux repose dans un recoin.",
@@ -22,6 +24,7 @@
     },
     "trap": {
       "name": "Piège",
+      "hint": "Un piège : un jet de sauvegarde, ou des PV perdus.",
       "icon": "trap",
       "flavor": [
         "Une dalle bouge sous votre pied...",
@@ -31,6 +34,7 @@
     },
     "xp_fountain": {
       "name": "Fontaine d'expérience",
+      "hint": "De l'expérience, à garder ou à partager.",
       "icon": "fountain_xp",
       "max": 2,
       "flavor": [
@@ -40,6 +44,7 @@
     },
     "life_fountain": {
       "name": "Fontaine de vie",
+      "hint": "Une source qui soigne (et relève un fantôme).",
       "icon": "fountain_life",
       "max": 1,
       "flavor": [
@@ -49,6 +54,7 @@
     },
     "low_blow": {
       "name": "Coup bas",
+      "hint": "Un mauvais coup à jouer… ou un pacte à risque.",
       "icon": "low_blow",
       "flavor": [
         "Un compagnon trébuche... C'est le moment idéal pour une petite traîtrise.",
@@ -68,6 +74,7 @@
     },
     "merchant": {
       "name": "Marchand",
+      "hint": "Un marchand : acheter, vendre, marchander.",
       "icon": "merchant",
       "max": 2,
       "flavor": [

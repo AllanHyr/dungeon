@@ -113,7 +113,7 @@ export function ghostAct(state, { playerId, mode }) {
   const next = board[state.dungeon.position + 1];
   if (mode === 'light') {
     assert(state.pending.kind === 'advance', 'On ne peut éclairer que juste avant d\'avancer.');
-    assert(next && !next.revealed, 'La prochaine case est déjà visible.');
+    assert(next && !next.revealed && !next.alt, 'La prochaine case est déjà visible.');
   }
 
   const rules = state.content.rules;

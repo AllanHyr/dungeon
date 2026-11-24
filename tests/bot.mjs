@@ -236,6 +236,16 @@ export function chooseAction(state, rand, combatMode = 'smart', opts = {}) {
           if (plan && plan.ok && plan.remove.length === 0) return { type: 'EQUIP', playerId: pl.id, uid: it.uid };
         }
       }
+      // Une bifurcation : le combat si le groupe est en forme, sinon la route calme (opts.forkPolicy : 'smart', 'combat', 'calm', 'main')
+      const ahead = state.dungeon.board[state.dungeon.position + 1];
+      if (ahead?.alt) {
+        const policy = opts.forkPolicy || process.env.FORKS || 'smart';
+        if (policy === 'main') return { type: 'ADVANCE' };
+        const hp = living.reduce((s2, x) => s2 + x.hp, 0) / living.reduce((s2, x) => s2 + computeStats(state, x).hpMax, 0);
+        const wantCombat = policy === 'combat' || (policy === 'smart' && hp >= 0.6);
+        const altIsCombat = ahead.alt.type === 'combat';
+        return { type: 'ADVANCE', branch: wantCombat === altIsCombat ? 'alt' : 'main' };
+      }
       return { type: 'ADVANCE' };
     }
     case 'roll':

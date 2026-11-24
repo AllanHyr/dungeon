@@ -147,6 +147,7 @@ export function createRun(content, setup, characters, seed = Math.floor(Math.ran
   state.params = getModeParams(content, state.setup);
   state.setup.restrict = !!state.params.restrict;
 
+  if (setup.forks === false) state.setup.forks = false; // (pas de bifurcations : la salle d'entraînement)
   characters.forEach((ch, i) => makePlayer(state, ch, i));
   state.dungeon.board = generateBoard(state, characters.length);
 
@@ -189,7 +190,7 @@ export function createTraining(content, specs, opts = {}) {
     return ch;
   });
   const tranche = content.trancheList.find((t) => t.available).id;
-  const state = createRun(content, { tranche, mode: 'basic' }, chars, opts.seed ?? 4242);
+  const state = createRun(content, { tranche, mode: 'basic', forks: false }, chars, opts.seed ?? 4242);
   state.training = { dummy: opts.dummy || 'mannequin', count: opts.count || 1, atkScale: opts.atkScale || 1, specs };
   log(state, "Salle d'entraînement : les mannequins ne meurent jamais. Teste tes compétences !", 'system');
   startTrainingFight(state);
@@ -265,8 +266,18 @@ function handle(state, a) {
       assert(pend?.kind === 'advance', "Ce n'est pas le moment d'avancer.");
       const actor = getPlayer(state, pend.actor);
       const d = state.dungeon;
+      const ahead = d.board[d.position + 1];
+      assert(a.branch === undefined || a.branch === 'main' || (a.branch === 'alt' && ahead?.alt), 'Route inconnue.');
       d.position++;
       const tile = d.board[d.position];
+      // Une bifurcation : on prend l'autre route (la case devient celle-là ; on garde la trace de la route laissée)
+      if (tile.alt) {
+        const other = a.branch === 'alt' ? { type: tile.type, flavor: tile.flavor } : tile.alt;
+        if (a.branch === 'alt') { tile.type = tile.alt.type; tile.flavor = tile.alt.flavor; }
+        tile.skipped = other.type;
+        delete tile.alt;
+        if (tile.type === 'combat' || other.type === 'combat') log(state, `${actor.name} choisit sa route : ${state.content.tiles[tile.type].name}${tile.type === 'combat' ? '' : ` plutôt que ${state.content.tiles[other.type].name.toLowerCase()}`}.`, 'info');
+      }
       tile.revealed = true;
       state.phase = 'tile';
       state.headline = null;

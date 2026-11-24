@@ -25,7 +25,7 @@ import { fileURLToPath } from 'node:url';
 import { rollFarmItem, rollChoices } from '../src/core/farm.js';
 import { applyPrefs, emptyProfile } from '../src/net/common.js';
 import { rollItem, rollShopItem } from '../src/core/loot.js';
-import { queueLoot } from '../src/core/flow.js';
+import { queueLoot, endTurn as endBoardTurn } from '../src/core/flow.js';
 import { makeMonster, spawnMonsters, planMonsters, endCombat } from '../src/core/combat.js';
 import { nextFloat } from '../src/core/rng.js';
 import { reviveUnit, applyDamage } from '../src/core/units.js';
@@ -76,6 +76,17 @@ test('le contenu se charge : 8 classes jouables (+ 4 classes de test), 3 tranche
   eq(Object.keys(content.classes).sort(), ['assassin', 'barde', 'berserker', 'druide', 'druide_ancien', 'duelliste', 'guerrier', 'mage', 'pretre', 'sacrieur', 'templier', 'veilleur']);
   eq(availableTranches(content).map((t) => t.id), [1, 4, 8]);
 });
+test('hors combat, un héros achevé par un saignement ne récupère pas de PV après sa mort (plus de « fantôme à 2 PV »)', () => {
+  const party = makeParty(content, ['guerrier'], 4, 'decent', 3);
+  const state = createRun(content, { tranche: 4, mode: 'tranche' }, party, 5);
+  const p = state.players[0];
+  p.hp = 1;
+  p.statuses.push({ id: 'dot', amount: 5, label: 'saigne', turns: 1 }); // (un saignement qui s'éteint à ce tour-ci : plus rien n'empêche la récupération)
+  endBoardTurn(state);
+  assert(!p.alive && p.hp === 0, `le héros est mort avec 0 PV (alive=${p.alive}, hp=${p.hp})`);
+  checkInvariants(state);
+});
+
 test('une faute dans un JSON donne une erreur claire (monstre inconnu)', () => {
   const raw = loadRaw();
   raw.dungeons.dungeons[0].monsterPool.push('monstre_qui_nexiste_pas');

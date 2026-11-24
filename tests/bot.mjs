@@ -325,7 +325,7 @@ export function playRun(content, setup, characters, seed, botSeed = seed + 7, ma
     const action = chooseAction(state, rand, combatMode);
     const res = dispatch(state, action);
     if (!res.ok) throw new Error(`Action refusée (${JSON.stringify(action)}) : ${res.error}\n pending=${JSON.stringify(state.pending).slice(0, 300)}`);
-    checkInvariants(state);
+    try { checkInvariants(state); } catch (e) { e.state = state; e.action = action; throw e; } // (on garde la partie pour l'inspecter)
     if (++actions > maxActions) {
       const err = new Error("Trop d'actions : partie bloquée ?");
       err.state = state; // pour pouvoir inspecter la partie bloquée

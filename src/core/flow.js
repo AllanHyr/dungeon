@@ -48,6 +48,7 @@ export function endTurn(state) {
 
   for (const p of livingPlayers(state)) {
     tickPoison(state, p);
+    if (!p.alive) continue; // (le poison ou le saignement vient de l'achever : pas de récupération pour un fantôme)
     // Petite récupération entre deux cases (sauf si empoisonné)
     if (!hasStatus(p, 'poison')) {
       const max = unitStats(state, p).hpMax;

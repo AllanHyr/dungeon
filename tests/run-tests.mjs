@@ -2126,25 +2126,28 @@ console.log('\n● Sacrieur : modes, 1re utilisation gratuite, PV manquants, sac
     assert(near(st.taken, 1) && near(st.damage, 1), 'à pleine vie : aucun effet');
   });
 
-  test('spécialisations : Bastion renforce la réduction, Écorché les dégâts, Équilibre combine les deux (l\'autre côté à 50 %)', () => {
+  test('spécialisations : Bastion renforce la réduction (et encaisse 12 % de moins), Écorché les dégâts, Équilibre combine les deux (l\'autre côté à ~65 %)', () => {
     const at = (spec, mode) => { const t = sac(spec); const p = t.players[0]; hurt(p, 0.5); p.mode = mode; return computeStats(t, p); };
     const extraR = -coef('sacrieur_rempart');
     const extraD = coef('sacrieur_fureur');
     assert(extraR > 0 && extraD > 0, 'les passifs de spé renforcent');
+    const flatR = -content.skills.sacrieur_rempart.modifiers[1].pct; // (Rempart de chair : −12 % de dégâts reçus, quel que soit le mode)
+    assert(flatR > 0, 'le Bastion encaisse moins dans les deux modes');
     let st = at('bastion', 'reduction');
-    assert(near(st.taken, 1 - (R() + extraR) * 0.5), `bastion / endurance : x${st.taken}`);
+    assert(near(st.taken, 1 - (R() + extraR) * 0.5 - flatR), `bastion / endurance : x${st.taken}`);
     st = at('bastion', 'degats');
-    assert(near(st.taken, 1) && near(st.damage, 1 + D() * 0.5), 'bastion / fureur : comme le passif de base');
+    assert(near(st.taken, 1 - flatR) && near(st.damage, 1 + D() * 0.5), `bastion / fureur : le passif de base, et toujours −12 % reçus (x${st.taken})`);
     st = at('ecorche', 'degats');
     assert(near(st.damage, 1 + (D() + extraD) * 0.5), `écorché / fureur : x${st.damage}`);
     st = at('ecorche', 'reduction');
     assert(near(st.taken, 1 - R() * 0.5), 'écorché / endurance : comme le passif de base');
-    // Équilibre : le côté de son mode à 100 %, l'autre à 70 % (valeurs écrites dans le passif « Sang mêlé »)
-    assert(near(-coef('sacrieur_sang_mele', 0), 0.5 * R(), 0.01) && near(coef('sacrieur_sang_mele', 1), 0.5 * D(), 0.01), 'Sang mêlé = 50 % des deux effets de base');
+    // Équilibre : le côté de son mode à 100 %, l'autre à environ 65 % (valeurs écrites dans le passif « Sang mêlé »)
+    const kR = -coef('sacrieur_sang_mele', 0) / R(), kD = coef('sacrieur_sang_mele', 1) / D();
+    assert(kR > 0.6 && kR < 0.7 && kD > 0.6 && kD < 0.7, `Sang mêlé ≈ 65 % des deux effets de base (${kR.toFixed(2)}, ${kD.toFixed(2)})`);
     st = at('equilibre', 'reduction');
-    assert(near(st.taken, 1 - R() * 0.5) && near(st.damage, 1 + 0.5 * D() * 0.5), `équilibre / endurance : reçus x${st.taken}, dégâts x${st.damage}`);
+    assert(near(st.taken, 1 - R() * 0.5) && near(st.damage, 1 + kD * D() * 0.5), `équilibre / endurance : reçus x${st.taken}, dégâts x${st.damage}`);
     st = at('equilibre', 'degats');
-    assert(near(st.damage, 1 + D() * 0.5) && near(st.taken, 1 - 0.5 * R() * 0.5), `équilibre / fureur : reçus x${st.taken}, dégâts x${st.damage}`);
+    assert(near(st.damage, 1 + D() * 0.5) && near(st.taken, 1 - kR * R() * 0.5), `équilibre / fureur : reçus x${st.taken}, dégâts x${st.damage}`);
     st = at(null, 'reduction');
     assert(near(st.taken, 1 - R() * 0.5) && near(st.damage, 1), 'sans spécialisation : le passif de base');
   });
@@ -3007,7 +3010,7 @@ console.log('\n● Templier : puissance sacrée, auras de groupe, spécialisatio
     const spent = lp.resources.sacre; lp.resources.sacre = 3; lally.hp = Math.round(lally.hp * 0.5);
     const hp1 = lally.hp;
     gen(l, lp, 'templier_imposition', lally);
-    assert(lally.hp - hp1 >= computeStats(l, lally).hpMax * 0.44, 'Imposition des mains : +45 % des PV max');
+    assert(lally.hp - hp1 >= computeStats(l, lally).hpMax * 0.34, 'Imposition des mains : +35 % des PV max');
     void spent;
   });
 
@@ -3519,7 +3522,7 @@ console.log('\n● Prêtre : forme d\'ombre, Expiation, soin en trop en bouclier
     eq(p.mode, 'ombre');
   });
 
-  test('Discipline : le Bouclier pose l\'Expiation ; les dégâts du Prêtre soignent les alliés qui la portent (80 %, 55 % en ombre), pas les autres', () => {
+  test('Discipline : le Bouclier pose l\'Expiation ; les dégâts du Prêtre soignent les alliés qui la portent (100 %, 55 % en ombre), pas les autres', () => {
     const t = pr('discipline');
     const [p, ally] = t.players;
     const [m] = t.combat.monsters;
@@ -3531,7 +3534,7 @@ console.log('\n● Prêtre : forme d\'ombre, Expiation, soin en trop en bouclier
     ally.hp = Math.round(max * 0.3); p.hp = Math.round(computeStats(t, p).hpMax * 0.5);
     const a0 = ally.hp, p0 = p.hp;
     const dmg = dealDamage(t, p, m, 20);
-    eq(ally.hp - a0, Math.round(dmg * 0.8), 'l\'allié sous Expiation regagne 80 % des dégâts');
+    eq(ally.hp - a0, Math.round(dmg * 1.0), 'l\'allié sous Expiation regagne 100 % des dégâts');
     eq(p.hp, p0, 'le Prêtre, sans Expiation, rien');
     p.mode = 'ombre';
     const a1 = ally.hp;

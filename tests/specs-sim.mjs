@@ -12,6 +12,7 @@ const N = Number(process.argv[2]) || 30;
 const FILTER = process.argv[3] || '';
 // STASIS=1|2|3 : jouer en Stasis (plus dur : sépare les spécialisations fortes, qui plafonnent à 100 % en Tranche)
 const STASIS = Number(process.env.STASIS) || 0;
+const GEAR = process.env.GEAR || (STASIS ? 'good' : 'decent'); // (en Stasis, un équipement « bon » : rare / épique)
 const SETUP = STASIS ? { mode: 'stasis', stasisLevel: STASIS } : { mode: 'tranche' };
 
 // Le build de chaque spécialisation (le même que dans les simulations de classe : tests/<classe>-sim.mjs).
@@ -35,7 +36,7 @@ export const BUILDS = {
   'druide:gardien': { slot: 'tank', spec: 'gardien', learn: ['druide_regeneration_frenetique'], low: ['druide_coup_patte', 'druide_rugissement', 'druide_peau_ecorce', 'druide_epine_sauvage'], deck: ['druide_coup_patte', 'druide_rugissement', 'druide_peau_ecorce', 'druide_regeneration_frenetique'] },
   'druide:restauration': { slot: 'heal', spec: 'restauration', learn: ['druide_abondance'], deck: ['druide_bourgeon', 'druide_toucher', 'druide_croissance', 'druide_floraison_sauvage'] },
   'druide:farouche': { slot: 'dps', spec: 'farouche', learn: ['druide_frenesie_feline'], deck: ['druide_coup_patte', 'druide_lacerer', 'druide_morsure_feroce', 'druide_epine_sauvage'] },
-  'barde:menestrel': { slot: 'dps', spec: 'menestrel', learn: ['barde_hymne_hate'], low: ['barde_tempo', 'barde_crescendo', 'barde_gamme', 'barde_refrain'], deck: ['barde_tempo', 'barde_crescendo', 'barde_gamme', 'barde_hymne_hate'] },
+  'barde:menestrel': { slot: 'dps', spec: 'menestrel', learn: ['barde_hymne_hate'], low: ['barde_tempo', 'barde_crescendo', 'barde_gamme', 'barde_refrain'], deck: ['barde_note', 'barde_tempo', 'barde_crescendo', 'barde_hymne_hate'] },
   'barde:troubadour': { slot: 'heal', spec: 'troubadour', learn: ['barde_serenade'], deck: ['barde_refrain', 'barde_melopee', 'barde_ode', 'barde_tempo'] },
   'barde:skald': { slot: 'dps', spec: 'skald', learn: ['barde_rengaine'], deck: ['barde_note', 'barde_strophe', 'barde_crescendo', 'barde_cacophonie'] },
   'mage:pyromancien': { slot: 'dps', spec: 'pyromancien', learn: ['mage_feu_interieur'], deck: ['mage_trait_feu', 'mage_embrasement', 'mage_boule_feu', 'mage_barriere'] },
@@ -56,7 +57,7 @@ export function measure(dungeon, members, n = N) {
   for (let i = 0; i < n; i++) {
     const b = members.map((m) => BUILDS[m]);
     const extra = { specs: b.map((x) => x.spec), decks: b.map((x) => (level >= 8 ? x.deck : x.low ?? x.deck)), learns: b.map((x) => (level >= 8 ? x.learn : [])) };
-    const party = makeParty(content, members.map((m) => m.split(':')[0]), level, 'decent', i + 1, extra);
+    const party = makeParty(content, members.map((m) => m.split(':')[0]), level, GEAR, i + 1, extra);
     const { state } = playRun(content, { tranche: dungeon.tranche, dungeon: dungeon.id, ...SETUP }, party, 1000 + i * 7919);
     if (state.result.won) wins++;
     turns += state.turn || 0;

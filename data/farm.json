@@ -21,7 +21,7 @@
         "hpPerWave": 0.07,
         "atkPerWave": 0.05,
         "bossEvery": 5,
-        "bossScale": { "hp": 0.65, "atk": 0.85 }
+        "bossScale": { "hp": 0.35, "atk": 0.6 }
       },
 
       "healBetweenWavesPct": 0.2,

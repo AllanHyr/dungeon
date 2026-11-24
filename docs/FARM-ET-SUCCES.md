@@ -42,7 +42,7 @@ Une session de farm se sauvegarde comme un donjon (on peut fermer la page et rep
       "waves": {
         "countStart": 1, "extraMonsterEvery": 3, "countMax": 3,
         "hpPerWave": 0.07, "atkPerWave": 0.05,
-        "bossEvery": 5, "bossScale": { "hp": 0.65, "atk": 0.85 }
+        "bossEvery": 5, "bossScale": { "hp": 0.35, "atk": 0.6 }
       },
       "healBetweenWavesPct": 0.2,
       "rewards": {
@@ -74,6 +74,8 @@ Les monstres sont déjà adaptés à **un seul joueur** (`partyScaling` de `rule
 | Zone | Tranche | Niveau requis (`minLevel`) | Monstres | Force (`waves.scale`) | Éclats / vague (+ boss) | Objets |
 | --- | --- | --- | --- | --- | --- | --- |
 | Les Terriers | 1 | 1 | rats, gelées, chauves-souris... (Roi des rats) | ×1 | 1 (+4) | niveau ≤ 1 |
+
+Le boss des **Terriers** est volontairement léger (`bossScale` ×0,35 PV, ×0,6 attaque) : c'est souvent le premier boss d'un nouveau joueur, seul et au niveau 1. Avant, seuls le Sacrieur et le Guerrier le battaient régulièrement ; l'Assassin, le Druide et le Barde ne le battaient jamais. Maintenant chaque classe le bat dans 55 à 100 % des sessions (robots, sans équipement).
 | Les Fourrés de Grouinval | 4 | 4 | cochons sauvages (Grand Verrat) | ×0,65 PV, ×0,7 attaque | 2 (+6) | niveau ≤ 4 |
 | Les Fosses aux ogres | 8 | 8 | ogres (Roi ogre) | ×0,7 PV, ×0,7 attaque | 3 (+10) | niveau ≤ 8 |
 

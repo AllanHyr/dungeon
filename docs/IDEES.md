@@ -114,7 +114,7 @@ Dans `data/classes.json` (id `templier`). Tank-soigneur-dps de la foi, au rang a
   | | Idée | Palier 4 (automatique) | Palier 8 (1 parmi 3) | Ultime 20 *(annoncé)* |
   | --- | --- | --- | --- | --- |
   | **Gardien** (Tank) | Le rempart de l'équipe | Armure de foi (−5 % de dégâts reçus, aura renforcée), Main de protection (garde un allié), Frappe / Verdict / Défi du gardien (boucliers en frappant) | Serment de fer (+1 puissance par tour) · Sanctuaire (garde toute l'équipe, 5 points) · Dernier rempart (survit une fois) | Avatar de lumière |
-  | **Lumière** (Soin) | Le soigneur | Dévotion (+20 % soins), Imposition des mains (45 % des PV, 3 points), Bénédiction de lumière (soin + soin sur la durée), Éclat purificateur, Frappe de lumière (soigne en frappant) | Source de vie (soin à chaque tour) · Miracle (ressuscite, 5 points) · Prière (soin sur 3 tours, +2 puissance) | Aube nouvelle |
+  | **Lumière** (Soin) | Le soigneur | Dévotion (+10 % de stat de soin), Imposition des mains (35 % des PV, 3 points), Bénédiction de lumière (soin + soin sur la durée), Éclat purificateur, Frappe de lumière (soigne en frappant) | Source de vie (soin à chaque tour) · Miracle (ressuscite, 5 points) · Prière (soin sur 3 tours, +2 puissance) | Aube nouvelle |
   | **Vindicte** (Dégâts) | Les verdicts dévastateurs | Sainte colère (+8 % ; dépenser de la puissance sacrée donne +20 % pendant 2 tours), Croisade (+20 %, +2 puissance), Frappe vengeresse, Verdict vengeur, Marteau de colère (brûlure) | Jugement final (5 points, puissance 5,0) · Flamme sacrée (brûlure à chaque coup) · Croisé infatigable (achever : +2 puissance, +1 PA) | Colère divine |
 - **Nouveau dans le moteur** : `aura` dans un mode de classe (modificateurs donnés à tous les alliés tant que le héros garde ce mode), condition `spec` (sur le porteur de l'aura ou n'importe quel `if`), événement `spend` (réaction quand on dépense une ressource). Détails : `docs/ECRIRE-UNE-CLASSE.md` §3 quinquies.
 - **Équilibrage (robots, équipe Templier + Veilleur + Duelliste, Profondeurs niv. 8, victoires ; `node tests/templier-sim.mjs 60`)** : Berserker (référence) ~70 % · Templier sans spé ~60 % · Gardien ~86 % · Lumière ~76 % · Vindicte ~82 %. **Seul** (Crypte niv. 6) : Berserker ~72 %, Templier 92-98 % (sauf Lumière : 16 %, un soigneur seul est fragile). ⚠ Comme le Sacrieur, il est **très solide seul** (aura + boucliers + soins) ; en équipe le Gardien reste le plus fort. Leviers : le −5 % et l'aura du Gardien, le Défi, la garde de la Main de protection (relance 4), la puissance du Verdict.
@@ -318,3 +318,43 @@ Cibles : une équipe équilibrée gagne ~85-90 % en tranche 4, ~70-75 % en tranc
 **Ajouté ensuite** : ✅ **renforts** (le Roi des Rats appelle jusqu'à 2 rats, La Balafre un coupe-jarret ; ils ne rapportent rien) · ✅ **panoplies** (chaque table de butin est une panoplie : bonus à 2 pièces, puis à 3) · ✅ **collection** dans l'encyclopédie (donjons terminés, monstres vaincus, butin trouvé ; rien n'est caché, on voit ce qui manque).
 
 **Pistes pour la suite** : une attaque **chargée** sur deux tours (le monstre se prépare, on a un tour pour s'en protéger) ; des monstres qui **volent de l'or** (bandits) ; un décor par donjon (aujourd'hui les nouveaux donjons réutilisent les 4 décors existants) ; des **succès** liés à la collection (tout le butin d'un donjon, tous ses monstres) ; un **mode difficile** par donjon.
+
+## 6 bis. Équilibrage des spécialisations ✅ *(robots — à confirmer en jouant)*
+
+**L'outil** : `node tests/specs-sim.mjs [parties] [filtre]` essaie chacune des 24 spécialisations **dans la même équipe de référence**
+(Guerrier Protection + Prêtre Sacré + Assassin Exécuteur), à sa place (tank, soin ou dégâts) : l'écart vient donc de la spécialisation.
+`STASIS=2` la fait jouer en Stasis 2 avec un bon équipement : c'est là que les écarts se voient (en Tranche, les meilleures plafonnent à 100 %).
+Pour essayer un réglage sans toucher aux données : `PATCH=fichier.json` (ex. `{ "mage_missiles": { "effects.0.power": 0.6 } }`).
+
+Victoires (%), moyenne des tranches 4 et 8 (Crypte, Coupe-Jarrets, Grouinval · Profondeurs, Sans-Repos, Ogres) :
+
+| Spécialisation | Tranche avant → après | Stasis 2 avant → après |
+| --- | --- | --- |
+| Sacrieur Bastion | 63 → 80 | 30 → 43 |
+| Assassin Traqueur | 71 → 84 | 35 → 57 |
+| Prêtre Discipline | 74 → 87 | 44 → 59 |
+| Sacrieur Équilibre | 73 → 80 | 58 → 57 |
+| Sacrieur Écorché | 76 → 82 | 47 → 59 |
+| Barde Ménestrel | 70 → 75 | 43 → 60 |
+| *équipe de référence* | 86 → 86 | 47 → 57 |
+| Templier Lumière | 98 → 93 | 84 → 63 |
+| Barde Troubadour | 95 → 93 | 78 → 67 |
+| Mage Arcaniste | 96 → 94 | 75 → 66 |
+| Prêtre Ombre | 96 → 94 | 74 → 71 |
+| Mage Cryomancien | 98 → 95 | 70 → 71 |
+
+En Stasis 2, l'écart entre la plus faible et la plus forte passe de **30-84 %** à **43-71 %** (le Bastion reste un peu en dessous : on n'a pas voulu rendre l'équipe de 3 tanks encore plus forte). Les autres bougent peu.
+**Ce qui a changé** :
+- *Renforcés* : Bastion (−12 % de dégâts reçus en permanence, Endurance plus forte, Dernier souffle 50 %) · Traqueur (+18 % de dégâts) ·
+  Discipline (Expiation 100 %, +25 % de dégâts, Pénitence 2,1) · Équilibre (Sang mêlé ~65 %, Lame protectrice 1,6, saignement 0,6) ·
+  Écorché (Fureur sanglante +0,25 %/PV manquant, Déchirure 3,0, Festin 2,2) · Ménestrel (le Rythme joue à chaque dépense, Grand crescendo +35 % 3 tours,
+  Hymne de hâte 4 inspiration) · Exécuteur (Instinct +30 %) · Sacré (Égide +22 %).
+- *Affaiblis* : Lumière (Dévotion +10 % de stat de soin seulement, Imposition 35 %, Éclat 25 %, Source de vie 5 %) · Troubadour (soins +5 %,
+  Refrain 1,2, Mélopée 0,28, Ode 20 %, Chœur 18 %, Sérénade 5 %) · Mages (Projectiles 0,6, Maîtrise sans bonus de dégâts, Surcharge 15 % ; Combustion 20 %,
+  Embrasement 0,8 + 0,6, Trait ardent 0,3 ; Cœur de glace −5 % / 15 % / 20 %, Éclair glacial 0,8, Armure de givre 20 %, Blizzard 0,5, Prison relance 4) ·
+  Ombre (Ténèbres 10 %, Toucher 0,6, Éruption 1,6, Pointe mentale 1,1) · Restauration (soins +5 %) · Armes (+5 %) · Skald et Vindicte (plus de +8 % fixe).
+
+⚠ **Reste à surveiller** : le **Gouffre aux Ogres** reste très dur pour les équipes sans saignement ni poison ni dégâts à distance
+(Écorché, Équilibre, Fureur, Farouche : 25-55 % au niveau 8) : c'est son identité (« faites-les saigner »), mais à confirmer en jouant.
+L'équipe de **3 tanks** passe encore presque partout sauf aux Ogres (c'était déjà le cas avant ce réglage).
+Le **Ménestrel** est un pur soutien : il vaut mieux avec deux autres sources de dégâts (dans l'équipe de référence, il remplace le seul dégât).

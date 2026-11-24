@@ -291,7 +291,7 @@ Dans `data/classes.json` (id `mage`). Les **dégâts à distance et en zone**, a
 | 4 | Les Soues de Grouinval | Cochons et sangliers | simple : la **Charge**, annoncée un round avant ; le boss s'énerve sous 50 % de PV | Le Grand Verrat |
 | 8 | Les Profondeurs Déchues | Chevaliers déchus, spectres | **Riposte** (chaque coup reçu en rend un), **Incorporel** (−30 % sur les coups, pas sur les saignements) | Le Gardien Déchu |
 | 8 | Le Sanctuaire des Sans-Repos | Cultistes | **Réanimation** (les acolytes relèvent un mort, une fois chacun, annoncé un round avant), **Sans repos** (le squelette se relève seul une fois), **Magie noire** (ignore la défense), **Voile d'ossements** (boss −40 % tant qu'un serviteur vit) | Le Hiérophante (avec escorte) |
-| 8 | Le Gouffre aux Ogres | Ogres | **Régénération** (4 % par tour, coupée par un saignement ou un poison), **Brise-bouclier** (massue, Fracas), **Colère du roi** | Gromm le Ventru (avec une chamane) |
+| 8 | Le Gouffre aux Ogres | Ogres | **Régénération** (4 % par tour, coupée par un saignement ou un poison), **Brise-bouclier** (massue, Fracas), **Colère du roi**, **Remède de chamane** (15 % des PV, au plus un round sur deux) | Gromm le Ventru (avec une chamane) |
 | 12 / 16 / 20 | La Citadelle Engloutie · Les Forges du Titan · L'Aire des Dragons | *aperçus* | à écrire | — |
 
 **Équilibrage pour les NOUVELLES classes** (robots, 40 parties par case, victoires ; `node tests/donjons-sim.mjs 40`). Héros du niveau de la tranche, équipement correct.
@@ -305,7 +305,7 @@ Dans `data/classes.json` (id `mage`). Les **dégâts à distance et en zone**, a
 | Grouinval | 85 | 95 | 80 | 95 | 95 | 95 | 38 |
 | Profondeurs Déchues | 73 | 100 | 53 | 93 | 73 | 48 | 55 |
 | Sans-Repos | 75 | 98 | 60 | 83 | 55 | 50 | 20 |
-| Gouffre aux Ogres | 88 | 45 | 90 | **5** | 25 | **15** | 13 |
+| Gouffre aux Ogres | 88 → 78 | 45 → **93** | 90 → 100 | 5 → **38** | 25 → 40 | 15 → 30 | 13 → 30 |
 
 Cibles : une équipe équilibrée gagne ~85-90 % en tranche 4, ~70-75 % en tranche 8 ; le Gouffre aux Ogres reste celui qui punit les mauvaises compositions.
 **Ce qui a changé** (avant, ces équipes gagnaient 93-100 % partout sauf aux Ogres) :
@@ -324,7 +324,7 @@ Cibles : une équipe équilibrée gagne ~85-90 % en tranche 4, ~70-75 % en tranc
 **L'outil** : `node tests/specs-sim.mjs [parties] [filtre]` essaie chacune des 24 spécialisations **dans la même équipe de référence**
 (Guerrier Protection + Prêtre Sacré + Assassin Exécuteur), à sa place (tank, soin ou dégâts) : l'écart vient donc de la spécialisation.
 `STASIS=2` la fait jouer en Stasis 2 avec un bon équipement : c'est là que les écarts se voient (en Tranche, les meilleures plafonnent à 100 %).
-Pour essayer un réglage sans toucher aux données : `PATCH=fichier.json` (ex. `{ "mage_missiles": { "effects.0.power": 0.6 } }`).
+Pour essayer un réglage sans toucher aux données : `PATCH=fichier.json` (ex. `{ "mage_missiles": { "effects.0.power": 0.6 } }`) ; marche aussi pour un monstre, une compétence ou une particularité de monstre (`{ "remede_de_chamane": { "cooldown": 3 } }`).
 
 Victoires (%), moyenne des tranches 4 et 8 (Crypte, Coupe-Jarrets, Grouinval · Profondeurs, Sans-Repos, Ogres) :
 
@@ -354,7 +354,10 @@ En Stasis 2, l'écart entre la plus faible et la plus forte passe de **30-84 %**
   Embrasement 0,8 + 0,6, Trait ardent 0,3 ; Cœur de glace −5 % / 15 % / 20 %, Éclair glacial 0,8, Armure de givre 20 %, Blizzard 0,5, Prison relance 4) ·
   Ombre (Ténèbres 10 %, Toucher 0,6, Éruption 1,6, Pointe mentale 1,1) · Restauration (soins +5 %) · Armes (+5 %) · Skald et Vindicte (plus de +8 % fixe).
 
-⚠ **Reste à surveiller** : le **Gouffre aux Ogres** reste très dur pour les équipes sans saignement ni poison ni dégâts à distance
-(Écorché, Équilibre, Fureur, Farouche : 25-55 % au niveau 8) : c'est son identité (« faites-les saigner »), mais à confirmer en jouant.
+✅ **Gouffre aux Ogres** (corrigé ensuite) : le mur venait du **Soin obscur de l'Ogresse chamane** (30 % des PV max de la cible, soit ~230 PV rendus à Gromm
+à chaque soin, environ 900 PV par combat de boss) : cachée au rang arrière derrière le roi, le corps à corps ne pouvait pas l'atteindre. Elle a maintenant son
+propre **Remède de chamane** (15 %, relance 2 : au plus un round sur deux ; le Soin obscur des cultistes ne change pas). Toutes les défaites avaient lieu au boss.
+Équipes avec un dégât au corps à corps sans saignement (Protection + Sacré + …) : Écorché 75 %, Équilibre 78 %, Fureur 85 %, Farouche 88 % (avant 25-55 %).
+Les **3 tanks** restent punis (38 %) : c'est l'identité du donjon. Fosses aux ogres (farm) : boss battu 60-100 % selon la classe.
 L'équipe de **3 tanks** passe encore presque partout sauf aux Ogres (c'était déjà le cas avant ce réglage).
 Le **Ménestrel** est un pur soutien : il vaut mieux avec deux autres sources de dégâts (dans l'équipe de référence, il remplace le seul dégât).

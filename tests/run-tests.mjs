@@ -3282,6 +3282,20 @@ console.log('\n● Donjons à thème : plusieurs donjons par tranche, mécanique
     assert(heals, 'un allié blessé : elle soigne');
   });
 
+  test('Gouffre aux Ogres : la chamane soigne le roi de 15 % de ses PV, au plus un round sur deux (et plus de 30 % comme le Soin obscur)', () => {
+    const sk = content.monsterSkills?.remede_de_chamane || content.skills.remede_de_chamane;
+    eq(sk.effects[0].pctMaxHp, 0.15); eq(sk.cooldown, 2);
+    assert(!content.monsters.ogresse_chamane.skills.some((s) => (s.skill ?? s) === 'soin_obscur'), 'elle n\'a plus le Soin obscur');
+    const t = fight(['roi_ogre', 'ogresse_chamane']);
+    const [roi, ch] = t.combat.monsters;
+    roi.hp = Math.round(roi.hpMax * 0.5);
+    let heals = false;
+    for (let i = 0; i < 20 && !heals; i++) { planMonsters(t); heals = ch.plan.some((st) => st.skillId === 'remede_de_chamane' && st.targetId === roi.id); }
+    assert(heals, 'le roi blessé : elle prévoit de le soigner');
+    ch.cooldowns.remede_de_chamane = 1;
+    for (let i = 0; i < 12; i++) { planMonsters(t); assert(!ch.plan.some((st) => st.skillId === 'remede_de_chamane'), 'pas pendant sa recharge'); }
+  });
+
   test('Sans repos (squelette relevé) : il se redresse une fois à 35 % de ses PV ; un saignement l\'achève pour de bon', () => {
     const t = fight(['squelette_releve']);
     const [p] = t.players; const [m] = t.combat.monsters;

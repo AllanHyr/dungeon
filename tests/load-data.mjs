@@ -33,13 +33,16 @@ export function loadContent({ legacy = true } = {}) {
       m.hp = Math.round(m.hp * hp);
     }
   }
-  // Retouches de compétences (EN MÉMOIRE) : PATCH=fichier.json, au format { "id_competence": { "effects.0.power": 1.2, "pa": 3 } }
+  // Retouches (EN MÉMOIRE) : PATCH=fichier.json, au format { "id_competence": { "effects.0.power": 1.2, "pa": 3 } }
+  // (compétences des classes, monstres, compétences et particularités des monstres ; null = retirer le champ)
   if (process.env.PATCH) {
     const patch = JSON.parse(readFileSync(process.env.PATCH, 'utf8'));
     const all = Object.values(raw.classes.classes).flatMap((c) => c.skills || []);
+    // (on peut aussi retoucher un monstre, une compétence ou une particularité de monstre : même format, par leur id)
+    const find = (id) => all.find((x) => x.id === id) || raw.monsters.monsters.find((m) => m.id === id) || raw.monsters.skills[id] || raw.monsters.passives[id];
     for (const [id, changes] of Object.entries(patch)) {
-      const sk = all.find((x) => x.id === id);
-      if (!sk) throw new Error(`PATCH : compétence inconnue ${id}`);
+      const sk = find(id);
+      if (!sk) throw new Error(`PATCH : compétence ou monstre inconnu ${id}`);
       for (const [path, value] of Object.entries(changes)) {
         const keys = path.split('.');
         let o = sk;

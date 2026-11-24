@@ -51,7 +51,9 @@ export function renderEnd(root) {
     h('div', { class: 'end-facts' },
       h('span', null, icon('target', 16), `${res.tilesCleared} salle${res.tilesCleared > 1 ? 's' : ''} franchie${res.tilesCleared > 1 ? 's' : ''}`),
       h('span', null, icon('d20', 16), `${res.turns} tour${res.turns > 1 ? 's' : ''}`),
-      h('span', null, icon('coin', 16), `${res.goldLeft} or restant (perdu)`)));
+      h('span', null, icon('coin', 16), res.won && res.players[0]?.goldShards > 0
+        ? `${res.goldLeft} or restant → ${res.players[0].goldShards} éclat${res.players[0].goldShards > 1 ? 's' : ''} de forge chacun`
+        : `${res.goldLeft} or restant (perdu)`)));
 
   // À plusieurs : mes héros d'abord ; celui dont le joueur est parti avant la fin ne touche rien.
   const roomRun = inRoom(run);

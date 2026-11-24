@@ -93,7 +93,8 @@ En bas de la barre : l'Atelier de classes, la Sauvegarde (ou ton Compte en ligne
    Chaque donjon dit tout de suite s'il convient à l'équipe : *Adapté*, *Risqué* ou *Très dangereux*. Les étiquettes sur un héros disent ce qu'il y a à faire (points de compétence à dépenser, récompense de farm à choisir).
    *(En ligne, chaque joueur amène UN héros dans un salon ; l'équipe de 1 à 4 héros sert à jouer seul, hors ligne.)*
 2. Chaque tour : le joueur sous les projecteurs clique **Avancer**, lance le **D20**, puis décide.
-3. Cases possibles : combat, trésor, piège, fontaine d'XP, fontaine de vie (rare), coup bas, marchand, un **feu de camp garanti au milieu** (chacun peut changer ses sorts équipés et choisir : se reposer, affûter ses armes ou monter la garde), et le boss à la fin.
+3. Cases possibles : combat, trésor, piège, fontaine d'XP, fontaine de vie (rare), coup bas, marchand, un **feu de camp garanti au milieu** (chacun peut changer ses sorts équipés, acheter des potions au **colporteur**, et choisir : se reposer, affûter ses armes ou monter la garde), et le boss à la fin.
+   Les PV ne remontent presque pas tout seuls entre deux combats (+4 % après un combat, +1 % par case) : potions, repos, fontaines et soins hors combat comptent. L'**or** de la run s'achète des objets ou des potions ; à la **victoire**, ce qui reste devient des **éclats de forge** (1 pour 20 or, partagés entre les héros).
    **Le coup bas** : on peut jouer un sale tour à un allié (empoisonner, croche-pied, assommer, maudire un objet). S'il réussit, le saboteur **gagne** un petit bonus
    (+dégâts, PV, protection) ; mais le coup peut se retourner contre lui (5 ou moins au dé), et la **victime a un droit de réponse** : un jet d'esquive (14 ou plus).
    La même case propose aussi des **pactes** (un coût tout de suite, un bonus pour les prochains combats) : ils marchent seul, sans victime.

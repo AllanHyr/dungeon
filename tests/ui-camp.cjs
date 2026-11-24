@@ -60,6 +60,16 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
     await sleep(300);
     const after = await run((app) => app.run.players.find((p) => p.id === app.run.pending.actor).deck.slice());
     check(after[3] === pickId && after.length === 4, `le 4e sort est remplacé (${before[3]} → ${after[3]})`);
+    // Le colporteur : une potion contre l'or de la run
+    check(await page.$('.camp-peddler') !== null && /colporteur/i.test(await page.textContent('.camp-peddler')), 'le colporteur est là, au coin du feu');
+    await run((app) => { app.run.gold = 500; app.render(); });
+    const gold0 = await run((app) => app.run.gold);
+    const pots0 = await run((app) => app.run.players.find((p) => p.id === app.run.pending.actor).bag.filter((it) => app.content.items[it.id].consumable).length);
+    await tap('#camp-buy');
+    await sleep(300);
+    const pots1 = await run((app) => app.run.players.find((p) => p.id === app.run.pending.actor).bag.filter((it) => app.content.items[it.id].consumable).length);
+    check(pots1 === pots0 + 1 && (await run((app) => app.run.gold)) < gold0, `acheter une potion : elle va dans le sac, l'or baisse (${pots0} → ${pots1})`);
+    check(await run((app) => app.run.pending.kind === 'camp' && app.run.pending.actor) === first, 'acheter ne termine pas son tour au coin du feu');
     await page.screenshot({ path: `${out}/camp-${phone ? 'phone' : 'desktop'}.png` });
 
     // Son activité : affûter ses armes ; puis c'est au suivant

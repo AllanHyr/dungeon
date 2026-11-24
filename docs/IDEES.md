@@ -319,6 +319,17 @@ Cibles : une équipe équilibrée gagne ~85-90 % en tranche 4, ~70-75 % en tranc
 
 **Pistes pour la suite** : une attaque **chargée** sur deux tours (le monstre se prépare, on a un tour pour s'en protéger) ; des monstres qui **volent de l'or** (bandits) ; un décor par donjon (aujourd'hui les nouveaux donjons réutilisent les 4 décors existants) ; des **succès** liés à la collection (tout le butin d'un donjon, tous ses monstres) ; un **mode difficile** par donjon.
 
+## 5 bis. Usure et or ✅ *(premier jet — à confirmer en jouant)*
+**Constat** (robots, ~500 parties) : le groupe arrivait au boss avec **94-95 % de ses PV** ; 153 morts de héros sur 158 avaient lieu au boss ; aucune potion bue ;
+~80 % de l'or de la run perdu à la fin (tranche 8 : ~350 gagnés, ~57 dépensés).
+**Fait** :
+- **Récupération automatique abaissée** (`rules.json`) : après un combat 12 % → **4 %**, par case 3 % → **1 %**. Sans soigneur, un trio arrive au boss à 56-63 % de ses PV (avant 72-73 %), un tank seul à 70-82 % (avant 86-88 %).
+  Avec un soigneur, le groupe se maintient (~92 %) : c'est son rôle. Taux de victoire inchangés à quelques points près (`donjons-sim`), farm inchangé (il a ses propres soins entre les vagues).
+- **Le colporteur** au feu de camp (`camp.peddler`) : 2 potions par héros (la meilleure de la tranche), au prix normal ; chacun achète pour lui, à son tour.
+- **L'or restant devient des éclats de forge** à la victoire (`goldToShards` : 1 éclat pour 20 or, partagé ; tranche 8 en trio ≈ 4 éclats chacun). Perdu en cas de défaite.
+⚠ À surveiller : en tranche 8, une équipe **sans aucun soin** (ex. Guerrier Protection + Assassin + Mage Pyromancien) ne gagne que ~4 % (c'était déjà ~3 % avant ce réglage).
+Pistes : des **bifurcations** (choisir sa route : combat ou trésor, selon l'état du groupe), une **option avant les jets** (désarmer ou contourner un piège, forcer ou ouvrir prudemment un coffre).
+
 ## 6 bis. Équilibrage des spécialisations ✅ *(robots — à confirmer en jouant)*
 
 **L'outil** : `node tests/specs-sim.mjs [parties] [filtre]` essaie chacune des 24 spécialisations **dans la même équipe de référence**

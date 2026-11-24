@@ -60,11 +60,15 @@ export function giveItem(state, fromId, toId, uid) {
 // ---------------- Marchand ----------------
 
 export function shopBuy(state, { index, buyerId }) {
-  assert(state.pending?.kind === 'shop', "Pas de marchand ici.");
+  const atCamp = state.pending?.kind === 'camp';
+  assert(state.pending?.kind === 'shop' || atCamp, "Pas de marchand ici.");
   const tile = currentTile(state);
-  const entry = tile.stock[index];
+  const entry = tile.stock?.[index];
   assert(entry && !entry.sold, 'Objet indisponible.');
   const buyer = playerOrFail(state, buyerId);
+  // (au feu de camp, le colporteur ne sert que le héros dont c'est le tour, et pour lui-même)
+  if (atCamp) assert(buyer.id === state.pending.actor, "Au coin du feu, chacun achète pour lui, à son tour.");
+  assert(buyer.alive, 'Un fantôme ne peut rien acheter.');
   const def = itemDef(state.content, entry.inst);
   const price = shopPrice(state, tile, itemPrice(state.content, def));
   assert(state.gold >= price, "Pas assez d'or.");

@@ -462,6 +462,14 @@ const camp = {
   onReveal(state, tile) {
     tile.queue = campOrder(state);
     tile.done = {};
+    // Le colporteur : quelques potions à vendre (rules.json > camp.peddler), pour dépenser l'or de la run.
+    const ped = state.content.rules.camp?.peddler;
+    tile.stock = [];
+    tile.priceMult = ped?.priceMult ?? 1;
+    for (let i = 0; i < (ped?.potions ?? 0) * tile.queue.length; i++) {
+      const potion = bestPotion(state);
+      if (potion) tile.stock.push({ inst: potion, sold: false });
+    }
     headline(state, 'Un feu de camp : chacun peut changer ses sorts et choisir une activité.', 'good');
     nextCamper(state, tile);
   }

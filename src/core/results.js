@@ -35,6 +35,10 @@ function computeResult(state, outcome) {
   const avg = contribs.reduce((a, b) => a + b, 0) / n;
   const { minMult, maxMult } = c.rules.contribution;
 
+  // L'or qui reste à la victoire devient des éclats de forge, partagés entre les héros (rules.json > goldToShards).
+  const perShard = c.rules.goldToShards?.goldPerShard || 0;
+  const goldShards = won && perShard > 0 ? Math.max(0, Math.round(state.gold / perShard / n)) : 0;
+
   const players = state.players.map((p, i) => {
     const relative = avg > 0 ? contribs[i] / avg : 1;
     const contribMult = clamp(0.5 + 0.5 * relative, minMult, maxMult);
@@ -62,6 +66,7 @@ function computeResult(state, outcome) {
         potential,
         total
       },
+      goldShards,
       levelAfter: after.level,
       levelUps: after.gained,
       loot: won ? found : [],
@@ -135,6 +140,7 @@ export function applyRunResult(content, characters, state) {
     if (!ch.stats.found) ch.stats.found = {};
     for (const it of newItemsOf(p)) if (content.itemDungeon?.[it.id]) ch.stats.found[it.id] = true;
     addXp(content, ch, pr.xp.total);
+    if (pr.goldShards > 0) ch.shards = (ch.shards || 0) + pr.goldShards; // (l'or restant, changé en éclats)
     // Le sac de la run devient l'inventaire du personnage (butin récupéré, objets achetés...).
     const keep = (it) => (it.plus ? { uid: it.uid, id: it.id, plus: it.plus } : { uid: it.uid, id: it.id }); // (garde l'amélioration de la forge)
     ch.inventory = p.bag.map(keep);

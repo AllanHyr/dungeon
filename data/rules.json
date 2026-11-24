@@ -41,8 +41,10 @@
 
   "initiative": { "_note": "Jet d'exploration sur une case combat.", "surpriseMax": 4, "ambushMin": 17 },
 
-  "regenPerTurnPct": 0.03,
-  "postCombatHealPct": 0.12,
+  "regenPerTurnPct": 0.01,
+  "postCombatHealPct": 0.04,
+  "_regen": "Récupération AUTOMATIQUE, volontairement faible : un combat ordinaire doit laisser des traces jusqu'au boss (sinon potions, repos, fontaines et soins hors combat ne servent à rien). regenPerTurnPct : à chaque case ; postCombatHealPct : après un combat gagné (pas le boss).",
+  "goldToShards": { "goldPerShard": 20, "_note": "À la VICTOIRE, l'or qui reste est changé en éclats de forge : (or restant / goldPerShard), partagé entre les héros (arrondi à l'unité, au moins 0). Perdu en cas de défaite ou d'abandon." },
 
   "poison": {"pct": 0.06, "turns": 4},
 
@@ -63,7 +65,8 @@
       "rest": { "name": "Se reposer", "icon": "heart", "desc": "Regagner 35 % de ses PV max et se débarrasser du poison.", "healPct": 0.35 },
       "sharpen": { "name": "Affûter ses armes", "icon": "sword", "desc": "+12 % de dégâts pendant les 2 prochains combats.", "stat": "damage", "pct": 0.12, "combats": 2 },
       "watch": { "name": "Monter la garde", "icon": "shield", "desc": "−12 % de dégâts reçus pendant les 2 prochains combats.", "stat": "taken", "pct": -0.12, "combats": 2 }
-    }
+    },
+    "peddler": { "potions": 2, "priceMult": 1.0, "_note": "Le COLPORTEUR du feu de camp : il vend 'potions' potions (la meilleure de la tranche) PAR HÉROS, au prix normal × priceMult, payées avec l'or de la run. Chacun achète pour lui, à son tour au coin du feu. potions: 0 = pas de colporteur." }
   },
   "forge": {
     "_note": "LA FORGE (fiche du personnage). Démanteler un objet du sac donne des ÉCLATS selon sa rareté (un objet amélioré rend en plus la moitié des éclats investis). Améliorer : +1 à +5, chaque cran +10 % aux PV, attaque, défense et soin de l'objet ; le cran n coûte upgradeCost[rareté] × n. Forger : un objet exclusif d'un donjon que le personnage a terminé, au prix craftCost[rareté]. Les objets protégés (cadenas) ne se démantèlent pas.",

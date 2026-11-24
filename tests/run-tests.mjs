@@ -26,6 +26,10 @@ import { rollFarmItem, rollChoices } from '../src/core/farm.js';
 import { applyPrefs, emptyProfile } from '../src/net/common.js';
 import { rollItem, rollShopItem } from '../src/core/loot.js';
 import { queueLoot, endTurn as endBoardTurn } from '../src/core/flow.js';
+import { endRun } from '../src/core/results.js';
+import { getPlayer as playerOf } from '../src/core/util.js';
+import { shopPrice as shopPriceOf } from '../src/core/tiles.js';
+import { itemPrice as itemPriceOf } from '../src/core/items.js';
 import { makeMonster, spawnMonsters, planMonsters, endCombat } from '../src/core/combat.js';
 import { nextFloat } from '../src/core/rng.js';
 import { reviveUnit, applyDamage } from '../src/core/units.js';
@@ -3805,6 +3809,41 @@ console.log('\n● Feu de camp');
     const c2 = buildContent(raw);
     const s = createRun(c2, { tranche: 1, mode: 'tranche' }, makeParty(c2, ['sacrieur'], 1, 'none', 1), 1);
     eq(s.dungeon.board.filter((t) => t.type === 'camp').length, 0, 'sans camp');
+  });
+
+  test('le colporteur du camp : 2 potions par héros, chacun achète pour lui à son tour, avec l\'or de la run', () => {
+    const { s } = atCamp();
+    const tile = s.dungeon.board[s.dungeon.position];
+    const per = content.rules.camp.peddler.potions;
+    eq(tile.stock.length, per * 2, 'deux héros : 2 × 2 potions');
+    assert(tile.stock.every((e) => content.items[e.inst.id].consumable), 'que des potions');
+    const actor = s.pending.actor, other = s.players.find((p) => p.id !== actor).id;
+    const price = shopPriceOf(s, tile, itemPriceOf(content, content.items[tile.stock[0].inst.id]));
+    s.gold = price - 1;
+    assert(!dispatch(s, { type: 'SHOP_BUY', index: 0, buyerId: actor }).ok, 'pas assez d\'or');
+    s.gold = price * 3;
+    assert(!dispatch(s, { type: 'SHOP_BUY', index: 0, buyerId: other }).ok, 'pas pour un autre que celui dont c\'est le tour');
+    const bagBefore = playerOf(s, actor).bag.length;
+    assert(dispatch(s, { type: 'SHOP_BUY', index: 0, buyerId: actor }).ok);
+    eq(s.gold, price * 2); eq(playerOf(s, actor).bag.length, bagBefore + 1);
+    assert(!dispatch(s, { type: 'SHOP_BUY', index: 0, buyerId: actor }).ok, 'déjà vendue');
+    eq(s.pending.kind, 'camp', 'acheter ne termine pas son tour au camp');
+  });
+
+  test('à la VICTOIRE, l\'or restant devient des éclats de forge (partagés) ; perdu en cas de défaite', () => {
+    const chars = makeParty(content, ['guerrier', 'pretre'], 6, 'decent', 3);
+    const s = createRun(content, { tranche: 4, mode: 'tranche' }, chars, 3);
+    s.gold = 205;
+    endRun(s, 'victory');
+    const per = content.rules.goldToShards.goldPerShard;
+    eq(s.result.players[0].goldShards, Math.round(205 / per / 2));
+    const before = chars.map((c) => c.shards || 0);
+    applyRunResult(content, chars, s);
+    chars.forEach((c, i) => eq(c.shards, before[i] + Math.round(205 / per / 2)));
+    const s2 = createRun(content, { tranche: 4, mode: 'tranche' }, makeParty(content, ['guerrier'], 6, 'decent', 4), 4);
+    s2.gold = 500;
+    endRun(s2, 'defeat');
+    eq(s2.result.players[0].goldShards, 0);
   });
 
   test('au camp, chaque héros VIVANT choisit à son tour (celui sous les projecteurs d\'abord) ; ensuite on lève le camp', () => {

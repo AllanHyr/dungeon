@@ -221,6 +221,11 @@ export function chooseAction(state, rand, combatMode = 'smart', opts = {}) {
           }
         }
       }
+      // Une potion pour un héros bien entamé (hors combat, avant d'avancer)
+      for (const pl of living) {
+        const potion = pl.bag.find((it) => state.content.items[it.id].consumable);
+        if (potion && hpRatio(state, pl) < 0.5) return { type: 'USE_ITEM', playerId: pl.id, uid: potion.uid, targetId: pl.id };
+      }
       // Équipe le meilleur matériel trouvé
       for (const pl of living) {
         for (const it of pl.bag) {
@@ -265,6 +270,11 @@ export function chooseAction(state, rand, combatMode = 'smart', opts = {}) {
     case 'camp': {
       // Feu de camp : se reposer si on est blessé, sinon affûter ses armes (un tank monte la garde).
       const me = state.players.find((x) => x.id === p.actor);
+      // Le colporteur : une potion si on a de quoi (jusqu'à 2 dans le sac)
+      const tile = state.dungeon.board[state.dungeon.position];
+      const idx = (tile.stock || []).findIndex((e) => !e.sold);
+      const owned = me.bag.filter((it) => state.content.items[it.id].consumable).length;
+      if (idx >= 0 && owned < 2 && state.gold >= shopPrice(state, tile, itemPrice(state.content, state.content.items[tile.stock[idx].inst.id]))) return { type: 'SHOP_BUY', index: idx, buyerId: me.id };
       if (hpRatio(state, me) < 0.7) return { type: 'CAMP_ACT', activity: 'rest' };
       return { type: 'CAMP_ACT', activity: state.content.classes[me.classId].role === 'tank' ? 'watch' : 'sharpen' };
     }

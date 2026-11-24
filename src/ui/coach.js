@@ -62,7 +62,7 @@ export const TILE_TIPS = {
   life_fountain: ['Une fontaine de vie', 'Rare et précieuse : elle soigne, et peut même ramener un héros tombé... si l\'eau n\'est pas souillée.'],
   low_blow: ['Le coup bas', 'Jouer un sale tour à un allié pour un petit gain, ou passer un pacte avec les ombres. Rien n\'oblige : on peut rester honnête.'],
   merchant: ['Le marchand', 'Un jet de marchandage fixe les prix, puis chacun achète avec l\'or de la partie. L\'or qui reste est perdu à la fin du donjon : dépense-le !'],
-  camp: ['Le feu de camp', 'Chaque héros peut changer ses sorts équipés, puis choisir une activité : se reposer, affûter ses armes ou monter la garde.'],
+  camp: ['Le feu de camp', 'Chaque héros peut changer ses sorts équipés, acheter des potions au colporteur avec l\'or de la run, puis choisir une activité : se reposer, affûter ses armes ou monter la garde.'],
   boss: ['Le boss', 'Le dernier combat. Le vaincre termine le donjon : tes héros gardent alors leur XP et leur butin.']
 };
 

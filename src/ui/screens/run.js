@@ -135,7 +135,7 @@ function runHeader(run, middle = null) {
     h('div', { class: 'run-stats' },
       run.training ? null : run.farm
         ? h('div', { class: 'gold farm-gains', title: 'Gagné pendant cette session (gardé si tu pars ou si tu tombes après la vague)' }, icon('flame', 20), h('b', null, `${run.farm.shards || 0} éclat${(run.farm.shards || 0) > 1 ? 's' : ''}${run.farm.xp ? ` · ${run.farm.xp} XP` : ''}`))
-        : h('div', { class: 'gold', title: "Or de la run (perdu à la fin, sauf s'il est dépensé)" }, icon('coin', 20), h('b', null, run.gold)),
+        : h('div', { class: 'gold', title: "Or de la run : à dépenser chez le marchand ou le colporteur. À la victoire, ce qui reste devient des éclats de forge (perdu en cas de défaite)." }, icon('coin', 20), h('b', null, run.gold)),
       run.bonus.rollMod
         ? h('div', { class: `mod-badge ${run.bonus.rollMod > 0 ? 'up' : 'down'}`, title: 'Bonus/malus du fantôme sur le prochain jet' }, icon('ghost', 16), `${run.bonus.rollMod > 0 ? '+' : ''}${run.bonus.rollMod} au prochain jet`)
         : null,
@@ -591,6 +591,25 @@ function sceneCamp(run, tile) {
         options.map((id) => h('option', { value: id, selected: id === cur }, `${c.skills[id].name}${deck.includes(id) && id !== cur ? ' (déjà équipé)' : ''}`))));
   };
   const done = tile.done || {};
+  // Le colporteur : des potions contre l'or de la run (chacun pour soi, à son tour)
+  const forSale = (tile.stock || []).map((e, i) => ({ e, i })).filter(({ e }) => !e.sold);
+  const firstPotion = forSale[0];
+  const potionDef = firstPotion ? c.items[firstPotion.e.inst.id] : null;
+  const potionPrice = potionDef ? shopPrice(run, tile, itemPrice(c, potionDef)) : 0;
+  const myPotions = actor.bag.filter((it) => c.items[it.id]?.consumable).length;
+  const peddler = (tile.stock || []).length ? h('div', { class: 'camp-peddler' },
+    h('div', { class: 'row space center wrap' },
+      h('h4', null, icon('flask', 18), ' Le colporteur'),
+      h('div', { class: 'gold', title: "Or de la run (à la victoire, ce qui reste devient des éclats de forge)" }, icon('coin', 18), h('b', null, run.gold))),
+    potionDef
+      ? h('div', { class: 'row gap center wrap' },
+        h('span', null, h('b', null, potionDef.name), h('span', { class: 'muted small' }, ` — ${Math.round(potionDef.consumable.healPct * 100)} % des PV max · encore ${forSale.length} · ${actor.name} en a ${myPotions}`)),
+        h('button', {
+          type: 'button', class: 'btn btn-small btn-primary', id: 'camp-buy', disabled: !mine || run.gold < potionPrice,
+          title: mine ? '' : `C'est au tour de ${actor.name}.`,
+          onClick: () => { play('click'); act({ type: 'SHOP_BUY', index: firstPotion.i, buyerId: actor.id }); }
+        }, icon('coin', 14), `Acheter ${potionPrice} or`))
+      : h('p', { class: 'muted small' }, 'Il a tout vendu.')) : null;
   return h('div', { class: 'card camp-card' },
     h('div', { class: 'row space center wrap' },
       h('h3', null, 'Au coin du feu'),
@@ -605,6 +624,7 @@ function sceneCamp(run, tile) {
     h('div', { class: 'camp-deck' },
       h('h4', null, 'Sorts équipés'),
       h('div', { class: 'camp-slots' }, Array.from({ length: size }, (_, i) => slotSelect(i)))),
+    peddler,
     h('div', { class: 'camp-acts' }, acts.map(([id, a]) => h('button', {
       type: 'button', class: 'camp-act', dataset: { activity: id }, disabled: !mine,
       onClick: () => { play('click'); act({ type: 'CAMP_ACT', activity: id }); }

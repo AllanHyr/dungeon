@@ -16,7 +16,7 @@ est une **carte crème** posée dessus (bord brun foncé, liseré clair, ombre e
 | Les 5 décors (160 × 65) et les 9 vignettes de cases (120 × 40) en pixel art | `src/ui/art/pixel-scenes.js` |
 
 Les règles : **aucun arrondi**, **aucune ombre floue**, **aucun dégradé doux** sur les cartes et boutons ; la lumière vient d'en haut à gauche.
-Les polices (Google Fonts) : **DotGothic16** pour le texte, **Jersey 10** pour les noms, titres de cartes et boutons (le gras), **Press Start 2P**
+Les polices (hébergées avec le jeu dans `css/fonts/`, déclarées dans `css/fonts.css` ; `artifact.html` les prend chez Google Fonts) : **DotGothic16** pour le texte, **Jersey 10** pour les noms, titres de cartes et boutons (le gras), **Press Start 2P**
 pour les grands titres ; `font-size-adjust` les met à la même hauteur. Le texte posé directement sur le bois est clair, avec une ombre d'un pixel.
 
 * **Revenir à « Lanterne »** : retirer la ligne `css/table-pixel.css` de `index.html` et de `artifact.html` (les couleurs et la mise en page reviennent ;
@@ -66,12 +66,12 @@ Exemple : pour une ambiance « forêt » au lieu de « nuit de donjon », on cha
 et `--brass-*` (vers un bois clair). Les noms des anciennes variables (`--bg`, `--panel`, `--gold`...) existent encore
 et pointent vers les nouvelles.
 
-**Typographie** (chargée depuis Google Fonts dans `index.html` et `artifact.html`) :
+**Typographie** (ancienne « Lanterne » : Cinzel / Alegreya Sans ; la table pixel la remplace, voir plus haut). Les polices actuelles sont
+hébergées avec le jeu : fichiers `woff2` dans `css/fonts/` (latin + latin étendu), déclarés dans `css/fonts.css`, chargé par `index.html`.
+`artifact.html` (version publiée) garde le lien Google Fonts.
 
-* `--serif` = **Cinzel** : titres, noms, nombres importants (PV, PA, niveaux). Hors ligne, retombe sur Palatino ou Georgia.
-* `--sans` = **Alegreya Sans** : tout le texte courant. Hors ligne, retombe sur la police du système.
-
-Pour changer de police : modifier le lien Google Fonts dans les deux fichiers HTML, puis `--serif` / `--sans`.
+Pour changer de police : ajouter ses fichiers `woff2` dans `css/fonts/` et un `@font-face` dans `css/fonts.css`, mettre à jour le lien Google Fonts
+de `artifact.html`, puis `--serif` / `--sans` / `--title` dans `css/table-pixel.css`.
 
 ---
 
@@ -111,7 +111,7 @@ Une nouvelle fonctionnalité doit **piocher dans cette liste** plutôt qu'invent
 1. **Une seule couleur « d'action » : la flamme.** Si tout est orange, rien n'est important.
    Pour dire « c'est **choisi** », on utilise le **laiton** (cadre, case cochée), pas la flamme : sur l'accueil, la flamme n'éclaire que le bouton de lancement et « Reprendre ».
 2. Le rouge est **réservé au danger** (monstres, dégâts, échec critique). Le doré est réservé au **critique** et aux récompenses.
-3. Les titres sont en Cinzel (`--serif`), les nombres importants aussi ; le texte courant en Alegreya Sans.
+3. Les grands titres sont en Press Start 2P (`--title`), les noms et nombres importants en Jersey 10 (`--serif`), le texte en DotGothic16, les longs textes en Alegreya Sans.
 4. Un élément **cliquable** a toujours un état au survol et un état au clavier (`:focus-visible` est déjà prévu).
 5. Pas d'information portée **uniquement** par la couleur : une icône ou un mot l'accompagne (rareté = couleur + nom).
 

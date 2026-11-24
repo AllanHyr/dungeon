@@ -20,6 +20,7 @@ import { skillIconName } from './format.js';
 import * as cv from './fx-canvas.js';
 const rand = cv.rand;
 import { planBeats, startState, targetsOf } from './fx-plan.js';
+import { inRoom, isMine } from './turn.js';
 
 // ---------------- Réglages et état ----------------
 
@@ -159,7 +160,12 @@ function number(a, text, kind, { big = 1, delay = 0, dx = 0 } = {}) {
  * Le fil du butin : en bas à gauche de l'écran, une petite carte par objet ramassé (« Thorne · Lame cryptique · Rare »), dans la couleur de
  * sa rareté. Elles s'empilent et s'effacent seules au bout de quelques secondes : rien à cliquer, rien qui bloque la partie.
  */
-function lootFeed(def, rarity, content, heroId) {
+/**
+ * Le fil du butin (en haut à droite). À plusieurs : ce que MES héros ramassent est mis en avant (« Pour toi »)
+ * et reste plus longtemps ; le butin des autres passe en discret, plus petit et plus bref.
+ * `mine` : true / false à plusieurs, null en solo (tout est à moi, rien à distinguer).
+ */
+function lootFeed(def, rarity, content, heroId, mine = null) {
   let box = document.getElementById('loot-feed');
   if (!box) {
     box = h('div', { id: 'loot-feed', role: 'status', 'aria-live': 'polite' });
@@ -167,10 +173,13 @@ function lootFeed(def, rarity, content, heroId) {
   }
   const hero = document.querySelector(`[data-unit="${CSS.escape(heroId || '')}"] .unit-name, [data-unit="${CSS.escape(heroId || '')}"] .f-name`)?.textContent || '';
   const rar = content?.rarities?.find((r) => r.id === rarity);
-  const card = h('div', { class: `loot-toast r-${rarity}` }, icon('gift', 16), h('span', null, hero ? `${hero} · ` : '', h('b', null, def.name)), rar ? h('small', null, rar.name) : null);
+  const card = h('div', { class: `loot-toast r-${rarity}${mine === true ? ' mine' : mine === false ? ' other' : ''}` },
+    icon('gift', mine === false ? 12 : 16),
+    h('span', null, mine === true ? h('em', { class: 'loot-mine' }, 'Pour toi') : null, hero ? `${hero} · ` : '', h('b', null, def.name)),
+    rar && mine !== false ? h('small', null, rar.name) : null);
   box.prepend(card);
   while (box.children.length > 5) box.lastChild.remove();
-  setTimeout(() => { card.classList.add('out'); setTimeout(() => card.remove(), 400); }, 4200);
+  setTimeout(() => { card.classList.add('out'); setTimeout(() => card.remove(), 400); }, mine === true ? 6000 : mine === false ? 2600 : 4200);
 }
 
 /** Le nom de la compétence, au-dessus de celui qui la lance. */
@@ -467,8 +476,9 @@ async function runStep(step, ctx) {
       return undefined;
     case 'loot': { // un objet ramassé : son nom monte au-dessus du héros, dans la couleur de sa rareté
       const def = ctx.content?.items?.[step.itemId];
-      if (a && def) number(a, `+ ${def.name}`, `loot r-${step.rarity || 'common'}`, { big: 0.6, dx: a.r + 60 });
-      if (def) lootFeed(def, step.rarity || 'common', ctx.content, step.target);
+      const mine = ctx.mine ? ctx.mine(step.target) : null;
+      if (a && def) number(a, `+ ${def.name}`, `loot r-${step.rarity || 'common'}`, { big: mine === false ? 0.45 : 0.6, dx: a.r + 60 });
+      if (def) lootFeed(def, step.rarity || 'common', ctx.content, step.target, mine);
       sfx('loot', { pan: panOf(a) });
       return sleep(120);
     }
@@ -863,6 +873,7 @@ export async function replay({ events, before, after, content, rewind = false })
       if (!visible) continue;
       const ctx = {
         beat, content, casterA, style: beat.style || { weight: 1, element: 'physical' },
+        mine: inRoom(after) ? (id) => isMine(after, id) : null, // (à plusieurs : ce héros est-il à moi ? sert au fil du butin)
         look: beat.type === 'cast' ? before?.units?.[beat.caster]?.look : null
       };
       try {

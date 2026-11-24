@@ -41,9 +41,15 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   await page.screenshot({ path: `${out}/100-connexion.png` });
   await page.click('#tab-register');
   check(!!(await page.$('#auth-invite')), 'le serveur demande un code d\'invitation');
-  await page.fill('#auth-name', 'Alice');
-  await page.fill('#auth-password', 'abc');
-  await page.fill('#auth-invite', 'ouvre-toi');
+  // (la page peut se redessiner juste après le changement d'onglet : on vérifie que les trois champs sont bien remplis avant d'envoyer)
+  for (let i = 0; i < 4; i++) {
+    await page.fill('#auth-name', 'Alice');
+    await page.fill('#auth-password', 'abc');
+    await page.fill('#auth-invite', 'ouvre-toi');
+    await page.waitForTimeout(100);
+    const ok = await page.evaluate(() => document.querySelector('#auth-name')?.value === 'Alice' && document.querySelector('#auth-password')?.value === 'abc' && document.querySelector('#auth-invite')?.value === 'ouvre-toi');
+    if (ok) break;
+  }
   await page.click('#auth-submit');
   await page.waitForSelector('.auth-error:not([hidden])');
   check(/mot de passe/.test(await page.textContent('.auth-error')), `mot de passe trop court refusé (« ${await page.textContent('.auth-error')} »)`);

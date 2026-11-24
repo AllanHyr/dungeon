@@ -42,7 +42,7 @@ export function openSoundLab() {
   };
 
   openModal({
-    title: 'Sons et animations',
+    title: 'Réglages',
     wide: true,
     className: 'sound-lab',
     onClose: stopDemo,
@@ -80,6 +80,22 @@ export function openSoundLab() {
           }, label))),
         h('p', { class: 'muted small' }, `${FX_CHOICES.find(([v]) => v === (settings.fx || null))?.[2] || ''} (Actuellement : ${{ full: 'complètes', fast: 'rapides', min: 'réduites' }[mode]}. Un clic pendant une animation la saute.)`));
 
+      // Le minuteur de tour (en solo ; à plusieurs, c'est l'hôte du salon qui le règle)
+      const secs = settings.turnSeconds || 0;
+      const timerChoice = h('div', { class: 'lab-seg', role: 'group', 'aria-label': 'Minuteur de tour' },
+        [[0, 'Sans minuteur'], [app.content.rules.combat.turnSeconds || 60, `${app.content.rules.combat.turnSeconds || 60} s par tour`]].map(([value, label]) => h('button', {
+          type: 'button', class: `btn btn-small ${secs === value ? 'btn-primary' : ''}`, 'data-timer': value, 'aria-pressed': String(secs === value),
+          onClick: () => { settings.turnSeconds = value; persistProfile(); redraw(); api.refresh(); }
+        }, label)));
+      // Les conseils (guide du premier combat, conseils des cases) ne s'affichent qu'une fois : on peut les revoir
+      const tipsSeen = settings.coachCombat || (settings.coachTiles || []).length;
+      const tips = h('div', { class: 'lab-tips' },
+        h('button', {
+          type: 'button', class: 'btn btn-small', id: 'lab-tips-reset', disabled: !tipsSeen,
+          onClick: () => { settings.coachCombat = false; settings.coachTiles = []; app.ui.coachStep = 0; persistProfile(); play('click'); api.refresh(); }
+        }, icon('refresh', 14), 'Revoir les conseils'),
+        h('span', { class: 'muted small' }, tipsSeen ? 'Le guide du premier combat et les conseils des cases reviendront à la prochaine partie.' : 'Les conseils s\'afficheront pendant tes premières parties.'));
+
       const playDemo = () => {
         if (ui.playing) { stopDemo(); api.refresh(); return; }
         ui.playing = true;
@@ -99,7 +115,7 @@ export function openSoundLab() {
 
       return [
         h('p', { class: 'muted' }, 'Tous les sons sont fabriqués par ton navigateur : rien à télécharger. Clique sur un son pour l\'écouter. Chacun est une petite « recette » (src/ui/sound.js) facile à retoucher.'),
-        h('div', { class: 'lab-settings' }, switchRow, volume, h('h3', null, 'Animations de combat'), fxChoice),
+        h('div', { class: 'lab-settings' }, switchRow, volume, h('h3', null, 'Animations de combat'), fxChoice, h('h3', null, 'Minuteur de tour (en solo)'), timerChoice, h('h3', null, 'Conseils'), tips),
         h('div', { class: 'lab-bench' },
           h('h3', null, 'Banc d\'essai'),
           h('div', { class: 'lab-tools' },

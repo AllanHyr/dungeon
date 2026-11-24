@@ -11,7 +11,7 @@ import { go, startRun, startFarm, characterAction, redraw } from '../controller.
 import { play } from '../sound.js';
 import { portrait, xpBar } from '../components.js';
 import { itemCard } from '../format.js';
-import { rewardTexts, salvageValue } from '../../core/index.js';
+import { rewardTexts, salvageValue, levelCap } from '../../core/index.js';
 import { inRoom, isMine, ownerOf } from '../turn.js';
 
 const CLASS_NAME = (id) => app.content.classes[id].name;
@@ -69,14 +69,17 @@ export function renderEnd(root) {
           h('div', { class: 'muted small' }, `${CLASS_NAME(pr.classId)} · niv. ${pr.realLevel}${pr.effLevel !== pr.realLevel ? ` (effectif ${pr.effLevel})` : ''}`),
           roomRun && !mine ? h('div', { class: 'muted small' }, left ? 'Parti avant la fin : aucune récompense' : `Joué par ${owner?.userName || '?'}`) : null),
         left ? null : h('div', { class: 'xp-total' },
-          res.won ? h('b', null, `+${x.total} XP`) : h('b', { class: 'tone-bad' }, 'XP perdue'),
+          // (un héros déjà au niveau maximum ne gagne plus d'XP : on le dit, plutôt qu'un « +120 XP » qui ne sert à rien)
+          res.won && pr.realLevel >= levelCap(c) ? h('b', { class: 'xp-maxed', title: 'Ce héros est au niveau maximum : l\'XP ne s\'accumule plus. La suite : les objets, la forge et le Stasis.' }, 'Niveau max')
+            : res.won ? h('b', null, `+${x.total} XP`) : h('b', { class: 'tone-bad' }, 'XP perdue'),
           res.won && pr.levelUps ? h('div', { class: 'level-up' }, icon('star', 16), `Niveau ${pr.realLevel} → ${pr.levelAfter} !`) : null)),
       left ? null : h('div', { class: 'muted small xp-detail' },
         `XP du groupe ${x.pool} × contribution ${x.contribMult}`,
         x.fountain ? ` + fontaines ${x.fountain}` : '',
         x.levelFactor < 1 ? ` × écart de niveau ${x.levelFactor}` : '',
         x.modeMult !== 1 ? ` × mode ${x.modeMult}` : '',
-        res.won ? '' : ` (aurait donné ${x.potential} XP)`),
+        res.won ? '' : ` (aurait donné ${x.potential} XP)`,
+        res.won && pr.realLevel >= levelCap(c) ? ' — niveau maximum atteint : la suite, ce sont les objets, la forge et le Stasis.' : ''),
       !left && pr.loot.length
         ? h('div', null, h('h4', null, `Butin récupéré (${pr.loot.length})`), h('div', { class: 'loot-grid' }, pr.loot.map((it) => itemCard(c, it, { compact: true }))))
         : null,

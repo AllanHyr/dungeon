@@ -155,6 +155,12 @@ Le **Stasis** est la fin de partie : seul, ses trois niveaux de difficulté rapp
 Un légendaire ne se **forge** qu'après avoir terminé son donjon en Stasis **à plusieurs**. Tout est dans `data/modes.json`
 (`maxRarity`, `soloMaxRarity`, `legendaryMinPlayers`, `rarityWeights` : l'épique est 4 fois plus rare hors Stasis).
 Le butin d'un donjon suit la taille du groupe (`partyScaling` dans `data/rules.json` : `loot`, `bossDrops`) : chaque héros ramasse à peu près autant, seul ou à plusieurs.
+Chaque objet ramassé s'annonce dans le **fil du butin** (en haut à droite) ; à plusieurs, ce que **tes** héros ramassent est mis en avant
+(« Pour toi », reste plus longtemps) et le butin des autres passe en discret. Au **niveau maximum** (`levelCap`), l'écran de fin affiche
+« Niveau max » au lieu de l'XP gagnée : la suite, ce sont les objets, la forge et le Stasis.
+
+Le bouton **Réglages** (accueil et pied des lieux) regroupe le son et le volume, le **minuteur de tour en solo** (60 s ou sans limite)
+et **« Revoir les conseils »** (le guide du premier combat et les bulles des cases repartent de zéro).
 
 Le jeu distingue toujours le **niveau réel** (sauvegardé) du **niveau effectif** (celui utilisé dans le donjon :
 en Tranche et Stasis, c'est `min(niveau réel, tranche)`).
@@ -208,8 +214,8 @@ C'est l'outil prévu pour écrire les classes : guide complet dans **[`docs/ECRI
 ## 3 ter. L'interface : la direction artistique « Lanterne »
 
 Une nuit de donjon éclairée à la lanterne : fond bleu-nuit, cadres en **laiton**, et la **flamme orange** pour tout ce qu'on peut faire
-(boutons principaux, points d'action, héros qui joue). Titres en *Cinzel*, texte en *Alegreya Sans* (chargées depuis Google Fonts ;
-hors ligne le jeu retombe sur les polices du système).
+(boutons principaux, points d'action, héros qui joue). Polices pixel (DotGothic16, Jersey 10, Press Start 2P) et *Alegreya Sans* pour les longs textes, **hébergées avec le jeu**
+(`css/fonts/` + `css/fonts.css`, licence OFL) : la version serveur n'appelle aucun site extérieur. Seule la version publiée (`artifact.html`) les prend chez Google Fonts.
 
 * Tout le style tient dans **`css/style.css`**, piloté par quelques variables au début du fichier : changer l'ambiance = changer ces variables.
 * Les **points d'action** s'affichent en petites flammes, les **personnages et monstres** en cadres carrés **illustrés en pixel art** (8 classes, 39 monstres, dessinés en code),

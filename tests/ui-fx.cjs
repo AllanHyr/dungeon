@@ -175,6 +175,35 @@ async function attackAndObserve(page) {
   check(await page.evaluate(() => JSON.parse(localStorage.getItem('donjon.profile.v1') || '{}').settings?.fx === 'full' || true), 'le choix est gardé');
   await page.context().close();
 
+  // ---------------------------------------------------------------- fil du butin à plusieurs
+  console.log('\n● Le fil du butin à plusieurs');
+  page = await newPage();
+  await page.goto(url);
+  await page.waitForSelector('.menu');
+  await page.evaluate(async () => {
+    const { startTraining } = await import('/src/ui/controller.js');
+    startTraining([{ classId: 'sacrieur', level: 5 }, { classId: 'pretre', level: 5 }], { dummy: 'mannequin_agressif', count: 1, atkScale: 1 });
+  });
+  await page.waitForSelector('.stage');
+  const feed = await page.evaluate(async () => {
+    const { app } = await import('/src/ui/state.js');
+    const fx = await import('/src/ui/fx.js');
+    const run = app.run;
+    const [me, other] = run.players.map((p) => p.id);
+    const items = Object.keys(app.content.items);
+    // (une partie « en salon » : seul le premier héros est à moi)
+    run.net = { you: [me], room: { code: 'TEST' } };
+    const events = [{ type: 'loot', target: me, itemId: items[0], rarity: 'rare' }, { type: 'loot', target: other, itemId: items[1], rarity: 'common' }];
+    await fx.replay({ events, before: run, after: run, content: app.content });
+    const out = { mine: document.querySelectorAll('#loot-feed .loot-toast.mine').length, other: document.querySelectorAll('#loot-feed .loot-toast.other').length, tag: document.querySelector('.loot-toast.mine .loot-mine')?.textContent };
+    run.net = null;
+    return out;
+  });
+  check(feed.mine === 1 && feed.tag === 'Pour toi', `mon objet est mis en avant (« ${feed.tag} »)`);
+  check(feed.other === 1, "l'objet d'un autre joueur passe en discret");
+  await page.screenshot({ path: `${out}/fx-butin-salon.png` });
+  await page.context().close();
+
   check(errors.length === 0, 'aucune erreur JavaScript' + (errors.length ? ' : ' + errors.slice(0, 3).join(' | ') : ''));
   await browser.close();
   if (failures.length) {

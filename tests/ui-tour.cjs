@@ -99,6 +99,8 @@ const profile = {
     await page.click('.loot-card .btn-primary');
     await sleep(300);
   }
+  // (on attend que le coffre soit entièrement résolu : dé, butin, journal — sinon la fenêtre du sac peut s'ouvrir sur un écran qui se redessine)
+  await page.waitForSelector('.advance-card .btn-primary', { timeout: 10000 });
   await page.click('.unit.player >> nth=0 >> button:has-text("Sac (")');
   await page.waitForSelector('.modal');
   await shot('34-inventaire-run');
@@ -116,6 +118,7 @@ const profile = {
   await sleep(400);
   await page.click('.dice-overlay').catch(() => {});
   await sleep(500);
+  await page.waitForSelector('.advance-card .btn-primary', { timeout: 10000 }).catch(() => {});
   await shot('36-apres-coup-bas');
 
   // ----- Scénario : un fantôme + marchand

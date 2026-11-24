@@ -115,7 +115,7 @@ function headerBar() {
         ? tool('Sauvegarde', 'save', () => openSaveModal(), { title: 'Sauvegarder ou copier tes personnages' })
         : h('button', { class: 'btn btn-ghost account-btn', title: 'Mon compte : changer de mot de passe, se déconnecter', 'aria-label': 'Mon compte', onClick: () => openAccountModal() },
             icon('user', 18), h('span', { class: 'account-name' }, app.gateway.user?.name || ''), h('small', null, 'Compte')),
-      tool('Sons', isSoundEnabled() ? 'sound_on' : 'sound_off', () => openSoundLab(), { cls: 'btn-sons', title: 'Sons et animations : volume, style des animations, banc d\'essai pour écouter chaque son' })));
+      tool('Réglages', isSoundEnabled() ? 'sound_on' : 'sound_off', () => openSoundLab(), { cls: 'btn-sons', title: 'Réglages — Sons et volume, animations, minuteur, revoir les conseils ; banc d\'essai pour écouter chaque son' })));
 }
 
 function footNote() {

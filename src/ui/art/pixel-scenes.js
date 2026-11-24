@@ -176,6 +176,19 @@ function depths() {
     c.line(crack, '#ff6a1a'); c.line(crack.map(([x, y]) => [x, y + 1]), '#a02a0a');
   }
   for (const crack of [[[6, 58], [44, 57]], [[60, 62], [110, 60]], [[118, 55], [150, 54]]]) c.glow((crack[0][0] + crack[1][0]) / 2, crack[0][1], 26, '#ff6a1a', 0.25, 6);
+  // des étendards en lambeaux accrochés aux piliers, des épées plantées, un heaume tombé (les chevaliers déchus)
+  for (const [x, y] of [[14, 18], [146, 14]]) {
+    c.rect(x - 5, y, 10, 1, '#4a3a2a');
+    c.poly([[x - 4, y + 1], [x + 4, y + 1], [x + 4, y + 13], [x + 2, y + 10], [x, y + 15], [x - 2, y + 11], [x - 4, y + 14]], '#3a1014');
+    c.line([[x, y + 3], [x, y + 9]], '#6a5a2a'); c.line([[x - 2, y + 5], [x + 2, y + 5]], '#6a5a2a');
+  }
+  for (const [x, y, lean] of [[30, 52, 1], [126, 50, -1], [138, 54, 0]]) {
+    c.line([[x, y], [x + lean * 2, y - 11]], '#6a6e7a'); c.px(x + lean * 2, y - 11, '#9aa0ae');
+    c.line([[x - 2 + lean * 2, y - 8], [x + 2 + lean * 2, y - 8]], '#4a3a2a');
+  }
+  c.ell(100, 57, 3.4, 2.6, '#3a3e48'); c.rect(98, 57, 5, 1, '#0a0405'); c.px(97, 56, '#5a5e6a');
+  // des feux follets (les spectres)
+  for (const [x, y] of [[56, 22], [104, 16], [80, 30]]) { c.glow(x, y, 4, '#a0e0ff', 0.3); c.px(x, y, '#e0f8ff'); c.px(x, y + 1, '#6ab0e0'); }
   // des braises qui montent
   for (let i = 0; i < 26; i++) { const x = Math.floor(r() * 160), y = Math.floor(r() * 48); c.px(x, y, r() < 0.5 ? '#ff9a4a' : '#c04018'); }
   return toSvg(c);
@@ -197,6 +210,237 @@ function terriers() {
   // le sol et deux lanternes
   c.rect(0, 50, 160, 15, (x, y) => (r() < 0.04 ? '#3a2a14' : mix('#24180c', '#0a0604', (y - 50) / 16)));
   for (const [x, y] of [[14, 44], [146, 44]]) { c.line([[x, 30], [x, y - 3]], '#2a1a0c'); torch(c, x, y - 2, 1, '#ffb850'); }
+  return toSvg(c);
+}
+
+/** Une caisse en bois (planches et croisillon). */
+function crate(c, x, y, w, h, base = '#4a3018') {
+  c.rect(x, y, w, h, base);
+  c.rect(x, y, w, 1, mix(base, '#c08a50', 0.35)); c.rect(x, y + h - 1, w, 1, mix(base, '#000000', 0.5));
+  c.rect(x, y, 1, h, mix(base, '#000000', 0.4)); c.rect(x + w - 1, y, 1, h, mix(base, '#000000', 0.5));
+  c.line([[x + 1, y + 1], [x + w - 2, y + h - 2]], mix(base, '#000000', 0.3));
+  c.line([[x + w - 2, y + 1], [x + 1, y + h - 2]], mix(base, '#000000', 0.3));
+}
+/** Un tonneau (cerclé de fer). */
+function barrel(c, x, y, w, h, base = '#5a3418') {
+  c.ell(x + w / 2, y + h / 2, w / 2, h / 2, base);
+  c.rect(x + 1, y + 1, w - 2, h - 2, base);
+  c.rect(x + 1, y + 1, 1, h - 2, mix(base, '#c08a50', 0.3)); c.rect(x + w - 2, y + 1, 1, h - 2, mix(base, '#000000', 0.45));
+  for (const yy of [y + 2, y + h - 3]) c.rect(x, yy, w, 1, '#30343c');
+  c.rect(x + 1, y, w - 2, 1, mix(base, '#000000', 0.55));
+}
+/** Une lanterne suspendue à une corde. */
+function lantern(c, x, y, rope, col = '#ffb850') {
+  c.line([[x, rope], [x, y - 3]], '#2a1c10');
+  c.glow(x, y, 22, col, 0.5, 18);
+  c.rect(x - 2, y - 2, 5, 1, '#3a3e48'); c.rect(x - 2, y + 3, 5, 1, '#3a3e48');
+  c.rect(x - 2, y - 1, 1, 4, '#3a3e48'); c.rect(x + 2, y - 1, 1, 4, '#3a3e48');
+  c.rect(x - 1, y - 1, 3, 4, col); c.px(x, y, '#fff4c0'); c.px(x, y + 1, '#ffe080');
+}
+
+// Le Repaire des Coupe-Jarrets : une cave de contrebandiers, étayée de poutres, encombrée de butin volé.
+function hideout() {
+  const c = canvas(160, 65), r = rng(41);
+  c.vgrad(0, 65, ['#0c0806', '#17100a', '#1e150c', '#150e08', '#0a0604']);
+  // la roche du fond, puis un mur de planches entre deux étais
+  for (let y = 0; y < 47; y++) for (let x = 0; x < 160; x++) if (r() < 0.05) c.px(x, y, '#241a10');
+  for (let x = 22; x < 138; x++) for (let y = 8; y < 47; y++) {
+    const p = Math.floor((y - 8) / 6);
+    let col = p % 2 ? '#2a1c10' : '#2f2012';
+    if ((y - 8) % 6 === 5) col = '#120b06';
+    else if ((x * 7 + p * 13) % 31 === 0) col = '#1a1109';
+    c.px(x, y, col);
+  }
+  for (const x of [20, 136]) { c.rect(x, 0, 5, 47, '#3a2614'); c.rect(x, 0, 1, 47, '#5a3e22'); c.rect(x + 4, 0, 1, 47, '#1a1008'); }
+  c.rect(16, 5, 128, 4, '#3a2614'); c.rect(16, 5, 128, 1, '#5a3e22'); c.rect(16, 8, 128, 1, '#1a1008');
+  c.line([[25, 9], [34, 18]], '#3a2614', 2); c.line([[135, 9], [126, 18]], '#3a2614', 2);
+  // l'avis de recherche cloué au mur
+  c.rect(44, 17, 11, 13, '#8a7a58'); c.rect(44, 17, 11, 1, '#a8987a'); c.px(49, 18, '#4a4e58');
+  c.ell(49.5, 22, 2.5, 2.5, '#3a2a1a'); c.rect(46, 26, 7, 1, '#3a2a1a'); c.rect(47, 28, 5, 1, '#6a2020');
+  // des sacs de butin et une épée accrochée
+  c.line([[106, 14], [114, 30]], '#8a96aa'); c.line([[105, 15], [108, 13]], '#d8a030', 1); c.px(115, 31, '#5a6478');
+  // la lanterne du milieu
+  lantern(c, 80, 14, 9, '#ffb048');
+  // le sol de terre battue
+  c.rect(0, 47, 160, 18, (x, y) => (r() < 0.035 ? '#2e2214' : mix('#22170c', '#080503', (y - 47) / 19)));
+  c.rect(0, 47, 160, 1, '#0e0905');
+  // à gauche : des caisses empilées, un tonneau
+  crate(c, 2, 34, 15, 13); crate(c, 6, 23, 12, 11, '#523618'); crate(c, 17, 38, 10, 9, '#442c16');
+  barrel(c, 28, 37, 9, 11);
+  // à droite : des tonneaux et des sacs d'où dépassent des pièces
+  barrel(c, 140, 33, 10, 14, '#5e3a1a'); barrel(c, 150, 36, 9, 12); barrel(c, 131, 38, 9, 10, '#4e2e14');
+  for (const [x, y] of [[118, 44], [124, 46]]) { c.ell(x, y, 5, 3.5, '#5a4a30'); c.ell(x, y - 3, 2, 1.2, '#3a2e1c'); c.px(x - 1, y - 2, '#ffd040'); c.px(x + 2, y - 1, '#d8a030'); }
+  c.glow(121, 45, 10, '#ffd040', 0.25, 5);
+  // une table basse avec une bougie, des cartes et des pièces (au premier plan, à gauche)
+  c.rect(34, 55, 26, 3, '#4a2e16'); c.rect(34, 55, 26, 1, '#7a5230'); c.rect(36, 58, 2, 6, '#2e1c0c'); c.rect(56, 58, 2, 6, '#2e1c0c');
+  torch(c, 40, 52, 0.7, '#ffc060');
+  for (const [x, col] of [[46, '#d8d0c0'], [49, '#d8d0c0'], [52, '#c03030']]) c.rect(x, 54, 2, 1, col);
+  c.px(55, 54, '#ffd040'); c.px(57, 54, '#d8a030');
+  // un rouleau de corde et quelques pièces à droite
+  c.ell(108, 58, 5, 2, '#6a5434'); c.ell(108, 58, 3, 1, '#3a2e1c');
+  for (const [x, y] of [[92, 60], [96, 62], [70, 61]]) c.px(x, y, '#b08a2a');
+  return toSvg(c);
+}
+
+// Les Soues de Grouinval : une grange de nuit, la lune filtre entre les planches, la boue, la paille.
+function pigsty() {
+  const c = canvas(160, 65), r = rng(53);
+  c.vgrad(0, 65, ['#0a0a0c', '#141210', '#1c160e', '#141008', '#080604']);
+  // le mur de planches verticales, avec des jours où passe la lune
+  for (let x = 0; x < 160; x++) for (let y = 0; y < 44; y++) {
+    const b = Math.floor(x / 9);
+    let col = b % 3 === 0 ? '#2a1e12' : b % 3 === 1 ? '#2e2214' : '#271b10';
+    if (x % 9 === 0) col = '#0c0806';
+    else if ((y * 3 + b * 11) % 29 === 0) col = '#1e150c';
+    c.px(x, y, col);
+  }
+  for (const x of [27, 63, 99, 135]) for (let y = 0; y < 44; y++) c.px(x, y, y % 7 < 5 ? '#5a6a86' : '#0c0806');
+  for (const x of [27, 99]) c.glow(x, 22, 10, '#8aa0c8', 0.18, 30);
+  // la grosse poutre, la fenêtre ronde (la lune) et ses rayons
+  c.rect(0, 6, 160, 4, '#3a2812'); c.rect(0, 6, 160, 1, '#5a4024'); c.rect(0, 9, 160, 1, '#140c06');
+  c.ell(80, 22, 8, 8, '#0c0806'); c.ell(80, 22, 7, 7, '#1a2a44'); c.ell(82, 20, 3.4, 3.4, '#d8dcc8'); c.ell(83, 19.5, 1, 1, '#b0b4a0');
+  c.rect(73, 21, 14, 1, '#2a1e12'); c.rect(79, 15, 1, 14, '#2a1e12');
+  c.glow(80, 22, 18, '#9ab0d8', 0.22);
+  // la paille en meules, à gauche et à droite
+  for (const [x, y, w, h] of [[0, 30, 24, 14], [4, 22, 16, 9], [138, 31, 22, 13]]) {
+    c.rect(x, y, w, h, '#6a5420'); c.rect(x, y, w, 1, '#9a7e34'); c.rect(x, y + h - 1, w, 1, '#3a2e10');
+    for (let i = 0; i < w * h / 6; i++) c.px(x + Math.floor(r() * w), y + 1 + Math.floor(r() * (h - 2)), r() < 0.5 ? '#8a6e2c' : '#4a3a16');
+    c.rect(x, y + Math.floor(h / 2), w, 1, '#3a2a10');
+  }
+  // une fourche contre le mur
+  c.line([[124, 14], [130, 44]], '#4a3018'); c.line([[121, 14], [123, 8]], '#8a96aa'); c.line([[124, 14], [124, 7]], '#8a96aa'); c.line([[127, 13], [126, 7]], '#8a96aa'); c.rect(121, 14, 7, 1, '#5a6478');
+  // la clôture de l'enclos
+  c.rect(0, 40, 160, 2, '#3e2c16'); c.rect(0, 40, 160, 1, '#6a4e2a'); c.rect(0, 45, 160, 2, '#3a2814'); c.rect(0, 45, 160, 1, '#5a4222');
+  for (let x = 6; x < 160; x += 22) { c.rect(x, 37, 3, 13, '#3a2814'); c.rect(x, 37, 1, 13, '#5a4222'); c.px(x + 1, 37, '#6a4e2a'); }
+  // la boue, ses flaques, l'auge
+  c.rect(0, 50, 160, 15, (x, y) => mix('#2a1e10', '#0a0704', (y - 50) / 16));
+  c.rect(0, 49, 160, 1, '#1a1208');
+  for (const [x, y, rx] of [[30, 58, 14], [120, 60, 18], [76, 63, 12]]) { c.ell(x, y, rx, 2, '#1a1208'); c.ell(x - 1, y, rx - 3, 1.2, '#2e3646'); c.line([[x - rx / 2, y], [x - rx / 4, y]], '#56627a'); }
+  c.rect(98, 50, 24, 5, '#4a3018'); c.rect(98, 50, 24, 1, '#7a5230'); c.rect(100, 51, 20, 2, '#3a2a14'); c.rect(99, 55, 2, 2, '#2a1a0c'); c.rect(119, 55, 2, 2, '#2a1a0c');
+  // de la paille éparse au sol, et une lanterne accrochée au poteau
+  for (let i = 0; i < 26; i++) { const x = (i * 41) % 160, y = 51 + ((i * 7) % 13); c.px(x, y, '#7a6024'); c.px(x + 1, y, '#4a3a16'); }
+  lantern(c, 52, 30, 10, '#ffb048');
+  return toSvg(c);
+}
+
+// Le Sanctuaire des Sans-Repos : la salle du rituel, l'autel, le cercle qui luit d'un vert de tombe.
+function sanctuary() {
+  const c = canvas(160, 65), r = rng(67);
+  c.vgrad(0, 65, ['#08060c', '#120c1a', '#1a1024', '#100a16', '#06040a']);
+  c.bricks(0, 0, 160, 46, { base: '#1a1226', joint: '#0a0610', light: '#251a34', bw: 9, bh: 5, rnd: r });
+  // une grande niche au fond, avec une statue encapuchonnée
+  c.poly([[64, 46], [64, 16], [70, 8], [80, 5], [90, 8], [96, 16], [96, 46]], '#2c2040');
+  c.poly([[67, 46], [67, 17], [72, 11], [80, 8], [88, 11], [93, 17], [93, 46]], '#0c0814');
+  c.poly([[72, 44], [73, 24], [76, 17], [80, 15], [84, 17], [87, 24], [88, 44]], '#241a30');
+  c.poly([[76, 23], [78, 18], [82, 18], [84, 23], [82, 25], [78, 25]], '#0a0610');
+  c.px(78, 22, '#7aff9a'); c.px(81, 22, '#7aff9a');
+  c.line([[73, 30], [80, 34], [87, 30]], '#1a1226');
+  // des bannières déchirées de part et d'autre, au symbole de l'œil
+  for (const x of [40, 120]) {
+    c.rect(x - 7, 6, 14, 1, '#4a3a20');
+    c.poly([[x - 6, 7], [x + 6, 7], [x + 6, 30], [x + 3, 27], [x + 1, 32], [x - 2, 28], [x - 6, 31]], '#3a1430');
+    c.ell(x, 16, 3.5, 2, '#7aff9a'); c.ell(x, 16, 1.2, 1.2, '#1a0a14');
+    c.line([[x - 6, 7], [x - 6, 31]], '#4e1e42');
+  }
+  // des niches à crânes
+  for (const [x, y] of [[12, 18], [24, 30], [140, 18], [150, 31]]) {
+    c.rect(x - 4, y - 3, 8, 6, '#06040a');
+    c.ell(x, y, 2.4, 2, '#8a8a78'); c.px(x - 1, y, '#06040a'); c.px(x + 1, y, '#06040a'); c.rect(x - 1, y + 2, 3, 1, '#6a6a5a');
+  }
+  // le sol de dalles
+  c.rect(0, 46, 160, 19, (x, y) => ((x + (y % 2) * 4) % 13 === 0 || y === 46 ? '#0a0610' : mix('#1c1428', '#06040a', (y - 46) / 20)));
+  // le cercle rituel, qui luit
+  c.glow(80, 56, 50, '#3aff7a', 0.22, 9);
+  for (let a = 0; a < 360; a += 1.5) { const t = a * Math.PI / 180; c.px(80 + Math.cos(t) * 42, 56 + Math.sin(t) * 6.5, '#2aa85a'); }
+  for (let a = 0; a < 360; a += 2) { const t = a * Math.PI / 180; c.px(80 + Math.cos(t) * 34, 56 + Math.sin(t) * 5, '#1e7a44'); }
+  for (let a = 0; a < 360; a += 30) { const t = (a + 15) * Math.PI / 180; const x = 80 + Math.cos(t) * 38, y = 56 + Math.sin(t) * 5.8; c.px(x, y, '#9affb8'); c.px(x + 1, y, '#5ad88a'); }
+  // l'autel et sa flamme verte
+  c.rect(70, 42, 20, 6, '#2e2440'); c.rect(70, 42, 20, 1, '#4a3c62'); c.rect(72, 48, 16, 2, '#1c1428');
+  c.glow(80, 37, 20, '#3aff7a', 0.45, 16);
+  c.poly([[76, 42], [78, 36], [79, 38], [80, 31], [81, 37], [83, 35], [84, 42]], '#2ad86a');
+  c.poly([[78, 42], [80, 36], [82, 42]], '#b8ffd0');
+  // des bougies violettes, des os au sol
+  for (const [x, y] of [[30, 50], [35, 52], [125, 50], [130, 52], [58, 47], [102, 47]]) torch(c, x, y, 0.7, '#c070ff');
+  c.line([[16, 60], [22, 59]], '#6a6a5a'); c.px(15, 60, '#7a7a68'); c.px(23, 59, '#7a7a68');
+  c.ell(146, 60, 2.4, 1.8, '#6a6a5a'); c.px(145, 60, '#06040a');
+  // des volutes d'âmes
+  for (let i = 0; i < 16; i++) { const x = Math.floor(r() * 160), y = 4 + Math.floor(r() * 38); c.px(x, y, r() < 0.5 ? '#3aa86a' : '#5a3a7a'); }
+  return toSvg(c);
+}
+
+// Le Gouffre aux Ogres : une caverne au bord d'un abîme, un feu, une marmite, des os de géant.
+function ogres() {
+  const c = canvas(160, 65), r = rng(79);
+  c.vgrad(0, 65, ['#0c0806', '#1a100a', '#24160c', '#1a0f08', '#0a0604']);
+  // les parois de roche, en strates
+  for (let y = 0; y < 50; y++) for (let x = 0; x < 160; x++) if ((y + Math.floor(Math.sin(x / 13) * 3 + Math.sin(x / 5))) % 7 === 0) c.px(x, y, '#120a06');
+  // l'abîme au fond, et le pont de corde qui le traverse
+  c.poly([[50, 48], [56, 20], [66, 12], [80, 9], [94, 12], [104, 20], [110, 48]], '#060302');
+  c.poly([[56, 48], [60, 26], [70, 17], [80, 15], [90, 17], [100, 26], [104, 48]], '#020101');
+  c.glow(80, 48, 26, '#ff5020', 0.2, 20);
+  const sag = (x, y0) => y0 + Math.round(6 * Math.sin(((x - 54) / 52) * Math.PI));
+  for (let x = 54; x <= 106; x++) { c.px(x, sag(x, 25), '#4a3420'); if (x % 3 !== 2) { c.px(x, sag(x, 31), '#7a5a34'); c.px(x, sag(x, 32), '#3a2814'); } }
+  for (let x = 57; x < 106; x += 6) c.line([[x, sag(x, 25)], [x, sag(x, 31)]], '#3a2814');
+  // des stalactites
+  for (let x = 2; x < 160; x += 9 + Math.floor(r() * 8)) spike(c, x, 0, 4 + Math.floor(r() * 9), 4 + Math.floor(r() * 3), 1, '#0e0806', '#3a2416');
+  // à gauche : une grande cage thoracique de bête
+  for (let i = 0; i < 5; i++) { const x = 8 + i * 6; c.line([[x, 47], [x - 3, 36], [x + 2, 26 + i]], '#a89878', 2); c.line([[x - 3, 37], [x - 3, 36]], '#6a5e48'); }
+  c.line([[4, 47], [40, 46]], '#8a7c60', 2);
+  // à droite : un totem coiffé d'un crâne, et un gros gourdin
+  c.rect(142, 18, 4, 30, '#4a2e16'); c.rect(142, 18, 1, 30, '#6a4624');
+  c.ell(144, 15, 5, 4.4, '#c8bc98'); c.rect(141, 14, 2, 2, '#1a0a04'); c.rect(145, 14, 2, 2, '#1a0a04'); c.rect(141, 18, 7, 2, '#c8bc98');
+  c.line([[138, 11], [140, 14]], '#c8bc98'); c.line([[150, 11], [148, 14]], '#c8bc98');
+  c.line([[150, 47], [156, 28]], '#5a3a1c', 3); c.ell(156, 27, 3, 4, '#5a3a1c'); c.px(155, 25, '#8a96aa'); c.px(157, 28, '#8a96aa');
+  // le sol de roche
+  c.rect(0, 47, 160, 18, (x, y) => (r() < 0.04 ? '#34200f' : mix('#26180c', '#080402', (y - 47) / 19)));
+  c.rect(0, 47, 160, 1, '#0e0805');
+  // le feu et la marmite sur son trépied (à gauche du centre)
+  c.glow(44, 52, 36, '#ff8a30', 0.45, 16);
+  c.line([[36, 58], [44, 40], [52, 58]], '#2a1a0c'); c.line([[44, 40], [44, 46]], '#3a3a40');
+  c.ell(44, 50, 7, 5, '#2a2a30'); c.rect(37, 46, 15, 1, '#4a4a54'); c.ell(44, 46.5, 6, 1, '#6a8a3a'); c.px(42, 46, '#9aba5a');
+  c.poly([[39, 58], [41, 54], [43, 56], [44, 51], [46, 55], [48, 53], [50, 58]], '#f07a20'); c.poly([[42, 58], [44, 54], [46, 58]], '#ffd040');
+  c.line([[36, 59], [52, 57]], '#4a2c14', 2);
+  for (const [x, y] of [[40, 40], [48, 36], [45, 33]]) c.px(x, y, '#ff9a40');
+  // des os et des cailloux au sol
+  c.line([[110, 58], [118, 56]], '#a89878'); c.px(109, 58, '#c8bc98'); c.px(110, 59, '#c8bc98'); c.px(118, 55, '#c8bc98'); c.px(119, 56, '#c8bc98');
+  c.ell(128, 61, 3, 2, '#c8bc98'); c.px(127, 61, '#1a0a04'); c.px(129, 61, '#1a0a04');
+  for (const [x, y, s] of [[70, 60, 3], [96, 62, 2], [20, 61, 4]]) c.ell(x, y, s, s * 0.6, '#3a2614');
+  return toSvg(c);
+}
+
+// Les Fourrés de Grouinval : un sous-bois de nuit, la lune, des ronces, des lucioles.
+function thicket() {
+  const c = canvas(160, 65), r = rng(89);
+  c.vgrad(0, 65, ['#060a14', '#0c1424', '#101c24', '#0c1810', '#060a06']);
+  // la lune et quelques étoiles
+  c.glow(118, 10, 26, '#c8d8ff', 0.22, 20);
+  c.ell(118, 10, 5, 5, '#e4e8d4'); c.ell(120, 9, 1.2, 1.2, '#c0c4b0'); c.ell(116, 12, 0.8, 0.8, '#c0c4b0');
+  for (let i = 0; i < 18; i++) c.px(Math.floor(r() * 160), Math.floor(r() * 18), '#a8b4d8');
+  // trois rangées d'arbres, de plus en plus proches et sombres
+  const tree = (x, base, h, w, col, edge) => {
+    c.rect(x - 1, base - h * 0.4, 3, h * 0.4, col);
+    for (let k = 0; k < 3; k++) { const top = base - h + k * h * 0.22, ww = w * (0.6 + k * 0.2); c.poly([[x - ww, top + h * 0.35], [x, top], [x + ww, top + h * 0.35]], col); c.line([[x - ww, top + h * 0.35], [x, top]], edge); }
+  };
+  for (let x = 4; x < 160; x += 11) tree(x + Math.floor(r() * 4), 40, 22 + Math.floor(r() * 8), 6, '#0e1c22', '#1a2e34');
+  for (let x = 0; x < 160; x += 17) if (x < 50 || x > 110) tree(x + Math.floor(r() * 6), 46, 32 + Math.floor(r() * 10), 9, '#0a1414', '#16282a');
+  // deux grands troncs au premier plan, sur les bords
+  for (const [x, w] of [[6, 8], [152, 9]]) { c.rect(x - w / 2, 0, w, 52, '#080c0a'); c.rect(x - w / 2, 0, 1, 52, '#1c2a22'); c.line([[x + w / 2, 14], [x + w / 2 + 10, 6]], '#080c0a', 2); }
+  // la clairière, le sentier
+  c.rect(0, 46, 160, 19, (x, y) => mix('#14200e', '#050805', (y - 46) / 20));
+  c.poly([[64, 65], [72, 46], [88, 46], [100, 65]], '#1e1e12');
+  c.rect(0, 46, 160, 1, '#0a1208');
+  // des ronces et des hautes herbes
+  for (const [x0, x1] of [[0, 40], [118, 160]]) for (let x = x0; x < x1; x += 2) {
+    const h = 4 + Math.floor(r() * 8);
+    c.line([[x, 50], [x + (r() < 0.5 ? -1 : 1), 50 - h]], r() < 0.5 ? '#1a3418' : '#122612');
+  }
+  for (const pts of [[[2, 50], [10, 42], [20, 46], [28, 40], [36, 47]], [[124, 48], [132, 41], [142, 45], [152, 39], [158, 44]]]) {
+    c.line(pts, '#2a1e14'); for (const [x, y] of pts) { c.px(x, y - 1, '#4a3424'); c.px(x + 1, y, '#a02a3a'); }
+  }
+  for (let i = 0; i < 40; i++) { const x = Math.floor(r() * 160), y = 52 + Math.floor(r() * 12); c.px(x, y, '#1e3a1a'); c.px(x, y - 1, '#2a4a22'); }
+  // des champignons, des lucioles
+  for (const [x, y] of [[50, 58], [53, 59], [112, 57]]) { c.rect(x, y, 1, 2, '#c8bc98'); c.rect(x - 1, y - 1, 3, 1, '#a82630'); }
+  for (const [x, y] of [[24, 30], [40, 22], [58, 36], [100, 28], [130, 34], [146, 24], [84, 18], [70, 42]]) { c.glow(x, y, 3, '#d8ff6a', 0.4); c.px(x, y, '#f4ffb0'); }
   return toSvg(c);
 }
 
@@ -358,7 +602,7 @@ function camp() {
   return toSvg(c);
 }
 
-export const PIXEL_SCENES = { caves, crypt, depths, terriers, training };
+export const PIXEL_SCENES = { caves, crypt, depths, terriers, hideout, pigsty, sanctuary, ogres, thicket, training };
 export const PIXEL_VIGNETTES = {
   treasure, trap, merchant, combat, boss, camp,
   low_blow: lowBlow,

@@ -61,7 +61,7 @@ Une session de farm se sauvegarde comme un donjon (on peut fermer la page et rep
 | Champ | Sens |
 | --- | --- |
 | `monsterPool`, `bossId` | les monstres de `monsters.json` qui peuplent la zone, et son boss |
-| `scene` | (facultatif) le décor derrière les combattants : `terriers` (défaut du farm), `caves`, `crypt`, `depths`, ou le chemin d'une image (`"img/mon-decor.jpg"`) |
+| `scene` | (facultatif) le décor derrière les combattants : `terriers` (défaut du farm), `thicket`, `ogres`, `caves`, `crypt`, `depths`, `hideout`, `pigsty`, `sanctuary`, ou le chemin d'une image (`"img/mon-decor.jpg"`) |
 | `countStart`, `extraMonsterEvery`, `countMax` | vague n : `countStart + (n−1) / extraMonsterEvery` monstres, plafonné à `countMax` (ex. 1 monstre, +1 toutes les 3 vagues, 3 au maximum) |
 | `hpPerWave`, `atkPerWave` | à chaque vague, PV et attaque des monstres augmentent de ce pourcentage (0,07 = +7 % par vague, cumulés) |
 | `bossEvery`, `bossScale` | toutes les `bossEvery` vagues, c'est le boss seul, avec ces multiplicateurs de PV et d'attaque en plus |

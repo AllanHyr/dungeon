@@ -639,7 +639,7 @@ Une **tranche** (`data/tranches.json`) est une plage de niveaux avec ses réglag
 | `minMonsters` | au moins tant de monstres par combat, **même en solo** — sans quoi une mécanique de groupe (relever un mort, soigner un allié) n'existerait pas |
 | `mechanics` | « à savoir avant d'entrer » : une liste de `{ "name", "desc" }`, affichée à l'accueil et dans l'encyclopédie. Les mécaniques elles-mêmes sont les `passives` des monstres |
 | `loot` | la **table de butin** du donjon : ces objets (de `items.json`) ne tombent **que là** — jamais ailleurs, ni au farm, ni chez le marchand |
-| `scene` | le décor (`caves`, `crypt`, `depths`, `terriers`, ou le chemin d'une image) |
+| `scene` | le décor (`caves`, `crypt`, `depths`, `terriers`, `hideout`, `pigsty`, `sanctuary`, `ogres`, `thicket`, ou le chemin d'une image) |
 | `available: false` | un aperçu « à venir » (affiché dans « Bientôt ») |
 | tout réglage d'une tranche | un donjon peut surcharger `boardLength`, `tileWeights`, `lootChance`, `enrageAfterRound`, `enragePerRound`... |
 

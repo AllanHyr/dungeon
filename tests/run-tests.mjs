@@ -1784,11 +1784,22 @@ test('chaque type de case a sa vignette, et chaque décor existe', () => {
     assert(vignetteIds().includes(id), `pas de vignette pour la case « ${id} »`);
     checkSvg(`vignette ${id}`, vignetteSvg(id), 40000); // (une vignette pixel : 120 × 40 pixels)
   }
-  for (const id of ['caves', 'crypt', 'depths', 'terriers', 'training']) {
+  for (const id of sceneIds()) {
     assert(sceneIds().includes(id), `pas de décor « ${id} »`);
     checkSvg(`décor pixel ${id}`, PIXEL_SCENES[id](), 90000); // (un décor pixel : 160 × 65 pixels)
     assert(sceneCss(id).startsWith('url("data:image/svg+xml,'), `décor ${id} : valeur CSS`);
   }
+});
+test('chaque donjon jouable a son propre décor, et chaque zone de farm un décor qui existe', () => {
+  const seen = new Map();
+  for (const d of Object.values(content.dungeons)) {
+    if (d.available === false) continue;
+    assert(d.scene && sceneIds().includes(d.scene), `donjon ${d.id} : décor « ${d.scene} » inconnu`);
+    assert(!seen.has(d.scene), `les donjons ${seen.get(d.scene)} et ${d.id} partagent le décor « ${d.scene} »`);
+    seen.set(d.scene, d.id);
+    eq(sceneIdFor({ setup: { tranche: d.tranche, dungeon: d.id } }, content), d.scene);
+  }
+  for (const [id, z] of Object.entries(content.farm.zones)) eq(sceneIdFor({ farm: { zoneId: id }, setup: { tranche: 1 } }, content), z.scene || 'terriers');
 });
 test('une classe sans portrait (classe de test) : pas de dessin, le médaillon garde son icône', () => {
   eq(heroSvg('berserker'), null);

@@ -219,7 +219,7 @@ Une nuit de donjon éclairée à la lanterne : fond bleu-nuit, cadres en **laito
 
 * Tout le style tient dans **`css/style.css`**, piloté par quelques variables au début du fichier : changer l'ambiance = changer ces variables.
 * Les **points d'action** s'affichent en petites flammes, les **personnages et monstres** en cadres carrés **illustrés en pixel art** (8 classes, 39 monstres, dessinés en code),
-  devant un **décor** par donjon (caves, crypte, profondeurs, terriers, salle d'entraînement). Chaque case a sa **vignette** (coffre, piège, fontaine, marchand, boss...).
+  devant un **décor** par donjon (caves, crypte, repaire de bandits, soues, profondeurs, sanctuaire, gouffre aux ogres, et pour le farm terriers et sous-bois ; plus la salle d'entraînement). Chaque case a sa **vignette** (coffre, piège, fontaine, marchand, boss...).
 * Les **combats s'animent** : élan et entailles, projectiles, éclairs, boucliers, soins, étincelles, chiffres qui s'envolent, barres de vie qui descendent coup après coup. Trois styles
   (complètes, rapides, réduites) ; un clic saute l'animation. Chaque compétence a son geste, déduit de ses données ou écrit dans un champ `fx`.
 * **57 sons** fabriqués par le navigateur (aucun fichier audio), avec un **banc d'essai** (menu → **Sons**) pour les écouter un par un, régler le volume et choisir le style des animations.

@@ -37,7 +37,7 @@ const profile = {
   }));
   check(g.heroes === 8, `8 portraits de classes, en pixel art (${g.heroes})`);
   check(g.monsters >= 20, `${g.monsters} portraits de monstres`);
-  check(g.scenes === 5, `5 décors (${g.scenes})`);
+  check(g.scenes === 10, `10 décors (${g.scenes})`);
   check(g.vignettes === 9, `9 vignettes de cases, feu de camp compris (${g.vignettes})`);
   await page.screenshot({ path: `${out}/90-galerie.png`, fullPage: true });
 
@@ -89,6 +89,22 @@ const profile = {
       return sceneIdFor(app.run, app.content) === attendu && document.querySelector('.stage').style.getPropertyValue('--scene').length > 100;
     }, { tranche, attendu });
     check(ok, `tranche ${tranche} : décor « ${attendu} »`);
+  }
+
+  // Chaque donjon a son décor (une capture par donjon, pour l'œil)
+  for (const [dungeon, tranche, attendu] of [['repaire_coupe_jarrets', 4, 'hideout'], ['soues_de_grouinval', 4, 'pigsty'], ['sanctuaire_sans_repos', 8, 'sanctuary'], ['gouffre_aux_ogres', 8, 'ogres']]) {
+    const ok = await page.evaluate(async ({ dungeon, tranche, attendu }) => {
+      const { app } = await import('/src/ui/state.js');
+      const { redraw } = await import('/src/ui/controller.js');
+      const { sceneIdFor, sceneCss } = await import('/src/ui/art.js');
+      app.run.training = false;
+      app.run.setup.tranche = tranche;
+      app.run.setup.dungeon = dungeon;
+      redraw();
+      return sceneIdFor(app.run, app.content) === attendu && document.querySelector('.stage').style.getPropertyValue('--scene') === sceneCss(attendu);
+    }, { dungeon, tranche, attendu });
+    check(ok, `${dungeon} : décor « ${attendu} »`);
+    await page.screenshot({ path: `${out}/92-combat-${attendu}.png` });
   }
 
   console.log('\n● Une vraie image à la place du dessin');

@@ -147,7 +147,8 @@
       "mechanics": [
         { "name": "Régénération", "desc": "Les ogres récupèrent 4 % de leurs PV à chaque tour (2,5 % pour leur roi) — sauf s'ils saignent ou sont empoisonnés. Concentrez vos coups sur un seul, ou faites-les saigner." },
         { "name": "Brise-bouclier", "desc": "Le Coup de massue et le Fracas détruisent vos boucliers avant de frapper : ne comptez pas que sur eux." },
-        { "name": "Colère du roi", "desc": "Sous 40 % de PV, Gromm frappe 35 % plus fort." }
+        { "name": "Colère du roi", "desc": "Sous 40 % de PV, Gromm frappe 35 % plus fort." },
+        { "name": "Remède de chamane", "desc": "L'Ogresse chamane soigne, un round sur deux, l'ogre le plus blessé (15 % de ses PV) depuis le rang arrière. Avec Gromm, abattez-la à distance, faites saigner le roi, ou frappez assez fort pour la devancer." }
       ],
       "loot": ["dent_d_ogre", "marmite_cabossee", "ceinture_en_peau_d_ogre", "massue_de_gromm"],
       "setName": "Panoplie de Gromm",

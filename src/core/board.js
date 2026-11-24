@@ -54,9 +54,40 @@ export function generateBoard(state, partySize) {
   ensureAtLeast(state, board, tranche, 'combat', tranche.minCombats ?? 4);
   ensureAtLeast(state, board, tranche, 'treasure', 1);
 
+  // Les BIFURCATIONS : un combat d'un côté, autre chose de l'autre (rules.json > forks)
+  addForks(state, board, tranche, partySize);
+
   // Dernière case : le boss
   board.push(makeTile(state, length - 1, 'boss'));
   return board;
+}
+
+/**
+ * Pose les bifurcations : sur certaines cases, une route ALTERNATIVE (`tile.alt` = { type, flavor }).
+ * Si la case est un combat, l'autre route est une case calme (tirée selon les poids de la tranche) ; sinon, l'autre route est un combat.
+ * Le joueur choisit en avançant (ADVANCE avec `branch: 'alt'`) : la case prend alors le type de l'autre route.
+ */
+function addForks(state, board, tranche, partySize) {
+  const c = state.content;
+  if (tranche.forks === false || state.setup.forks === false) return; // (la salle d'entraînement n'en a pas)
+  const cfg = { ...(c.rules.forks || {}), ...(typeof tranche.forks === 'object' ? tranche.forks : {}) };
+  if (!cfg.every) return;
+  const counts = {};
+  for (const t of board) counts[t.type] = (counts[t.type] || 0) + 1;
+  for (let i = cfg.first ?? 2; i < board.length; i += cfg.every) {
+    const tile = board[i];
+    if (!tile || tile.type === 'camp') continue;
+    let type;
+    if (tile.type === 'combat') {
+      const calm = RANDOM_TILE_TYPES.filter((t) => t !== 'combat' && t !== tile.type && tranche.tileWeights[t] > 0
+        && !(c.tiles[t].minPlayers && partySize < c.tiles[t].minPlayers) && !(c.tiles[t].max && (counts[t] || 0) >= c.tiles[t].max));
+      if (!calm.length) continue;
+      type = weightedPick(state, calm, (t) => tranche.tileWeights[t] || 1);
+    } else type = 'combat';
+    counts[type] = (counts[type] || 0) + 1;
+    const flavors = c.tiles[type].flavor || [''];
+    tile.alt = { type, flavor: randInt(state, 0, flavors.length - 1) };
+  }
 }
 
 function makeTile(state, index, type) {

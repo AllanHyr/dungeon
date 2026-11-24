@@ -293,10 +293,19 @@ function boardStrip(run, compact = false) {
     const isCurrent = tile.index === pos;
     const passed = tile.index < pos || (isCurrent && tile.resolved);
     const showType = tile.revealed || tile.type === 'boss';
-    const cls = ['tile', passed ? 'passed' : '', isCurrent ? 'current' : '', showType ? `type-${tile.type}` : 'hidden', tile.type === 'boss' ? 'is-boss' : '', tile.index === pos + 1 ? 'next' : ''].filter(Boolean).join(' ');
-    return h('div', { class: cls, title: showType ? def.name : 'Case inconnue' },
+    // Une bifurcation : juste devant, on voit les deux routes ; plus loin, seulement qu'il y en aura une
+    const fork = !!tile.alt;
+    const forkNow = fork && tile.index === pos + 1;
+    const cls = ['tile', passed ? 'passed' : '', isCurrent ? 'current' : '', forkNow ? 'fork-now' : showType ? `type-${tile.type}` : 'hidden', fork ? 'fork' : '', tile.type === 'boss' ? 'is-boss' : '', tile.index === pos + 1 ? 'next' : ''].filter(Boolean).join(' ');
+    const title = forkNow ? `Bifurcation : ${def.name} ou ${c.tiles[tile.alt.type].name}`
+      : fork ? 'Bifurcation : deux routes (visibles juste avant)'
+        : showType ? `${def.name}${tile.skipped ? ` (route laissée : ${c.tiles[tile.skipped].name})` : ''}` : 'Case inconnue';
+    return h('div', { class: cls, title, dataset: fork ? { fork: forkNow ? 'now' : 'later' } : undefined },
       isCurrent ? h('div', { class: 'party-token', title: 'Votre groupe' }, icon('start', 14)) : null,
-      icon(showType ? def.icon : 'unknown', 26),
+      fork && !forkNow ? h('span', { class: 'tile-fork', 'aria-hidden': 'true' }, icon('swap', 12)) : null,
+      forkNow
+        ? h('span', { class: 'tile-pair' }, icon(def.icon, 18), icon(c.tiles[tile.alt.type].icon, 18))
+        : icon(showType ? def.icon : 'unknown', 26),
       passed ? h('span', { class: 'tile-check' }, icon('check', 12)) : null,
       h('span', { class: 'tile-num' }, tile.type === 'boss' ? 'Boss' : tile.index + 1));
   });
@@ -433,9 +442,31 @@ function sceneAdvance(run) {
       h('p', { class: 'muted' }, run.dungeon.position < 0
         ? `L'entrée du donjon. ${total} salles vous séparent du boss.`
         : `Salle ${run.dungeon.position + 1} sur ${total} franchie. Le groupe reprend son souffle.`),
-      def ? h('p', { class: 'tile-hint' }, tileIcon(app.content, next.type, 22), ` Un fantôme a éclairé la suite : ${def.name}.`) : null,
-      h('button', { class: 'btn btn-primary btn-xl', id: 'advance-btn', disabled: !yourTurn(run), onClick: () => { play('click'); act({ type: 'ADVANCE' }); } }, icon('d20', 24), 'Avancer')),
+      next?.alt ? forkChoice(run, next) : [
+        def ? h('p', { class: 'tile-hint' }, tileIcon(app.content, next.type, 22), ` Un fantôme a éclairé la suite : ${def.name}.`) : null,
+        h('button', { class: 'btn btn-primary btn-xl', id: 'advance-btn', disabled: !yourTurn(run), onClick: () => { play('click'); act({ type: 'ADVANCE' }); } }, icon('d20', 24), 'Avancer')]),
     outOfCombatTools(run));
+}
+
+/** Une bifurcation : les deux routes, côte à côte (le joueur sous les projecteurs choisit). */
+function forkChoice(run, next) {
+  const c = app.content;
+  const mine = yourTurn(run);
+  const actor = playerById(run, run.pending.actor);
+  const living = run.players.filter((p) => p.alive);
+  const hpPct = Math.round(100 * living.reduce((s, p) => s + p.hp, 0) / Math.max(1, living.reduce((s, p) => s + computeStats(run, p).hpMax, 0)));
+  const route = (branch, type) => {
+    const def = c.tiles[type];
+    return h('button', {
+      type: 'button', class: `fork-route type-${type}`, dataset: { branch, tile: type }, disabled: !mine,
+      title: mine ? '' : `C'est ${actor.name} qui choisit la route.`,
+      onClick: () => { play('click'); act({ type: 'ADVANCE', branch }); }
+    }, tileIcon(c, type, 34), h('b', null, def.name), h('span', { class: 'muted small' }, def.hint || ''));
+  };
+  return h('div', { class: 'fork' },
+    h('p', { class: 'fork-title' }, icon('swap', 18), ' Le chemin se sépare. ', h('span', { class: 'muted' }, `Le groupe a ${hpPct} % de ses PV.`)),
+    h('div', { class: 'fork-routes' }, route('main', next.type), route('alt', next.alt.type)),
+    mine ? null : h('p', { class: 'muted small' }, `${actor.name} choisit la route.`));
 }
 
 /** Soins et potions utilisables entre deux cases. */

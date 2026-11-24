@@ -3782,6 +3782,47 @@ console.log('\n● Druide : formes, sorts réservés à une forme, rangs');
   });
 }
 
+console.log('\n● Bifurcations');
+test('le chemin se sépare toutes les 3 cases (jamais au camp ni au boss) : un combat d\'un côté, une case calme de l\'autre', () => {
+  const f = content.rules.forks;
+  for (const d of content.dungeonList.filter((x) => x.available !== false)) {
+    for (let seed = 1; seed <= 6; seed++) {
+      const s = createRun(content, { tranche: d.tranche, dungeon: d.id, mode: 'tranche' }, makeParty(content, ['sacrieur', 'pretre'], d.tranche, 'none', seed), seed);
+      const b = s.dungeon.board;
+      for (const t of b) {
+        if (!t.alt) continue;
+        assert(t.index >= f.first && (t.index - f.first) % f.every === 0, `${d.id} : bifurcation à la bonne place (${t.index})`);
+        assert(t.type !== 'camp' && t.type !== 'boss', 'jamais au camp ni au boss');
+        assert((t.type === 'combat') !== (t.alt.type === 'combat'), `${d.id} : combat d'un côté seulement (${t.type} / ${t.alt.type})`);
+      }
+      assert(b.filter((t) => t.alt).length >= 3, `${d.id} : au moins 3 bifurcations (${b.filter((t) => t.alt).length})`);
+      const lifes = b.filter((t) => t.type === 'life_fountain' || t.alt?.type === 'life_fountain').length;
+      assert(lifes <= content.tiles.life_fountain.max, 'les maximums par donjon comptent aussi les autres routes');
+    }
+  }
+  const raw = loadRaw();
+  raw.tranches.tranches.find((t) => t.id === 1).forks = false;
+  const c2 = buildContent(raw);
+  const s = createRun(c2, { tranche: 1, mode: 'tranche' }, makeParty(c2, ['sacrieur'], 1, 'none', 1), 1);
+  eq(s.dungeon.board.filter((t) => t.alt).length, 0, '« forks »: false les enlève');
+});
+test('à une bifurcation, on choisit sa route en avançant (branch « alt ») ; la route laissée est notée ; un fantôme ne peut pas l\'éclairer', () => {
+  const s = createRun(content, { tranche: 4, mode: 'tranche' }, makeParty(content, ['guerrier', 'pretre'], 4, 'decent', 2), 2);
+  const fork = s.dungeon.board.find((t) => t.alt);
+  assert(!dispatch(s, { type: 'ADVANCE', branch: 'alt' }).ok || s.dungeon.board[0].alt, 'pas d\'autre route ici : refusé');
+  s.dungeon = { ...s.dungeon, position: fork.index - 1 };
+  s.pending = { kind: 'advance', actor: s.players[0].id }; s.phase = 'advance';
+  const main = fork.type, alt = fork.alt.type;
+  s.players[1].alive = false;
+  assert(!dispatch(s, { type: 'GHOST', playerId: s.players[1].id, mode: 'light' }).ok, 'les deux routes se voient déjà');
+  s.players[1].alive = true;
+  assert(!dispatch(s, { type: 'ADVANCE', branch: 'ailleurs' }).ok, 'route inconnue refusée');
+  assert(dispatch(s, { type: 'ADVANCE', branch: 'alt' }).ok);
+  const t = s.dungeon.board[fork.index];
+  eq(t.type, alt); eq(t.skipped, main); assert(!t.alt, 'la bifurcation est passée');
+  assert(t.revealed);
+});
+
 console.log('\n● Feu de camp');
 {
   /** Une run de 2 héros (niveau 6, tranche 4), arrêtée juste devant le feu de camp. */

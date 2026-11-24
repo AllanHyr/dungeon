@@ -328,7 +328,10 @@ Cibles : une équipe équilibrée gagne ~85-90 % en tranche 4, ~70-75 % en tranc
 - **Le colporteur** au feu de camp (`camp.peddler`) : 2 potions par héros (la meilleure de la tranche), au prix normal ; chacun achète pour lui, à son tour.
 - **L'or restant devient des éclats de forge** à la victoire (`goldToShards` : 1 éclat pour 20 or, partagé ; tranche 8 en trio ≈ 4 éclats chacun). Perdu en cas de défaite.
 ⚠ À surveiller : en tranche 8, une équipe **sans aucun soin** (ex. Guerrier Protection + Assassin + Mage Pyromancien) ne gagne que ~4 % (c'était déjà ~3 % avant ce réglage).
-Pistes : des **bifurcations** (choisir sa route : combat ou trésor, selon l'état du groupe), une **option avant les jets** (désarmer ou contourner un piège, forcer ou ouvrir prudemment un coffre).
+✅ **Bifurcations** (`rules.json > forks` : à partir de la case 3, toutes les 3 cases ; jamais au camp ni au boss) : un combat d'un côté, une case calme de l'autre,
+visibles juste avant (le plateau marque d'avance les bifurcations à venir). Robots, équipe A : toujours le combat → T4 87 % / T8 76 % de victoires, ~7 combats, 374 / 779 XP par victoire ;
+toujours la route calme → T4 96 % / T8 88 %, ~3 combats, 245 / 528 XP (≈ −30 %), un peu moins d'objets et d'éclats. Le robot « malin » prend le combat si le groupe a ≥ 60 % de ses PV.
+Piste : une **option avant les jets** (désarmer ou contourner un piège, forcer ou ouvrir prudemment un coffre).
 
 ## 6 bis. Équilibrage des spécialisations ✅ *(robots — à confirmer en jouant)*
 

@@ -57,8 +57,9 @@ const out = process.argv[3] || '/tmp/shots';
       continue;
     }
     if (await page.$('.advance-card')) {
-      await shot('04-avancer');
-      await page.click('.advance-card .btn-primary');
+      // (une bifurcation : on prend la première route ; sinon le bouton « Avancer »)
+      if (await page.$('.fork-route')) { await shot('04b-bifurcation'); await page.click('.coach-next').catch(() => {}); await page.click('.fork-route >> nth=0'); }
+      else { await shot('04-avancer'); await page.click('.advance-card .btn-primary'); }
       await sleep(150);
       continue;
     }

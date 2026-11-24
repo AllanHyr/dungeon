@@ -61,7 +61,8 @@ export const TILE_TIPS = {
   xp_fountain: ['Une fontaine d\'expérience', 'Boire rapporte de l\'XP à tout le groupe... sauf si l\'eau est empoisonnée (5 ou moins au dé).'],
   life_fountain: ['Une fontaine de vie', 'Rare et précieuse : elle soigne, et peut même ramener un héros tombé... si l\'eau n\'est pas souillée.'],
   low_blow: ['Le coup bas', 'Jouer un sale tour à un allié pour un petit gain, ou passer un pacte avec les ombres. Rien n\'oblige : on peut rester honnête.'],
-  merchant: ['Le marchand', 'Un jet de marchandage fixe les prix, puis chacun achète avec l\'or de la partie. L\'or qui reste est perdu à la fin du donjon : dépense-le !'],
+  merchant: ['Le marchand', 'Un jet de marchandage fixe les prix, puis chacun achète avec l\'or de la partie. À la victoire, l\'or qui reste devient des éclats de forge ; en cas de défaite, il est perdu.'],
+  fork: ['Une bifurcation', 'Le chemin se sépare : d\'un côté un combat (XP, or et butin, mais des coups), de l\'autre une case plus calme. Le groupe est en forme ? Le combat rapporte plus. Blessé ? L\'autre route le ménage.'],
   camp: ['Le feu de camp', 'Chaque héros peut changer ses sorts équipés, acheter des potions au colporteur avec l\'or de la run, puis choisir une activité : se reposer, affûter ses armes ou monter la garde.'],
   boss: ['Le boss', 'Le dernier combat. Le vaincre termine le donjon : tes héros gardent alors leur XP et leur butin.']
 };
@@ -81,9 +82,13 @@ export function tileCoach(root) {
   if (root.querySelector('.coach')) return;
   const tile = run.dungeon?.board?.[run.dungeon.position];
   // le plateau d'abord (la toute première « Avancer »), puis la case sur laquelle on vient d'arriver
-  const key = run.pending?.kind === 'advance' && !seenTiles().includes('board') ? 'board' : run.pending?.kind !== 'advance' && tile && !tile.resolved ? tile.type : null;
+  // (... ou la première bifurcation, devant les deux routes)
+  const ahead = run.dungeon?.board?.[run.dungeon.position + 1];
+  const key = run.pending?.kind === 'advance' && !seenTiles().includes('board') ? 'board'
+    : run.pending?.kind === 'advance' && ahead?.alt ? 'fork'
+      : run.pending?.kind !== 'advance' && tile && !tile.resolved ? tile.type : null;
   if (!key || !TILE_TIPS[key] || seenTiles().includes(key)) return;
-  const target = key === 'board' ? root.querySelector('.board') : root.querySelector('.tile-card');
+  const target = key === 'board' ? root.querySelector('.board') : key === 'fork' ? root.querySelector('.fork') : root.querySelector('.tile-card');
   if (!target) return;
   const [title, text] = TILE_TIPS[key];
   target.classList.add('coach-target');

@@ -53,7 +53,19 @@ const combatTile = {
 // ============================================================
 const treasure = {
   onReveal(state) {
-    askRoll(state, 'treasure', 'Ouvrir le coffre', 'Plus le jet est haut, plus le butin sera de qualité. Un 20 donne deux objets... un 1 déclenche un piège !');
+    const careful = state.content.rules.tileChoices?.treasure?.carefulTotal;
+    if (!careful) return askForce(state);
+    askChoice(state, 'treasure', 'Un coffre. Le forcer, ou l\'ouvrir prudemment ?', [
+      { id: 'force', label: 'Le forcer (jet de D20)', hint: 'Plus le jet est haut, meilleur est le butin. Un 20 donne deux objets… un 1 déclenche un piège.' },
+      { id: 'careful', label: 'L\'ouvrir prudemment', hint: `Pas de dé : un butin moyen (comme un jet de ${careful}), mais aucun piège.` }
+    ]);
+  },
+  onChoice(state, tile, id) {
+    if (id === 'force') return askForce(state);
+    // Prudemment : comme un jet fixe, sans 20 ni 1
+    const actor = getPlayer(state, state.pending.actor);
+    log(state, `${actor.name} ouvre le coffre avec précaution.`, 'info');
+    treasure.onRoll(state, tile, { natural: null, total: state.content.rules.tileChoices.treasure.carefulTotal });
   },
   onRoll(state, tile, roll) {
     const c = state.content;
@@ -78,8 +90,8 @@ const treasure = {
       actor.stats.rollsOk++;
       headline(state, 'Coffre exceptionnel : DEUX objets !', 'good');
     } else {
-      if (roll.total >= 15) actor.stats.rollsOk++;
-      headline(state, 'Le coffre s\'ouvre...', 'good');
+      if (roll.natural && roll.total >= 15) actor.stats.rollsOk++;
+      headline(state, roll.natural ? 'Le coffre s\'ouvre...' : 'Le coffre s\'ouvre sans un bruit.', 'good');
     }
     log(state, `Le coffre contient ${gold} pièces d'or${items.length > 1 ? ' et deux objets' : ' et un objet'}.`, 'loot');
     queueLoot(state, items);
@@ -87,14 +99,52 @@ const treasure = {
   }
 };
 
+function askForce(state) {
+  askRoll(state, 'treasure', 'Ouvrir le coffre', 'Plus le jet est haut, plus le butin sera de qualité. Un 20 donne deux objets... un 1 déclenche un piège !');
+}
+
 // ============================================================
 //  Piège
 // ============================================================
+function askSave(state, dc) {
+  askRoll(state, 'trap', 'Jet de sauvegarde', `Il faut ${dc} ou plus (votre bonus de sauvegarde s'ajoute) pour éviter le piège.`, { dc });
+}
+
+/** Les chances (0..1) de réussir la sauvegarde contre un piège : 20 réussit toujours, 1 échoue toujours. */
+export function trapOdds(state, actor, dc) {
+  const bonus = Math.round(unitStats(state, actor).luck) + state.bonus.rollMod + Math.round(unitStats(state, actor).save);
+  let ok = 0;
+  for (let n = 1; n <= 20; n++) if (n === 20 || (n !== 1 && n + bonus >= dc)) ok++;
+  return ok / 20;
+}
+
 const trap = {
-  onReveal(state) {
+  onReveal(state, tile) {
     const tr = dungeonRules(state.content, state.setup);
     const dc = tr.trapDc + state.params.trapDcBonus;
-    askRoll(state, 'trap', 'Jet de sauvegarde', `Il faut ${dc} ou plus (votre bonus de sauvegarde s'ajoute) pour éviter le piège.`, { dc });
+    const opt = state.content.rules.tileChoices?.trap;
+    if (!opt) return askSave(state, dc);
+    const actor = decider(state);
+    const hpMax = unitStats(state, actor).hpMax;
+    const full = Math.round(hpMax * tr.trapDamagePct);
+    const avoid = Math.max(1, Math.round(full * opt.avoidDamage));
+    const odds = Math.round(trapOdds(state, actor, dc) * 100);
+    tile.dc = dc;
+    askChoice(state, 'trap', `Un piège ! ${actor.name} peut tenter de le désarmer, ou le contourner.`, [
+      { id: 'disarm', label: `Le désarmer (${odds} % de chances)`, hint: `Jet de sauvegarde contre ${dc}. Réussi : quelques pièces récupérées. Raté : −${full} PV (et parfois du poison).` },
+      { id: 'avoid', label: `Le contourner (−${avoid} PV)`, hint: 'Pas de dé : on passe en se faisant un peu mal, à coup sûr.' }
+    ], { dc });
+  },
+  onChoice(state, tile, id) {
+    if (id === 'disarm') return askSave(state, tile.dc);
+    const c = state.content;
+    const tr = dungeonRules(c, state.setup);
+    const actor = getPlayer(state, state.pending.actor);
+    const dmg = Math.max(1, Math.round(unitStats(state, actor).hpMax * tr.trapDamagePct * c.rules.tileChoices.trap.avoidDamage));
+    const real = applyDamage(state, actor, dmg, null, { ignoreGuard: true });
+    log(state, `${actor.name} contourne le piège en s'écorchant (−${real} PV).`, 'info');
+    headline(state, `Piège contourné : −${real} PV pour ${actor.name}`, 'info');
+    finishTile(state);
   },
   onRoll(state, tile, roll) {
     const c = state.content;
@@ -108,7 +158,13 @@ const trap = {
 
     if (success) {
       actor.stats.rollsOk++;
-      if (roll.natural === 20) {
+      const scrap = c.rules.tileChoices?.trap?.disarmGold;
+      if (scrap && roll.natural !== 20) {
+        const gold = Math.max(1, Math.round(randInt(state, tr.treasureGold[0], tr.treasureGold[1]) * state.params.gold * scrap));
+        state.gold += gold;
+        log(state, `${actor.name} désamorce le piège et récupère ${gold} or en pièces détachées.`, 'good');
+        headline(state, `Piège désamorcé : +${gold} or`, 'good');
+      } else if (roll.natural === 20) {
         const gold = Math.round(randInt(state, tr.treasureGold[0], tr.treasureGold[1]) * state.params.gold);
         state.gold += gold;
         log(state, `${actor.name} désamorce le piège et récupère ${gold} or !`, 'good');

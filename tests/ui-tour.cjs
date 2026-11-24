@@ -83,10 +83,16 @@ const profile = {
     app.run.dungeon.board[0].type = 'treasure';
     app.run.dungeon.board[1].type = 'low_blow';
     app.run.dungeon.board[2].type = 'merchant';
+    for (const t of app.run.dungeon.board) delete t.alt; // (pas de bifurcation dans ce scénario écrit à l'avance)
     app.run.gold = 120;
     app.render();
   });
   await page.click('.advance-card .btn-primary');
+  // Un coffre : d'abord le choix (le forcer ou l'ouvrir prudemment)
+  await page.waitForSelector('.choice-duo [data-option="force"]');
+  await shot('30-coffre-choix');
+  if (await page.$('.coach-tile .coach-next')) await page.click('.coach-tile .coach-next'); // (le conseil « première fois »)
+  await page.click('.choice-duo [data-option="force"]');
   await page.waitForSelector('.roll-card');
   await shot('31-jet-coffre');
   await page.click('.roll-card .btn-primary');

@@ -21,9 +21,10 @@ export function afkAction(state) {
     case 'camp': return { type: 'CAMP_ACT', activity: 'rest' }; // au feu de camp : se reposer (sans toucher à ses sorts)
     case 'farm': return { type: 'FARM_STOP' }; // le farm est solo, mais au cas où : on part avec ce qu'on a gagné
     case 'choice': {
-      // « keep » = garder le butin ; « skip » = passer son chemin (fontaines) ; « pass » = rester honnête (coup bas)
+      // « keep » = garder le butin ; « skip » = passer son chemin (fontaines) ; « pass » = rester honnête (coup bas) ;
+      // « careful » = ouvrir un coffre prudemment ; « avoid » = contourner un piège
       const ids = pend.options.map((o) => o.id);
-      const safe = ['keep', 'skip', 'pass'].find((id) => ids.includes(id)) ?? ids[0];
+      const safe = ['keep', 'skip', 'pass', 'careful', 'avoid'].find((id) => ids.includes(id)) ?? ids[0];
       return { type: 'CHOOSE', option: safe };
     }
     default: return null; // 'end' : la partie est finie

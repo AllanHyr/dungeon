@@ -268,6 +268,25 @@ const main = async () => {
     assert(tile.revealed && tile.type !== 'hidden', JSON.stringify(tile));
     await ps[0].b.post('/api/run/action', { action: { type: 'ABANDON' } });
   });
+  await test('une bifurcation : juste devant, le navigateur voit les deux routes (leur type seulement) ; plus loin, seulement qu\'il y en a une', async () => {
+    const { ps } = await lobby(base, 2);
+    await ps[0].b.post('/api/room/start');
+    const atFork = (cur) => cur.run.pending?.kind === 'advance' && cur.run.dungeon.board[cur.run.dungeon.position + 1]?.alt;
+    const cur = await playAll(app, ps, { stopWhen: atFork });
+    assert(atFork(cur), 'on arrive devant une bifurcation');
+    const board = cur.run.dungeon.board, pos = cur.run.dungeon.position, next = board[pos + 1];
+    assert(next.type !== 'hidden' && next.alt.type !== 'hidden' && next.type !== next.alt.type, JSON.stringify(next));
+    assert(!next.revealed && !next.monsters && !next.stock && !next.loot && !next.choice && Object.keys(next.alt).sort().join() === 'flavor,type', 'rien d\'autre que le type des deux routes');
+    const later = board.filter((t) => t.index > pos + 1 && t.alt);
+    assert(later.every((t) => t.type === 'hidden' && t.alt.type === 'hidden'), 'les bifurcations plus loin restent cachées');
+    const actor = cur.room.owners.find((o) => o.playerId === cur.run.pending.actor);
+    const who = ps.find((p) => p.id === actor.userId), other = ps.find((p) => p !== who);
+    eq((await other.b.post('/api/run/action', { action: { type: 'ADVANCE', branch: 'alt' } })).status, 403, 'c\'est celui dont c\'est le tour qui choisit la route');
+    const r = await who.b.post('/api/run/action', { action: { type: 'ADVANCE', branch: 'alt' } });
+    const tile = r.json.run.dungeon.board[pos + 1];
+    assert(r.json.ok && tile.revealed && tile.skipped === next.type && !tile.alt, JSON.stringify(tile).slice(0, 200));
+    await ps[0].b.post('/api/run/action', { action: { type: 'ABANDON' } });
+  });
   await test('chacun ne joue que pour SON héros, et seulement à son tour ; l\'abandon est réservé à l\'hôte', async () => {
     const { ps } = await lobby(base, 3);
     const [host, bob, carol] = ps;

@@ -9,6 +9,8 @@
   "_deckSize": "Nombre de sorts ACTIFS qu'un personnage peut équiper en même temps (son « deck »). S'y ajoutent, toujours disponibles : les compétences de départ de la classe (attaque de base, sort de classe) et les compétences communes (Garde, Attaque à l'arme). Les passives ne prennent pas de place.",
   "specLevel": 4,
   "_specLevel": "Niveau à partir duquel on peut choisir une spécialisation (classes.json > specs). On peut en changer entre deux parties (jamais en plein donjon).",
+  "talents": { "firstLevel": 2, "perLevel": 1, "rows": [0, 2, 4, 6, 9, 12, 15] },
+  "_talents": "ARBRES DE TALENTS (les classes qui ont des « talentTrees » dans classes.json, à la place des « specs »). On gagne perLevel point(s) par niveau à partir du niveau firstLevel (1 point par niveau dès le niveau 2 : 7 points au niveau 8, 19 au niveau 20). rows[i] = le nombre de points à avoir déjà mis DANS CET ARBRE pour ouvrir la rangée i (rangée 0 : tout de suite ; rangée 3, le talent clé : 6 points). Le nombre de rangs d'un talent est écrit dans le talent (« talent »: { « ranks »: 3 }). Changer ses talents est gratuit entre deux parties (jamais en plein donjon).",
   "_levelCap": "PLAFOND ACTUEL de niveau (bridage de cette version). Au plafond, la montée s'arrête et l'XP gagnée est perdue (pas de réserve : le jour où on relève le plafond, chacun repart de zéro XP). maxLevel est la taille de la courbe (xpToNext) : à ne changer que pour allonger la courbe. Pour ouvrir la suite : augmenter levelCap (jamais au-delà de maxLevel).",
   "xpToNext": [80, 120, 180, 250, 330, 420, 520, 640, 780, 940, 1120, 1320, 1540, 1780, 2040, 2320, 2620, 2940, 3280],
   "_xpToNext": "xpToNext[0] = XP nécessaire pour passer du niveau 1 au niveau 2, etc.",

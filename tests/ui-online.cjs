@@ -87,10 +87,10 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   const saved = (await apiGet(page, 'api/profile')).characters.find((c) => c.id === thorne.id);
   check(saved.equipment.mainHand?.id === 'dague_os' && !saved.inventory.some((i) => i.uid === 'w1'), 'et le serveur l\'a enregistré (le sac a un objet de moins)');
   await page.click('.sheet-modal .tab[data-tab="skills"]');
-  await page.waitForSelector('.spec-card[data-spec-id="bastion"]');
-  await page.click('.spec-card[data-spec-id="bastion"]');
-  await page.waitForSelector('.spec-card[data-spec-id="bastion"].is-selected');
-  check((await apiGet(page, 'api/profile')).characters.find((c) => c.id === thorne.id).spec === 'bastion', 'choisir une spécialisation : enregistré sur le serveur');
+  await page.waitForSelector('.tt-talent[data-talent="sacrieur_peau_epaisse"] .tt-plus:not([disabled])');
+  await page.click('.tt-talent[data-talent="sacrieur_peau_epaisse"] .tt-plus');
+  await page.waitForSelector('.tt-talent[data-talent="sacrieur_peau_epaisse"][data-rank="1"]');
+  check((await apiGet(page, 'api/profile')).characters.find((c) => c.id === thorne.id).talents.join() === 'sacrieur_peau_epaisse', 'mettre un point de talent : enregistré sur le serveur');
   await page.screenshot({ path: `${out}/101-fiche-en-ligne.png` });
   await page.keyboard.press('Escape');
 
@@ -188,7 +188,7 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
   // (les préférences, dont le lieu, restent propres à chaque appareil : le téléphone arrive au Camp)
   const names = await phone.$$eval('.camp-hero b', (els) => els.map((e) => e.textContent));
   check(names.length === 3, `sur un deuxième appareil : les mêmes personnages, au Camp (${names.join(', ')})`);
-  check(await phone.evaluate(async () => { const { app } = await import('/src/ui/state.js'); return app.profile.characters.find((c) => c.spec === 'bastion')?.equipment.mainHand?.id === 'dague_os'; }), 'avec leur équipement et leur spécialisation');
+  check(await phone.evaluate(async () => { const { app } = await import('/src/ui/state.js'); return app.profile.characters.find((c) => c.talents?.includes('sacrieur_peau_epaisse'))?.equipment.mainHand?.id === 'dague_os'; }), 'avec leur équipement et leurs talents');
   check((await phone.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) === 0, 'accueil sur téléphone : pas de débordement');
   await phone.screenshot({ path: `${out}/104-accueil-tel.png` });
 

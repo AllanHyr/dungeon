@@ -54,6 +54,23 @@
 
 **Rythme** : « un point de spé tous les 4 niveaux » = 2 points dans la version actuelle (niveaux 4 et 8).
 
+## 1 ter. Arbres de talents 🧪 *(prototype : le Sacrieur seul)*
+**Idée** (façon WoW Classic) : plus de spécialisation choisie dans un menu ; **1 point par niveau dès le niveau 2**, à répartir dans **trois arbres** (les trois anciennes spés).
+Les rangées s'ouvrent avec les points mis dans l'arbre (`rules.json > talents.rows` : 0 / 2 / 4 / **6 = talent clé** / 9 / 12 / 15 = ultime). Talents à **3 rangs au plus**,
+petits bonus chiffrés à plusieurs rangs, ce qui change la façon de jouer à 1 rang. Changer : gratuit entre deux parties. Tout est réglable dans les JSON.
+**Le Sacrieur** (prototype) : chaque arbre reprend les talents de son ancienne spé (Peau épaisse = l'ancien Rempart de chair en 3 rangs ; Fureur sanglante et Sang mêlé en 2 rangs),
+avec la **Punition évoluée comme talent clé** (6 points). La répartition toute faite d'un arbre au niveau 8 = l'ancienne spé + le choix du palier 8.
+Robots (Sacrieur + Prêtre + Mage, et Sacrieur + Assassin + Mage) : niveau 8 au moins aussi fort qu'avant (Écorché nettement moins fragile : T8 46 → 60 %) ;
+niveau 4 un peu moins fort qu'avant (3 points au lieu de la spé entière), ce qui est voulu : la puissance arrive au fil des niveaux.
+**Ensuite** : si le prototype plaît, convertir les 7 autres classes (un arbre = une ancienne spé), puis retirer le code des spécialisations.
+Questions ouvertes : plus de points par niveau, ou des talents ramenés à 1 rang, si on se sent à l'étroit ; un coût pour changer ses talents (or, éclats) plus tard ?
+
+### Idée à garder : le fournisseur avant le donjon (façon Darkest Dungeon) 💡
+Un PNJ au Camp qui vend des **provisions pour la prochaine partie seulement** : antidote, potion de puissance, torche, objet contre la mécanique du donjon choisi
+(ce qui donne une raison de lire les mécaniques avant d'y aller). **À trancher d'abord** : avec quel or ? Aujourd'hui l'or n'existe que pendant une partie
+et le reste devient des éclats de forge à la victoire. Piste la plus simple : l'or restant est **gardé par le héros** (au lieu de devenir des éclats, ou une partie des deux).
+À faire **après** les arbres de talents, pour ne pas changer deux grands systèmes à la fois.
+
 ## 2. Les classes
 
 ### Sacrieur ✅ *(écrit : niveaux 1 à 8, premier jet d'équilibrage)*

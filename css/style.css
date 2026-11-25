@@ -2101,3 +2101,66 @@ html.fx-playing .run { pointer-events: none; } /* (le temps d'une animation : un
   .grimoire-dungeons { grid-template-columns: minmax(0, 1fr); }
   .bestiary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ------------------------------------------------------------
+   Arbres de talents (fiche > Compétences) : trois colonnes, une par arbre ; sur téléphone, une seule (onglets)
+   ------------------------------------------------------------ */
+.tt-budget { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--ink-3); margin-bottom: 12px; }
+.tt-budget .tt-free { font-size: 1.4rem; color: var(--text-2, var(--text)); }
+.tt-budget.has-free { border-color: var(--lantern); box-shadow: 0 0 12px var(--glow); }
+.tt-budget.has-free .tt-free { color: var(--lantern-2); }
+.tt-tabs { display: none; gap: 6px; margin-bottom: 10px; }
+.tt-tab { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 6px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--ink-3); color: var(--text); font: inherit; cursor: pointer; min-width: 0; }
+.tt-tab.on { border-color: var(--lantern); background: var(--ink-4); }
+.tt-tab-pts { min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--ink-5, var(--ink-4)); font-size: 0.78rem; }
+.tt-trees { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.tt-tree { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; border: 1px solid var(--line-2); background: var(--ink-2, var(--ink-3)); min-width: 0; }
+.tt-tree.is-main { border-color: var(--brass-2); }
+.tt-head { display: flex; align-items: center; gap: 8px; }
+.tt-head-icon { flex: none; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--brass-2); color: var(--brass-4); }
+.tt-head-id { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.tt-head-id b { font-size: 1.05rem; }
+.tt-pts { flex: none; min-width: 32px; padding: 2px 8px; text-align: center; border-radius: 999px; border: 1px solid var(--line-2); font-weight: 700; }
+.tt-tree.is-main .tt-pts { border-color: var(--lantern); color: var(--lantern-2); }
+.tt-desc { margin: 0; font-size: 0.85rem; color: var(--muted); }
+.tt-preset { align-self: flex-start; }
+.tt-row { display: flex; flex-direction: column; gap: 6px; padding-top: 8px; border-top: 1px dashed var(--line-2); }
+.tt-row-head { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.tt-row.is-closed .tt-row-head { color: var(--lantern-2); }
+.tt-row-talents { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
+.tt-talent { position: relative; display: flex; flex-direction: column; border-radius: 10px; border: 1px solid var(--line-2); background: var(--ink-3); min-width: 0; }
+.tt-pick { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; padding: 8px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; min-width: 0; }
+.tt-icon { grid-row: 1 / span 2; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 8px; border: 2px solid var(--brass-2); background: radial-gradient(circle at 50% 35%, #27384a, #101923 75%); color: var(--dps); }
+.tt-icon.is-passive { border-radius: 50%; }
+.tt-icon .icon.fluid { width: 62%; height: 62%; }
+.kind-heal .tt-icon { color: var(--heal); }
+.kind-defense .tt-icon { color: var(--tank); }
+.kind-buff .tt-icon { color: var(--violet); }
+.tt-name { font-size: 0.85rem; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+.tt-rank { font-size: 0.78rem; color: var(--muted); }
+.tt-btns { display: flex; border-top: 1px solid var(--line-2); }
+.tt-btn { flex: 1; padding: 4px 0; border: 0; background: none; color: var(--text); font: inherit; font-weight: 700; font-size: 1rem; cursor: pointer; }
+.tt-btn + .tt-btn { border-left: 1px solid var(--line-2); }
+.tt-btn:disabled { opacity: 0.3; cursor: default; }
+.tt-plus:not(:disabled) { color: var(--lantern-2); }
+.tt-talent.is-available { border-color: var(--lantern); }
+.tt-talent.is-partial { border-color: rgba(166, 217, 140, 0.6); }
+.tt-talent.is-partial .tt-rank { color: var(--good); }
+.tt-talent.is-maxed { border: 2px solid var(--good); background: var(--ink-4); }
+.tt-talent.is-maxed .tt-rank { color: var(--good); font-weight: 700; }
+.tt-talent.is-locked, .tt-talent.is-blocked { opacity: 0.55; }
+.tt-talent.is-selected { box-shadow: 0 0 0 2px var(--lantern), 0 0 14px var(--glow); }
+.tt-row.is-upcoming { opacity: 0.75; }
+.tt-soon { padding: 8px; border-radius: 10px; border: 1px dashed var(--line-2); font-size: 0.85rem; }
+.tt-detail { display: flex; flex-direction: column; gap: 8px; padding: 10px; margin-top: 2px; border-radius: 12px; border: 2px solid var(--lantern); background: var(--ink-4); }
+.tt-detail .tc-head { display: flex; align-items: center; gap: 10px; }
+.tt-detail .tc-id { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.tt-detail .tc-desc { margin: 0; }
+.tt-why { margin: 0; color: var(--lantern-2); font-size: 0.85rem; }
+.tt-detail-btns { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+@media (max-width: 760px) {
+  .tt-tabs { display: flex; }
+  .tt-trees { grid-template-columns: minmax(0, 1fr); }
+  .tt-tree:not(.is-shown) { display: none; }
+  .tt-row-talents { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

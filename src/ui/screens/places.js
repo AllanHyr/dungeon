@@ -56,6 +56,7 @@ function heroTodo(ch) {
   if (free > 0) return `${free} point${plural(free, '', 's')} de compétence`;
   if (todo.spec) return 'Spécialisation à choisir';
   if (todo.talents) return `${todo.talents} talent${plural(todo.talents, '', 's')} à choisir`;
+  if (todo.points) return `${todo.points} point${plural(todo.points, '', 's')} de talent à répartir`;
   return null;
 }
 

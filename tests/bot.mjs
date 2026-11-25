@@ -2,7 +2,8 @@
 // Sert à tester le moteur (aucun plantage, la partie se termine) et à équilibrer.
 import {
   createRun, createFarm, dispatch, getCombatView, createCharacter, learnSkill, addXp, canEquip, computeStats, itemPrice, shopPrice,
-  checkUsable, needsPick, validTargets, activeSkillIds, skillOf, totalShield, EQUIP_SLOTS, slotsFor, planEquip, twoHandedWorn, setSpec, setDeck, evalCondition
+  checkUsable, needsPick, validTargets, activeSkillIds, skillOf, totalShield, EQUIP_SLOTS, slotsFor, planEquip, twoHandedWorn, setSpec, setDeck, evalCondition,
+  hasTalents, applyTalentPreset, deckEligible, fillDeck, changeTalent
 } from '../src/core/index.js';
 import { targetDamagePct } from '../src/core/effects.js';
 import { markedEnemies } from '../src/core/geometry.js';
@@ -29,9 +30,19 @@ export function makeParty(content, classes, level = 1, gear = 'none', seed = 1, 
     }
     const skills = content.classes[classId].skills.filter((s) => !s.innate);
     for (let k = 0; k < 80; k++) learnSkill(content, ch, r.pick(skills).id);
-    if (extra.specs?.[i]) { const res = setSpec(content, ch, extra.specs[i]); if (!res.ok) throw new Error(res.reason); }
-    for (const id of extra.learns?.[i] || []) { const res = learnSkill(content, ch, id); if (!res.ok) throw new Error(res.reason); } // (choix d'une spécialisation, appris après l'avoir choisie)
-    if (extra.decks?.[i]) { const res = setDeck(content, ch, extra.decks[i]); if (!res.ok) throw new Error(res.reason); }
+    const trees = hasTalents(content, classId);
+    if (extra.talents?.[i] && trees) { for (const id of extra.talents[i]) changeTalent(content, ch, id, 1); } // (des points précis, dans l'ordre : ceux qui ne passent pas sont ignorés)
+    else if (extra.specs?.[i] && trees) { const res = applyTalentPreset(content, ch, extra.specs[i]); if (!res.ok) throw new Error(res.reason); } // arbres de talents : la répartition toute faite
+    else if (extra.specs?.[i]) { const res = setSpec(content, ch, extra.specs[i]); if (!res.ok) throw new Error(res.reason); }
+    for (const id of extra.learns?.[i] || []) { // (choix d'une spécialisation, appris après l'avoir choisie ; arbres de talents : pris s'il reste de quoi)
+      if (trees) continue;
+      const res = learnSkill(content, ch, id); if (!res.ok) throw new Error(res.reason);
+    }
+    if (extra.decks?.[i]) {
+      const deck = trees ? extra.decks[i].filter((id) => deckEligible(content, ch, id)) : extra.decks[i]; // (arbres de talents : sans les sorts pas encore pris à ce niveau)
+      const res = setDeck(content, ch, deck); if (!res.ok) throw new Error(res.reason);
+      if (trees) fillDeck(content, ch);
+    }
     if (gear !== 'none') {
       // Tous les emplacements, dans l'ordre : une arme à deux mains libère la main gauche (pas d'objet dedans).
       let n = 0;

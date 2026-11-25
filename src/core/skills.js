@@ -37,7 +37,7 @@ export function activeSkillIds(state, unit) {
   const c = state.content;
   if (unit.kind === 'monster') return unit.skillIds;
   const cls = c.classes[unit.classId];
-  const evolved = (id) => (c.replacedBy[id] || []).find((v) => skillAvailable(c.skills[v], unit)) || id;
+  const evolved = (id) => (c.replacedBy[id] || []).find((v) => skillAvailable(c.skills[v], unit) && (!c.skills[v].talent || unit.skills.includes(v))) || id; // (une évolution par talent : seulement si le talent est pris)
   const known = unit.skills.filter((id) => c.skills[id]?.type === 'active' && !c.skills[id].replaces);
   const classSkill = cls.classSkill && known.includes(cls.classSkill) ? [cls.classSkill] : [];
   const learned = known.filter((id) => id !== cls.classSkill);

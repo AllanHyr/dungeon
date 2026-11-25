@@ -255,7 +255,7 @@ function heroCard(ch, view, locks) {
   // Les petites étiquettes d'un héros : des points de compétence à dépenser, une récompense de farm à choisir, une partie en cours...
   const free = skillPointsToSpend(content, ch);
   const todo = pendingChoices(content, ch);
-  const todoText = todo.spec ? 'Spécialisation à choisir' : todo.talents ? `${todo.talents} talent${plural(todo.talents, '', 's')} à choisir` : '';
+  const todoText = todo.spec ? 'Spécialisation à choisir' : todo.talents ? `${todo.talents} talent${plural(todo.talents, '', 's')} à choisir` : todo.points ? `${todo.points} point${plural(todo.points, '', 's')} de talent` : '';
   const loot = ch.lootChoice?.length || 0;
   const worn = Object.values(ch.equipment || {}).filter(Boolean).length;
   const tags = [

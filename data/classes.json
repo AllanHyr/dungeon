@@ -7,7 +7,7 @@
 
 
     "sacrieur": {
-      "_note": "SACRIEUR — premier jet d'équilibrage (valeurs PROVISOIRES, à régler à l'essai). Passif de base : selon son mode (Endurance / Fureur), les PV qu'il a perdus lui font subir moins de dégâts OU infliger plus de dégâts. Le sort de classe 'Pacte de sang' change de mode. Les spécialisations (niveau 4) donnent automatiquement un passif renforcé, des sorts et une Punition évoluée.",
+      "_note": "SACRIEUR — premier jet d'équilibrage (valeurs PROVISOIRES, à régler à l'essai). Passif de base : selon son mode (Endurance / Fureur), les PV qu'il a perdus lui font subir moins de dégâts OU infliger plus de dégâts. Le sort de classe 'Pacte de sang' change de mode. PROTOTYPE DES ARBRES DE TALENTS (« talentTrees ») : à la place des spécialisations, trois arbres (Bastion, Équilibre, Écorché) où il répartit 1 point par niveau dès le niveau 2 ; le talent clé de chaque arbre (rangée 3, 6 points) est une Punition évoluée. Voir docs/ECRIRE-UNE-CLASSE.md, « Arbres de talents ».",
       "aliases": ["berserker", "tank"],
       "name": "Sacrieur",
       "role": "tank",
@@ -24,158 +24,144 @@
           "degats": { "name": "Fureur", "icon": "flame", "desc": "Moins il a de PV, plus il inflige de dégâts." }
         }
       },
-      "specs": {
-        "bastion": { "name": "Bastion", "tag": "Tank", "desc": "Le tank pur : réduction de dégâts renforcée, Sacrifice (il encaisse pour ses alliés) et Dernier souffle. Sa Punition donne un gros bouclier.",
-          "upcoming": [ { "level": 12, "name": "À venir", "desc": "Un nouveau choix parmi trois." }, { "level": 20, "name": "Forteresse", "desc": "Ultime : pendant 2 tours, il encaisse pour toute l'équipe et subit moitié moins de dégâts." } ] },
-        "equilibre": { "name": "Équilibre", "tag": "Hybride", "desc": "Réduction ET dégâts toujours actifs (l'autre côté à 50 %), quel que soit son mode. Il change de mode sans rien perdre, frappe en se protégeant et sa Punition vole de la vie.",
-          "upcoming": [ { "level": 12, "name": "À venir", "desc": "Un nouveau choix parmi trois." }, { "level": 20, "name": "Pacte parfait", "desc": "Ultime : les deux passifs de Sang chaud à 100 % pendant 3 tours." } ] },
-        "ecorche": { "name": "Écorché", "tag": "Dégâts", "desc": "Le dps pur : dégâts renforcés, sorts qui se paient en PV ou qui volent de la vie. Sa Punition se paie en PV pour frapper bien plus fort.",
-          "upcoming": [ { "level": 12, "name": "À venir", "desc": "Un nouveau choix parmi trois." }, { "level": 20, "name": "Dernier sang", "desc": "Ultime : sous 15 % de PV, tous ses sorts coûtent 1 PA de moins et font ×1,5." } ] }
-      },
-      "branches": {
-        "Bastion": { "desc": "Encaisser à la place des autres." },
-        "Équilibre": { "desc": "Tenir et frapper à la fois." },
-        "Écorché": { "desc": "Frapper toujours plus fort, quitte à se vider." }
+      "talentTrees": {
+        "bastion": {"name": "Bastion", "tag": "Tank", "icon": "shield", "desc": "Encaisser à la place des autres : réduction de dégâts, Sacrifice, Dernier souffle. Au bout : une Punition qui protège.", "preset": ["sacrieur_peau_epaisse", "sacrieur_peau_epaisse", "sacrieur_peau_epaisse", "sacrieur_sacrifice", "sacrieur_dernier_souffle", "sacrieur_peau_de_pierre", "sacrieur_punition_bastion", "sacrieur_represailles", "sacrieur_sang_partage", "sacrieur_chair_robuste", "sacrieur_chair_robuste"], "upcoming": [{"points": 9, "name": "À venir", "desc": "De nouveaux talents."}, {"points": 15, "name": "Forteresse", "desc": "Ultime : pendant 2 tours, il encaisse pour toute l'équipe et subit moitié moins de dégâts."}]},
+        "equilibre": {"name": "Équilibre", "tag": "Hybride", "icon": "refresh", "desc": "Tenir et frapper à la fois : les deux effets de Sang chaud, un changement de mode sans perte. Au bout : une Punition qui vole de la vie.", "preset": ["sacrieur_sang_mele", "sacrieur_sang_mele", "sacrieur_souplesse", "sacrieur_lame_protectrice", "sacrieur_adaptation", "sacrieur_hemorragie", "sacrieur_punition_equilibre", "sacrieur_transfusion", "sacrieur_sang_froid", "sacrieur_sang_froid", "sacrieur_sang_froid"], "upcoming": [{"points": 9, "name": "À venir", "desc": "De nouveaux talents."}, {"points": 15, "name": "Pacte parfait", "desc": "Ultime : les deux passifs de Sang chaud à 100 % pendant 3 tours."}]},
+        "ecorche": {"name": "Écorché", "tag": "Dégâts", "icon": "skull", "desc": "Frapper toujours plus fort, quitte à se vider : sorts payés en PV, vol de vie. Au bout : une Punition qui se paie en sang.", "preset": ["sacrieur_fureur", "sacrieur_fureur", "sacrieur_dechirure", "sacrieur_festin", "sacrieur_execution", "sacrieur_frenesie", "sacrieur_punition_ecorche", "sacrieur_saignee", "sacrieur_lames_avides", "sacrieur_lames_avides", "sacrieur_lames_avides"], "upcoming": [{"points": 9, "name": "À venir", "desc": "De nouveaux talents."}, {"points": 15, "name": "Dernier sang", "desc": "Ultime : sous 15 % de PV, tous ses sorts coûtent 1 PA de moins et font ×1,5."}]}
       },
       "skills": [
         { "id": "sacrieur_sang_chaud", "icon": "drop", "name": "Sang chaud", "type": "passive", "innate": true, "level": 1, "cost": 0,
           "desc": "Selon son mode : en Endurance, −0,55 % de dégâts reçus par 1 % de PV manquants ; en Fureur, +0,85 % de dégâts infligés par 1 % de PV manquants. Les boucliers ne comptent pas comme des PV.",
-          "modifiers": [
-            { "stat": "taken", "pctPer": { "missingHpPct": -0.55 }, "if": { "mode": "reduction" } },
-            { "stat": "damage", "pctPer": { "missingHpPct": 0.85 }, "if": { "mode": "degats" } }
-          ] },
+          "modifiers": [ { "stat": "taken", "pctPer": { "missingHpPct": -0.55}, "if": { "mode": "reduction" }}, { "stat": "damage", "pctPer": { "missingHpPct": 0.85}, "if": { "mode": "degats" }} ] },
 
-        { "id": "sacrieur_pacte", "icon": "refresh", "name": "Pacte de sang", "type": "active", "innate": true, "level": 1, "cost": 0,
+        { "id": "sacrieur_pacte", "icon": "refresh", "name": "Pacte de sang", "type": "active", "innate": true, "level": 1, "cost": 0, "pa": 1, "freeFirst": true, "target": "self",
           "desc": "Change de mode : Endurance (réduit les dégâts reçus) ou Fureur (augmente les dégâts infligés). La 1re utilisation du combat est gratuite, ensuite 1 PA.",
-          "pa": 1, "freeFirst": true, "target": "self",
           "effects": [ { "type": "mode", "set": "toggle" } ] },
 
-        { "id": "sacrieur_entaille", "icon": "axe", "name": "Entaille", "type": "active", "innate": true, "level": 1, "cost": 0,
+        { "id": "sacrieur_entaille", "icon": "axe", "name": "Entaille", "type": "active", "innate": true, "level": 1, "cost": 0, "pa": 3, "target": "enemy", "range": "melee",
           "desc": "Un coup simple, sans temps de relance.",
-          "pa": 3, "target": "enemy", "range": "melee",
-          "effects": [ { "type": "damage", "power": 1.0 } ] },
-        { "id": "sacrieur_morsure", "icon": "drop", "name": "Morsure de sang", "type": "active", "innate": true, "level": 2, "cost": 0,
+          "effects": [ { "type": "damage", "power": 1.0} ] },
+
+        { "id": "sacrieur_morsure", "icon": "drop", "name": "Morsure de sang", "type": "active", "innate": true, "level": 2, "cost": 0, "pa": 5, "cooldown": 2, "target": "enemy", "range": "melee",
           "desc": "En Endurance : 1,8 de puissance et il récupère 65 % des dégâts. En Fureur : 2,3 de puissance mais seulement 35 % récupérés. Relance : 2 tours.",
-          "pa": 5, "cooldown": 2, "target": "enemy", "range": "melee",
-          "effects": [
-            { "type": "damage", "power": 1.8, "lifesteal": 0.65, "if": { "mode": "reduction" } },
-            { "type": "damage", "power": 2.3, "lifesteal": 0.35, "if": { "mode": "degats" } }
-          ] },
-        { "id": "sacrieur_punition", "icon": "skull", "name": "Punition", "type": "active", "innate": true, "level": 4, "cost": 0,
-          "desc": "Plus il lui manque de PV, plus elle frappe fort (puissance 1,3 + 0,05 par 1 % de PV manquants). Une fois par combat. Chaque spécialisation la fait évoluer.",
-          "pa": 4, "perCombat": 1, "target": "enemy", "range": "melee",
-          "effects": [ { "type": "damage", "power": 1.3, "powerPerMissingHp": 0.05 } ] },
-        { "id": "sacrieur_carapace", "icon": "shield", "name": "Carapace de sang", "type": "active", "innate": true, "level": 1, "cost": 0,
+          "effects": [ { "type": "damage", "power": 1.8, "lifesteal": 0.65, "if": { "mode": "reduction" }}, { "type": "damage", "power": 2.3, "lifesteal": 0.35, "if": { "mode": "degats" }} ] },
+
+        { "id": "sacrieur_punition", "icon": "skull", "name": "Punition", "type": "active", "innate": true, "level": 4, "cost": 0, "pa": 4, "perCombat": 1, "target": "enemy", "range": "melee",
+          "desc": "Plus il lui manque de PV, plus elle frappe fort (puissance 1,3 + 0,05 par 1 % de PV manquants). Une fois par combat. Chaque arbre de talents a de quoi la faire évoluer.",
+          "effects": [ { "type": "damage", "power": 1.3, "powerPerMissingHp": 0.05} ] },
+
+        { "id": "sacrieur_carapace", "icon": "shield", "name": "Carapace de sang", "type": "active", "innate": true, "level": 1, "cost": 0, "pa": 3, "cooldown": 2, "target": "self",
           "desc": "Un bouclier de 2 tours. En Endurance : 12 % de ses PV max + 45 % des PV qui lui manquent. En Fureur : 6 % + 20 %. Relance : 2 tours.",
-          "pa": 3, "cooldown": 2, "target": "self",
-          "effects": [
-            { "type": "shield", "pctMaxHp": 0.12, "pctMissingHp": 0.45, "turns": 2, "if": { "mode": "reduction" } },
-            { "type": "shield", "pctMaxHp": 0.06, "pctMissingHp": 0.2, "turns": 2, "if": { "mode": "degats" } }
-          ] },
-        { "id": "sacrieur_provocation", "icon": "target", "name": "Provocation", "type": "active", "innate": true, "level": 3, "cost": 0,
+          "effects": [ { "type": "shield", "pctMaxHp": 0.12, "pctMissingHp": 0.45, "turns": 2, "if": { "mode": "reduction" }}, { "type": "shield", "pctMaxHp": 0.06, "pctMissingHp": 0.2, "turns": 2, "if": { "mode": "degats" }} ] },
+
+        { "id": "sacrieur_provocation", "icon": "target", "name": "Provocation", "type": "active", "innate": true, "level": 3, "cost": 0, "pa": 2, "cooldown": 3, "target": "self",
           "desc": "Les ennemis doivent le viser pendant 2 tours, et il gagne un petit bouclier (6 % de ses PV max). Relance : 3 tours.",
-          "pa": 2, "cooldown": 3, "target": "self",
-          "effects": [ { "type": "taunt", "turns": 2 }, { "type": "shield", "pctMaxHp": 0.06, "turns": 2 } ] },
-        { "id": "sacrieur_temerite", "icon": "flame", "name": "Coup téméraire", "type": "active", "innate": true, "level": 5, "cost": 0,
+          "effects": [ { "type": "taunt", "turns": 2}, { "type": "shield", "pctMaxHp": 0.06, "turns": 2} ] },
+
+        { "id": "sacrieur_temerite", "icon": "flame", "name": "Coup téméraire", "type": "active", "innate": true, "level": 5, "cost": 0, "pa": 4, "target": "enemy", "range": "melee",
           "desc": "De gros dégâts qui lui coûtent des PV (sans jamais le tuer). En Endurance : 2,0 de puissance et −6 % de ses PV max. En Fureur : 2,6 de puissance et −10 %.",
-          "pa": 4, "target": "enemy", "range": "melee",
-          "effects": [
-            { "type": "damage", "power": 2.0, "if": { "mode": "reduction" } },
-            { "type": "damage", "power": 2.6, "if": { "mode": "degats" } },
-            { "type": "damage", "pctMaxHp": 0.06, "to": "self", "nonLethal": true, "if": { "mode": "reduction" } },
-            { "type": "damage", "pctMaxHp": 0.10, "to": "self", "nonLethal": true, "if": { "mode": "degats" } }
-          ] },
-        { "id": "sacrieur_crochet", "icon": "swap", "name": "Crochet", "type": "active", "innate": true, "level": 6, "cost": 0,
+          "effects": [ { "type": "damage", "power": 2.0, "if": { "mode": "reduction" }}, { "type": "damage", "power": 2.6, "if": { "mode": "degats" }}, { "type": "damage", "pctMaxHp": 0.06, "to": "self", "nonLethal": true, "if": { "mode": "reduction" }}, { "type": "damage", "pctMaxHp": 0.1, "to": "self", "nonLethal": true, "if": { "mode": "degats" }} ] },
+
+        { "id": "sacrieur_crochet", "icon": "swap", "name": "Crochet", "type": "active", "innate": true, "level": 6, "cost": 0, "pa": 2, "cooldown": 2, "target": "enemy", "range": "any",
           "desc": "Attire un ennemi du rang arrière sur le rang avant : le corps à corps peut enfin l'atteindre. Relance : 2 tours.",
-          "pa": 2, "cooldown": 2, "target": "enemy", "range": "any",
           "effects": [ { "type": "move", "row": "front" } ] },
 
-        { "_exemple": "SPÉCIALISATION BASTION (tank) — niveau 4, débloquée automatiquement en la choisissant ('auto').",
-          "id": "sacrieur_rempart", "icon": "armor", "name": "Rempart de chair", "type": "passive", "auto": true, "level": 4, "cost": 0, "spec": "bastion", "branch": "Bastion", "tier": 1,
-          "desc": "Il subit 12 % de dégâts en moins, et le mode Endurance est renforcé : −0,35 % de dégâts reçus de plus par 1 % de PV manquants (−0,9 % au total).",
-          "modifiers": [ { "stat": "taken", "pctPer": { "missingHpPct": -0.35 }, "if": { "mode": "reduction" } }, { "stat": "taken", "pct": -0.12 } ] },
-        { "id": "sacrieur_sacrifice", "icon": "shield", "name": "Sacrifice", "type": "active", "auto": true, "level": 4, "cost": 0, "spec": "bastion", "branch": "Bastion", "tier": 1,
+        { "id": "sacrieur_peau_epaisse", "icon": "armor", "name": "Peau épaisse", "type": "passive", "level": 1, "cost": 0, "talent": { "tree": "bastion", "row": 0, "ranks": 3},
+          "desc": "Par rang : il subit 4 % de dégâts en moins, et en Endurance −0,12 % de plus par 1 % de PV manquants (au rang 3 : −12 % et −0,36 %, −0,91 % au total avec Sang chaud).",
+          "modifiers": [ { "stat": "taken", "pct": -0.04}, { "stat": "taken", "pctPer": { "missingHpPct": -0.12}, "if": { "mode": "reduction"} } ] },
+
+
+        { "id": "sacrieur_sacrifice", "icon": "shield", "name": "Sacrifice", "type": "active", "level": 1, "cost": 0, "pa": 3, "cooldown": 4, "target": "self", "talent": { "tree": "bastion", "row": 1, "ranks": 1},
           "desc": "Il encaisse à la place de ses alliés tous les coups des monstres, jusqu'au début de son prochain tour. Relance : 4 tours.",
-          "pa": 3, "cooldown": 4, "target": "self",
-          "effects": [ { "type": "redirect", "turns": 1 } ] },
-        { "id": "sacrieur_dernier_souffle", "icon": "ghost", "name": "Dernier souffle", "type": "passive", "auto": true, "level": 4, "cost": 0, "spec": "bastion", "branch": "Bastion", "tier": 1,
+          "effects": [ { "type": "redirect", "turns": 1} ] },
+
+        { "id": "sacrieur_chair_robuste", "icon": "heart", "name": "Chair robuste", "type": "passive", "level": 1, "cost": 0, "talent": { "tree": "bastion", "row": 0, "ranks": 2},
+          "desc": "Par rang : +5 % de PV max (+10 % au rang 2).",
+          "modifiers": [ { "stat": "hp", "pct": 0.05} ] },
+
+        { "id": "sacrieur_dernier_souffle", "icon": "ghost", "name": "Dernier souffle", "type": "passive", "level": 1, "cost": 0, "talent": { "tree": "bastion", "row": 2, "ranks": 1},
           "desc": "Un coup mortel le laisse à 1 PV et lui donne un bouclier d'absorption de 50 % de ses PV max (2 tours). Une fois par combat.",
-          "triggers": [ { "on": "wouldDie", "oncePerCombat": true, "effects": [ { "type": "survive", "hp": 1 }, { "type": "shield", "pctMaxHp": 0.5, "turns": 2, "to": "self" } ] } ] },
-        { "id": "sacrieur_punition_bastion", "icon": "shield", "name": "Punition protectrice", "type": "active", "level": 4, "cost": 0, "spec": "bastion", "replaces": "sacrieur_punition",
-          "desc": "Évolution de la Punition : moins de dégâts, mais un gros bouclier (12 % des PV max + 50 % des PV manquants). Une fois par combat.",
-          "pa": 4, "perCombat": 1, "target": "enemy", "range": "melee",
-          "effects": [ { "type": "damage", "power": 0.9, "powerPerMissingHp": 0.025 }, { "type": "shield", "pctMaxHp": 0.12, "pctMissingHp": 0.5, "turns": 2, "to": "self" } ] },
+          "triggers": [ { "on": "wouldDie", "oncePerCombat": true, "effects": [ { "type": "survive", "hp": 1}, { "type": "shield", "pctMaxHp": 0.5, "turns": 2, "to": "self" } ]} ] },
 
-        { "_exemple": "SPÉCIALISATION ÉQUILIBRE (hybride) — le passif intègre réduction ET dégâts, sans buff supplémentaire.",
-          "id": "sacrieur_sang_mele", "icon": "heart", "name": "Sang mêlé", "type": "passive", "auto": true, "level": 4, "cost": 0, "spec": "equilibre", "branch": "Équilibre", "tier": 1,
-          "desc": "Les deux effets de Sang chaud sont toujours actifs : celui de son mode à 100 %, l'autre à environ 65 %.",
-          "modifiers": [
-            { "stat": "taken", "pctPer": { "missingHpPct": -0.35 }, "if": { "mode": "degats" } },
-            { "stat": "damage", "pctPer": { "missingHpPct": 0.55 }, "if": { "mode": "reduction" } }
-          ] },
-        { "id": "sacrieur_souplesse", "icon": "wind", "name": "Souplesse", "type": "passive", "auto": true, "level": 4, "cost": 0, "spec": "equilibre", "branch": "Équilibre", "tier": 1,
-          "desc": "Le premier changement de mode de chaque tour lui rend le PA qu'il a coûté : il passe d'un mode à l'autre sans rien perdre.",
-          "triggers": [ { "on": "modeChange", "oncePerTurn": true, "effect": { "type": "pa", "amount": 1 } } ] },
-        { "id": "sacrieur_lame_protectrice", "icon": "shield", "name": "Lame protectrice", "type": "active", "auto": true, "level": 4, "cost": 0, "spec": "equilibre", "branch": "Équilibre", "tier": 1,
-          "desc": "Il frappe et se protège dans le même geste : des dégâts, plus un bouclier de 5 % de ses PV max + 20 % des PV qui lui manquent (2 tours). Relance : 1 tour.",
-          "pa": 4, "cooldown": 1, "target": "enemy", "range": "melee",
-          "effects": [ { "type": "damage", "power": 1.6 }, { "type": "shield", "pctMaxHp": 0.05, "pctMissingHp": 0.2, "turns": 2, "to": "self" } ] },
-        { "id": "sacrieur_punition_equilibre", "icon": "heart", "name": "Punition vampirique", "type": "active", "level": 4, "cost": 0, "spec": "equilibre", "replaces": "sacrieur_punition",
-          "desc": "Évolution de la Punition : des dégâts normaux et il récupère 40 % des dégâts infligés. Une fois par combat.",
-          "pa": 4, "perCombat": 1, "target": "enemy", "range": "melee",
-          "effects": [ { "type": "damage", "power": 1.3, "powerPerMissingHp": 0.045, "lifesteal": 0.4 } ] },
-
-        { "_exemple": "SPÉCIALISATION ÉCORCHÉ (dps).",
-          "id": "sacrieur_fureur", "icon": "flame", "name": "Fureur sanglante", "type": "passive", "auto": true, "level": 4, "cost": 0, "spec": "ecorche", "branch": "Écorché", "tier": 1,
-          "desc": "Renforce le mode Fureur : +0,25 % de dégâts infligés de plus par 1 % de PV manquants (+1,1 % au total).",
-          "modifiers": [ { "stat": "damage", "pctPer": { "missingHpPct": 0.25 }, "if": { "mode": "degats" } } ] },
-        { "id": "sacrieur_dechirure", "icon": "skull", "name": "Déchirure", "type": "active", "auto": true, "level": 4, "cost": 0, "spec": "ecorche", "branch": "Écorché", "tier": 1,
-          "desc": "Un coup dévastateur qui lui coûte 15 % de ses PV max (sans jamais en mourir). Relance : 2 tours.",
-          "pa": 5, "cooldown": 2, "target": "enemy", "range": "melee",
-          "effects": [ { "type": "damage", "power": 3.0 }, { "type": "damage", "pctMaxHp": 0.15, "to": "self", "nonLethal": true } ] },
-        { "id": "sacrieur_festin", "icon": "drop", "name": "Festin de sang", "type": "active", "auto": true, "level": 4, "cost": 0, "spec": "ecorche", "branch": "Écorché", "tier": 1,
-          "desc": "De gros dégâts : il récupère 50 % des dégâts qu'il inflige. Relance : 2 tours.",
-          "pa": 5, "cooldown": 2, "target": "enemy", "range": "melee",
-          "effects": [ { "type": "damage", "power": 2.2, "lifesteal": 0.5 } ] },
-        { "id": "sacrieur_punition_ecorche", "icon": "skull", "name": "Punition sanglante", "type": "active", "level": 4, "cost": 0, "spec": "ecorche", "replaces": "sacrieur_punition",
-          "desc": "Évolution de la Punition : il se saigne d'abord de 12 % de ses PV max (sans en mourir), puis frappe bien plus fort : plus il lui manque de PV, plus c'est violent (puissance 1,3 + 0,06 par 1 %). Une fois par combat.",
-          "pa": 4, "perCombat": 1, "target": "enemy", "range": "melee",
-          "effects": [ { "type": "damage", "pctMaxHp": 0.12, "to": "self", "nonLethal": true }, { "type": "damage", "power": 1.3, "powerPerMissingHp": 0.06 } ] },
-
-        { "_exemple": "PALIER 8 — un seul choix parmi trois par spécialisation ('choiceGroup'). Choisir un autre sort du groupe remplace le précédent.",
-          "id": "sacrieur_represailles", "icon": "axe", "name": "Représailles", "type": "passive", "level": 8, "cost": 0, "spec": "bastion", "choiceGroup": "bastion_8", "branch": "Bastion", "tier": 2,
-          "desc": "Quand un monstre le frappe, il lui renvoie des dégâts (puissance 0,5).",
-          "triggers": [ { "on": "takeDamage", "effect": { "type": "damage", "power": 0.5, "to": "attacker" } } ] },
-        { "id": "sacrieur_sang_partage", "icon": "shield", "name": "Sang partagé", "type": "active", "level": 8, "cost": 0, "spec": "bastion", "choiceGroup": "bastion_8", "branch": "Bastion", "tier": 2,
-          "desc": "Un bouclier de 12 % de leurs PV max à toute l'équipe (2 tours) ; il s'inflige 10 % de ses PV max (sans mourir). Relance : 3 tours.",
-          "pa": 3, "cooldown": 3, "target": "self",
-          "effects": [ { "type": "damage", "pctMaxHp": 0.10, "to": "self", "nonLethal": true }, { "type": "shield", "pctMaxHp": 0.12, "turns": 2, "to": "allies" } ] },
-        { "id": "sacrieur_peau_de_pierre", "icon": "armor", "name": "Peau de pierre", "type": "passive", "level": 8, "cost": 0, "spec": "bastion", "choiceGroup": "bastion_8", "branch": "Bastion", "tier": 2,
+        { "id": "sacrieur_peau_de_pierre", "icon": "armor", "name": "Peau de pierre", "type": "passive", "level": 1, "cost": 0, "talent": { "tree": "bastion", "row": 1, "ranks": 1},
           "desc": "Au début du combat : un bouclier de 15 % de ses PV max (2 tours).",
-          "triggers": [ { "on": "combatStart", "effect": { "type": "shield", "pctMaxHp": 0.15, "turns": 2, "to": "self" } } ] },
+          "triggers": [ { "on": "combatStart", "effect": { "type": "shield", "pctMaxHp": 0.15, "turns": 2, "to": "self" }} ] },
 
-        { "id": "sacrieur_transfusion", "icon": "heart", "name": "Transfusion", "type": "active", "level": 8, "cost": 0, "spec": "equilibre", "choiceGroup": "equilibre_8", "branch": "Équilibre", "tier": 2,
-          "desc": "Il donne de son sang à un allié : il perd 15 % de ses PV max (sans mourir), l'allié en regagne 25 % des siens. Relance : 2 tours.",
-          "pa": 3, "cooldown": 2, "target": "ally",
-          "effects": [ { "type": "damage", "pctMaxHp": 0.15, "to": "self", "nonLethal": true }, { "type": "heal", "pctMaxHp": 0.25 } ] },
-        { "id": "sacrieur_hemorragie", "icon": "drop", "name": "Hémorragie", "type": "active", "level": 8, "cost": 0, "spec": "equilibre", "choiceGroup": "equilibre_8", "branch": "Équilibre", "tier": 2,
-          "desc": "Des dégâts (il récupère 20 %) et un saignement de 3 tours. Relance : 2 tours.",
-          "pa": 4, "cooldown": 2, "target": "enemy", "range": "melee",
-          "effects": [ { "type": "damage", "power": 1.1, "lifesteal": 0.2 }, { "type": "dot", "power": 0.6, "turns": 3, "label": "saigne" } ] },
-        { "id": "sacrieur_adaptation", "icon": "refresh", "name": "Adaptation", "type": "passive", "level": 8, "cost": 0, "spec": "equilibre", "choiceGroup": "equilibre_8", "branch": "Équilibre", "tier": 2,
+        { "id": "sacrieur_represailles", "icon": "axe", "name": "Représailles", "type": "passive", "level": 1, "cost": 0, "talent": { "tree": "bastion", "row": 2, "ranks": 1},
+          "desc": "Quand un monstre le frappe, il lui renvoie des dégâts (puissance 0,5).",
+          "triggers": [ { "on": "takeDamage", "effect": { "type": "damage", "power": 0.5, "to": "attacker" }} ] },
+
+        { "id": "sacrieur_punition_bastion", "icon": "shield", "name": "Punition protectrice", "type": "active", "level": 1, "cost": 0, "replaces": "sacrieur_punition", "pa": 4, "perCombat": 1, "target": "enemy", "range": "melee", "talent": { "tree": "bastion", "row": 3, "ranks": 1},
+          "desc": "Évolution de la Punition : moins de dégâts, mais un gros bouclier (12 % des PV max + 50 % des PV manquants). Une fois par combat.",
+          "effects": [ { "type": "damage", "power": 0.9, "powerPerMissingHp": 0.025}, { "type": "shield", "pctMaxHp": 0.12, "pctMissingHp": 0.5, "turns": 2, "to": "self" } ] },
+
+        { "id": "sacrieur_sang_partage", "icon": "shield", "name": "Sang partagé", "type": "active", "level": 1, "cost": 0, "pa": 3, "cooldown": 3, "target": "self", "talent": { "tree": "bastion", "row": 3, "ranks": 1},
+          "desc": "Un bouclier de 12 % de leurs PV max à toute l'équipe (2 tours) ; il s'inflige 10 % de ses PV max (sans mourir). Relance : 3 tours.",
+          "effects": [ { "type": "damage", "pctMaxHp": 0.1, "to": "self", "nonLethal": true}, { "type": "shield", "pctMaxHp": 0.12, "turns": 2, "to": "allies" } ] },
+
+        { "id": "sacrieur_sang_mele", "icon": "heart", "name": "Sang mêlé", "type": "passive", "level": 1, "cost": 0, "talent": { "tree": "equilibre", "row": 0, "ranks": 2},
+          "desc": "Par rang, l'effet de Sang chaud de l'AUTRE mode reste un peu actif : en Fureur, −0,18 % de dégâts reçus par 1 % de PV manquants ; en Endurance, +0,28 % de dégâts infligés (environ 65 % de l'autre côté au rang 2).",
+          "modifiers": [ { "stat": "taken", "pctPer": { "missingHpPct": -0.18}, "if": { "mode": "degats" }}, { "stat": "damage", "pctPer": { "missingHpPct": 0.28}, "if": { "mode": "reduction" }} ] },
+
+        { "id": "sacrieur_sang_froid", "icon": "wind", "name": "Sang-froid", "type": "passive", "level": 1, "cost": 0, "talent": { "tree": "equilibre", "row": 0, "ranks": 3},
+          "desc": "Par rang : +2 % de dégâts infligés et −2 % de dégâts reçus (+6 % / −6 % au rang 3).",
+          "modifiers": [ { "stat": "damage", "pct": 0.02}, { "stat": "taken", "pct": -0.02} ] },
+
+        { "id": "sacrieur_souplesse", "icon": "wind", "name": "Souplesse", "type": "passive", "level": 1, "cost": 0, "talent": { "tree": "equilibre", "row": 1, "ranks": 1},
+          "desc": "Le premier changement de mode de chaque tour lui rend le PA qu'il a coûté : il passe d'un mode à l'autre sans rien perdre.",
+          "triggers": [ { "on": "modeChange", "oncePerTurn": true, "effect": { "type": "pa", "amount": 1}} ] },
+
+        { "id": "sacrieur_lame_protectrice", "icon": "shield", "name": "Lame protectrice", "type": "active", "level": 1, "cost": 0, "pa": 4, "cooldown": 1, "target": "enemy", "range": "melee", "talent": { "tree": "equilibre", "row": 1, "ranks": 1},
+          "desc": "Il frappe et se protège dans le même geste : des dégâts, plus un bouclier de 5 % de ses PV max + 20 % des PV qui lui manquent (2 tours). Relance : 1 tour.",
+          "effects": [ { "type": "damage", "power": 1.6}, { "type": "shield", "pctMaxHp": 0.05, "pctMissingHp": 0.2, "turns": 2, "to": "self" } ] },
+
+        { "id": "sacrieur_adaptation", "icon": "refresh", "name": "Adaptation", "type": "passive", "level": 1, "cost": 0, "talent": { "tree": "equilibre", "row": 2, "ranks": 1},
           "desc": "Quand il change de mode : +15 % de dégâts infligés et −15 % de dégâts reçus pendant 2 tours.",
-          "triggers": [ { "on": "modeChange", "effects": [ { "type": "mod", "stat": "damage", "pct": 0.15, "turns": 2 }, { "type": "mod", "stat": "taken", "pct": -0.15, "turns": 2 } ] } ] },
+          "triggers": [ { "on": "modeChange", "effects": [ { "type": "mod", "stat": "damage", "pct": 0.15, "turns": 2}, { "type": "mod", "stat": "taken", "pct": -0.15, "turns": 2} ]} ] },
 
-        { "id": "sacrieur_saignee", "icon": "flame", "name": "Saignée volontaire", "type": "active", "level": 8, "cost": 0, "spec": "ecorche", "choiceGroup": "ecorche_8", "branch": "Écorché", "tier": 2,
-          "desc": "Il s'ouvre les veines : −20 % de ses PV max (sans mourir) et +3 PA tout de suite (+2 net). Relance : 3 tours.",
-          "pa": 1, "cooldown": 3, "target": "self",
-          "effects": [ { "type": "damage", "pctMaxHp": 0.2, "to": "self", "nonLethal": true }, { "type": "pa", "amount": 3 } ] },
-        { "id": "sacrieur_execution", "icon": "skull", "name": "Exécution", "type": "passive", "level": 8, "cost": 0, "spec": "ecorche", "choiceGroup": "ecorche_8", "branch": "Écorché", "tier": 2,
+        { "id": "sacrieur_hemorragie", "icon": "drop", "name": "Hémorragie", "type": "active", "level": 1, "cost": 0, "pa": 4, "cooldown": 2, "target": "enemy", "range": "melee", "talent": { "tree": "equilibre", "row": 2, "ranks": 1},
+          "desc": "Des dégâts (il récupère 20 %) et un saignement de 3 tours. Relance : 2 tours.",
+          "effects": [ { "type": "damage", "power": 1.1, "lifesteal": 0.2}, { "type": "dot", "power": 0.6, "turns": 3, "label": "saigne" } ] },
+
+        { "id": "sacrieur_punition_equilibre", "icon": "heart", "name": "Punition vampirique", "type": "active", "level": 1, "cost": 0, "replaces": "sacrieur_punition", "pa": 4, "perCombat": 1, "target": "enemy", "range": "melee", "talent": { "tree": "equilibre", "row": 3, "ranks": 1},
+          "desc": "Évolution de la Punition : des dégâts normaux et il récupère 40 % des dégâts infligés. Une fois par combat.",
+          "effects": [ { "type": "damage", "power": 1.3, "powerPerMissingHp": 0.045, "lifesteal": 0.4} ] },
+
+        { "id": "sacrieur_transfusion", "icon": "heart", "name": "Transfusion", "type": "active", "level": 1, "cost": 0, "pa": 3, "cooldown": 2, "target": "ally", "talent": { "tree": "equilibre", "row": 3, "ranks": 1},
+          "desc": "Il donne de son sang à un allié : il perd 15 % de ses PV max (sans mourir), l'allié en regagne 25 % des siens. Relance : 2 tours.",
+          "effects": [ { "type": "damage", "pctMaxHp": 0.15, "to": "self", "nonLethal": true}, { "type": "heal", "pctMaxHp": 0.25} ] },
+
+        { "id": "sacrieur_fureur", "icon": "flame", "name": "Fureur sanglante", "type": "passive", "level": 1, "cost": 0, "talent": { "tree": "ecorche", "row": 0, "ranks": 2},
+          "desc": "Par rang, en Fureur : +0,13 % de dégâts infligés de plus par 1 % de PV manquants (+0,26 % au rang 2, +1,1 % au total avec Sang chaud).",
+          "modifiers": [ { "stat": "damage", "pctPer": { "missingHpPct": 0.13}, "if": { "mode": "degats" }} ] },
+
+        { "id": "sacrieur_lames_avides", "icon": "axe", "name": "Lames avides", "type": "passive", "level": 1, "cost": 0, "talent": { "tree": "ecorche", "row": 0, "ranks": 3},
+          "desc": "Par rang : +4 % de dégâts infligés, quel que soit son mode (+12 % au rang 3).",
+          "modifiers": [ { "stat": "damage", "pct": 0.04} ] },
+
+        { "id": "sacrieur_dechirure", "icon": "skull", "name": "Déchirure", "type": "active", "level": 1, "cost": 0, "pa": 5, "cooldown": 2, "target": "enemy", "range": "melee", "talent": { "tree": "ecorche", "row": 1, "ranks": 1},
+          "desc": "Un coup dévastateur qui lui coûte 15 % de ses PV max (sans jamais en mourir). Relance : 2 tours.",
+          "effects": [ { "type": "damage", "power": 3.0}, { "type": "damage", "pctMaxHp": 0.15, "to": "self", "nonLethal": true} ] },
+
+        { "id": "sacrieur_festin", "icon": "drop", "name": "Festin de sang", "type": "active", "level": 1, "cost": 0, "pa": 5, "cooldown": 2, "target": "enemy", "range": "melee", "talent": { "tree": "ecorche", "row": 1, "ranks": 1},
+          "desc": "De gros dégâts : il récupère 50 % des dégâts qu'il inflige. Relance : 2 tours.",
+          "effects": [ { "type": "damage", "power": 2.2, "lifesteal": 0.5} ] },
+
+        { "id": "sacrieur_execution", "icon": "skull", "name": "Exécution", "type": "passive", "level": 1, "cost": 0, "talent": { "tree": "ecorche", "row": 2, "ranks": 1},
           "desc": "Quand il touche un ennemi sous 30 % de PV : un coup en plus (puissance 1,0). Une fois par tour.",
-          "triggers": [ { "on": "dealDamage", "if": { "targetHpPctBelow": 30 }, "oncePerTurn": true, "effect": { "type": "damage", "power": 1.0, "to": "target" } } ] },
-        { "id": "sacrieur_frenesie", "icon": "bolt", "name": "Frénésie", "type": "passive", "level": 8, "cost": 0, "spec": "ecorche", "choiceGroup": "ecorche_8", "branch": "Écorché", "tier": 2,
+          "triggers": [ { "on": "dealDamage", "if": { "targetHpPctBelow": 30}, "oncePerTurn": true, "effect": { "type": "damage", "power": 1.0, "to": "target" }} ] },
+
+        { "id": "sacrieur_frenesie", "icon": "bolt", "name": "Frénésie", "type": "passive", "level": 1, "cost": 0, "talent": { "tree": "ecorche", "row": 2, "ranks": 1},
           "desc": "Quand il achève un ennemi : +2 PA tout de suite. Une fois par tour.",
-          "triggers": [ { "on": "kill", "oncePerTurn": true, "effect": { "type": "pa", "amount": 2 } } ] }
+          "triggers": [ { "on": "kill", "oncePerTurn": true, "effect": { "type": "pa", "amount": 2}} ] },
+
+        { "id": "sacrieur_punition_ecorche", "icon": "skull", "name": "Punition sanglante", "type": "active", "level": 1, "cost": 0, "replaces": "sacrieur_punition", "pa": 4, "perCombat": 1, "target": "enemy", "range": "melee", "talent": { "tree": "ecorche", "row": 3, "ranks": 1},
+          "desc": "Évolution de la Punition : il se saigne d'abord de 12 % de ses PV max (sans en mourir), puis frappe bien plus fort : plus il lui manque de PV, plus c'est violent (puissance 1,3 + 0,06 par 1 %). Une fois par combat.",
+          "effects": [ { "type": "damage", "pctMaxHp": 0.12, "to": "self", "nonLethal": true}, { "type": "damage", "power": 1.3, "powerPerMissingHp": 0.06} ] },
+
+        { "id": "sacrieur_saignee", "icon": "flame", "name": "Saignée volontaire", "type": "active", "level": 1, "cost": 0, "pa": 1, "cooldown": 3, "target": "self", "talent": { "tree": "ecorche", "row": 3, "ranks": 1},
+          "desc": "Il s'ouvre les veines : −20 % de ses PV max (sans mourir) et +3 PA tout de suite (+2 net). Relance : 3 tours.",
+          "effects": [ { "type": "damage", "pctMaxHp": 0.2, "to": "self", "nonLethal": true}, { "type": "pa", "amount": 3} ] }
       ]
     },
     "assassin": {

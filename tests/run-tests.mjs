@@ -44,7 +44,8 @@ import {
   sanitizeProfile, saveRun, loadRunText, clearRun, sanitizeCharacter
 } from '../src/storage/profile.js';
 import {
-  activeSkillIds, skillAvailable, setSpec, setDeck, specsOf, deckEligible, fillDeck, deckSize, specLevel, levelCap, knownSkills, autoSkillIds, skillPaCost
+  activeSkillIds, skillAvailable, setSpec, setDeck, specsOf, deckEligible, fillDeck, deckSize, specLevel, levelCap, knownSkills, autoSkillIds, skillPaCost,
+  talentPointsTotal, talentPointsFree, talentRanks, canAddTalent, canRemoveTalent, changeTalent, resetTalents, applyTalentPreset, mainTree, talentTreesOf, talentsOf, pendingChoices
 } from '../src/core/index.js';
 
 const content = loadContent();
@@ -2142,56 +2143,104 @@ console.log('\n● Sacrieur : modes, 1re utilisation gratuite, PV manquants, sac
     assert(near(st.taken, 1) && near(st.damage, 1), 'à pleine vie : aucun effet');
   });
 
-  test('spécialisations : Bastion renforce la réduction (et encaisse 12 % de moins), Écorché les dégâts, Équilibre combine les deux (l\'autre côté à ~65 %)', () => {
-    const at = (spec, mode) => { const t = sac(spec); const p = t.players[0]; hurt(p, 0.5); p.mode = mode; return computeStats(t, p); };
-    const extraR = -coef('sacrieur_rempart');
-    const extraD = coef('sacrieur_fureur');
-    assert(extraR > 0 && extraD > 0, 'les passifs de spé renforcent');
-    const flatR = -content.skills.sacrieur_rempart.modifiers[1].pct; // (Rempart de chair : −12 % de dégâts reçus, quel que soit le mode)
-    assert(flatR > 0, 'le Bastion encaisse moins dans les deux modes');
+  test('arbres de talents : Peau épaisse (Bastion) renforce la réduction, Fureur sanglante (Écorché) les dégâts, Sang mêlé (Équilibre) garde l\'autre côté ; chaque rang compte', () => {
+    const at = (tree, mode, level = 8) => { const t = sac(tree, level); const p = t.players[0]; hurt(p, 0.5); p.mode = mode; return computeStats(t, p); };
+    const peau = content.skills.sacrieur_peau_epaisse.modifiers;
+    const flatR = -peau[0].pct * 3, extraR = -peau[1].pctPer.missingHpPct * 3; // (rang 3 : la répartition toute faite du Bastion)
+    assert(near(flatR, 0.12) && near(extraR, 0.36, 0.005), `Peau épaisse au rang 3 = l'ancien Rempart de chair (−12 %, −0,36) : ${flatR}, ${extraR}`);
     let st = at('bastion', 'reduction');
     assert(near(st.taken, 1 - (R() + extraR) * 0.5 - flatR), `bastion / endurance : x${st.taken}`);
     st = at('bastion', 'degats');
-    assert(near(st.taken, 1 - flatR) && near(st.damage, 1 + D() * 0.5), `bastion / fureur : le passif de base, et toujours −12 % reçus (x${st.taken})`);
+    assert(near(st.taken, 1 - flatR) && near(st.damage, 1 + D() * 0.5), `bastion / fureur : x${st.taken}`);
+    const extraD = coef('sacrieur_fureur') * 2;
     st = at('ecorche', 'degats');
-    assert(near(st.damage, 1 + (D() + extraD) * 0.5), `écorché / fureur : x${st.damage}`);
+    assert(near(st.damage, 1 + (D() + extraD) * 0.5), `écorché / fureur (Fureur sanglante rang 2) : x${st.damage}`);
     st = at('ecorche', 'reduction');
     assert(near(st.taken, 1 - R() * 0.5), 'écorché / endurance : comme le passif de base');
-    // Équilibre : le côté de son mode à 100 %, l'autre à environ 65 % (valeurs écrites dans le passif « Sang mêlé »)
-    const kR = -coef('sacrieur_sang_mele', 0) / R(), kD = coef('sacrieur_sang_mele', 1) / D();
-    assert(kR > 0.6 && kR < 0.7 && kD > 0.6 && kD < 0.7, `Sang mêlé ≈ 65 % des deux effets de base (${kR.toFixed(2)}, ${kD.toFixed(2)})`);
+    const kR = -coef('sacrieur_sang_mele', 0) * 2 / R(), kD = coef('sacrieur_sang_mele', 1) * 2 / D();
+    assert(kR > 0.6 && kR < 0.7 && kD > 0.6 && kD < 0.7, `Sang mêlé au rang 2 ≈ 65 % des deux effets de base (${kR.toFixed(2)}, ${kD.toFixed(2)})`);
     st = at('equilibre', 'reduction');
     assert(near(st.taken, 1 - R() * 0.5) && near(st.damage, 1 + kD * D() * 0.5), `équilibre / endurance : reçus x${st.taken}, dégâts x${st.damage}`);
-    st = at('equilibre', 'degats');
-    assert(near(st.damage, 1 + D() * 0.5) && near(st.taken, 1 - kR * R() * 0.5), `équilibre / fureur : reçus x${st.taken}, dégâts x${st.damage}`);
     st = at(null, 'reduction');
-    assert(near(st.taken, 1 - R() * 0.5) && near(st.damage, 1), 'sans spécialisation : le passif de base');
+    assert(near(st.taken, 1 - R() * 0.5) && near(st.damage, 1), 'sans talents : le passif de base');
+    // un seul rang : un tiers de l'effet
+    const t = training([{ classId: 'sacrieur', level: 8, talents: ['sacrieur_peau_epaisse'] }]);
+    const p = t.players[0];
+    p.mode = 'degats';
+    eq(p.ranks.sacrieur_peau_epaisse, 1);
+    assert(near(computeStats(t, p).taken, 1 + peau[0].pct), `rang 1 : −4 % (x${computeStats(t, p).taken})`);
   });
 
-  test('les compétences automatiques : débloquées en choisissant la spé (niveau 4), sans les apprendre ni dépenser de point', () => {
+  test('les points de talent : 1 par niveau dès le niveau 2, une rangée s\'ouvre avec assez de points dans son arbre, on retire sans casser l\'arbre', () => {
     const ch = createCharacter(content, { id: 's', name: 'S', classId: 'sacrieur' });
-    ch.level = 3;
-    assert(!setSpec(content, ch, 'bastion').ok, 'niveau 3 : spé fermée');
-    ch.level = 4;
-    eq(autoSkillIds(content, ch), [], 'sans spé : rien');
-    assert(setSpec(content, ch, 'bastion').ok);
-    eq(autoSkillIds(content, ch).sort(), ['sacrieur_dernier_souffle', 'sacrieur_rempart', 'sacrieur_sacrifice']);
-    assert(knownSkills(content, ch).includes('sacrieur_sacrifice') && !ch.skills.includes('sacrieur_sacrifice'), 'connue, mais pas « apprise »');
-    const r = canLearnSkill(content, ch, 'sacrieur_sacrifice');
-    assert(!r.ok && r.reason.includes('Automatique'), r.reason);
-    eq(skillPointsFree(content, ch), 4, 'aucun point dépensé');
-    assert(deckEligible(content, ch, 'sacrieur_sacrifice') && !deckEligible(content, ch, 'sacrieur_dechirure'), 'Sacrifice se met dans le deck ; Déchirure est d\'une autre spé');
-    assert(setDeck(content, ch, ['sacrieur_sacrifice', 'sacrieur_entaille']).ok);
-    const s = createRun(content, { tranche: 4, mode: 'tranche' }, [ch], 4);
-    assert(s.players[0].skills.includes('sacrieur_rempart') && s.players[0].skills.includes('sacrieur_dernier_souffle'), 'les passifs automatiques sont dans la partie');
-    assert(activeSkillIds(s, s.players[0]).includes('sacrieur_sacrifice'));
-    setSpec(content, ch, 'ecorche');
-    assert(!knownSkills(content, ch).includes('sacrieur_sacrifice') && knownSkills(content, ch).includes('sacrieur_festin'), 'changer de spé change les automatiques');
-    assert(!ch.deck.includes('sacrieur_sacrifice'), 'et sort l\'ancien sort du deck');
+    eq(talentPointsTotal(content, ch), 0, 'niveau 1 : aucun point');
+    assert(!canAddTalent(content, ch, 'sacrieur_peau_epaisse').ok, 'niveau 1 : rien à mettre');
+    ch.level = 8;
+    eq([talentPointsTotal(content, ch), talentPointsFree(content, ch)], [7, 7]);
+    eq(pendingChoices(content, ch).points, 7, 'l\'accueil annonce 7 points à répartir');
+    const no = canAddTalent(content, ch, 'sacrieur_sacrifice');
+    assert(!no.ok && /2 points/.test(no.reason), `Sacrifice (rangée 1) demande 2 points dans le Bastion : ${no.reason}`);
+    assert(!canLearnSkill(content, ch, 'sacrieur_sacrifice').ok, 'un talent ne s\'apprend pas comme une compétence');
+    assert(changeTalent(content, ch, 'sacrieur_peau_epaisse', 1).ok && changeTalent(content, ch, 'sacrieur_chair_robuste', 1).ok);
+    assert(changeTalent(content, ch, 'sacrieur_sacrifice', 1).ok, '2 points dans le Bastion : la rangée 1 s\'ouvre');
+    assert(!canAddTalent(content, ch, 'sacrieur_sacrifice').ok, 'déjà au rang maximal (1)');
+    assert(ch.deck.includes('sacrieur_sacrifice') || ch.deck.length === deckSize(content), 'un sort pris s\'équipe s\'il y a de la place');
+    const r = canRemoveTalent(content, ch, 'sacrieur_peau_epaisse');
+    assert(!r.ok && /plus bas/.test(r.reason), `retirer la Peau fermerait la rangée de Sacrifice : ${r.reason}`);
+    assert(changeTalent(content, ch, 'sacrieur_sacrifice', -1).ok && !ch.deck.includes('sacrieur_sacrifice'), 'retirer Sacrifice le sort aussi de la barre');
+    assert(changeTalent(content, ch, 'sacrieur_peau_epaisse', -1).ok);
+    eq(talentRanks(content, ch), { sacrieur_chair_robuste: 1 });
+    eq(talentPointsFree(content, ch), 6);
+    // un mélange : des points dans deux arbres
+    for (const id of ['sacrieur_lames_avides', 'sacrieur_lames_avides', 'sacrieur_lames_avides', 'sacrieur_sang_froid']) assert(changeTalent(content, ch, id, 1).ok, id);
+    eq(mainTree(content, ch), 'ecorche', 'l\'arbre principal : celui qui a le plus de points');
+    resetTalents(content, ch);
+    eq([ch.talents, talentPointsFree(content, ch)], [[], 7], 'tout retirer : gratuit');
   });
 
-  test('la Punition évolue selon la spécialisation et ne se lance qu\'une fois par combat', () => {
-    const idsOf = (spec) => { const t = sac(spec); t.players[0].deck = ['sacrieur_punition']; return getCombatView(t, 'p1').skills.map((x) => x.skillId); };
+  test('dans un donjon de plus bas niveau, seuls les PREMIERS points comptent ; les talents passent dans la partie avec leurs rangs', () => {
+    const ch = createCharacter(content, { id: 's', name: 'S', classId: 'sacrieur' });
+    ch.level = 8;
+    applyTalentPreset(content, ch, 'bastion');
+    eq(ch.talents.length, 7);
+    let s = createRun(content, { tranche: 8, mode: 'tranche' }, [ch], 4);
+    eq(s.players[0].ranks, { sacrieur_peau_epaisse: 3, sacrieur_sacrifice: 1, sacrieur_dernier_souffle: 1, sacrieur_peau_de_pierre: 1, sacrieur_punition_bastion: 1 });
+    eq(s.players[0].spec, 'bastion', 'l\'arbre principal sert de spécialisation en partie');
+    assert(getCombatView(createTraining(content, [{ classId: 'sacrieur', level: 8, spec: 'bastion' }]), 'p1').skills.some((x) => x.skillId === 'sacrieur_punition_bastion'), 'la Punition a évolué');
+    s = createRun(content, { tranche: 4, mode: 'tranche' }, [ch], 4);
+    eq(s.players[0].effLevel, 4);
+    eq(s.players[0].ranks, { sacrieur_peau_epaisse: 3 }, 'niveau effectif 4 : 3 points, les trois premiers');
+    assert(!s.players[0].skills.includes('sacrieur_sacrifice') && !s.players[0].skills.includes('sacrieur_punition_bastion'));
+  });
+
+  test('les actions CHAR_TALENT, CHAR_TALENT_RESET, CHAR_TALENT_PRESET : mêmes règles, refusées en pleine partie, et la sauvegarde migre les anciennes spés', () => {
+    const chars = [];
+    const go = (a, ctx = {}) => applyCharacterAction(content, chars, a, { newId: () => 'h1', ...ctx });
+    assert(go({ type: 'CHAR_CREATE', name: 'Sang', classId: 'sacrieur' }).ok);
+    const ch = chars[0];
+    ch.level = 5;
+    assert(!go({ type: 'CHAR_TALENT', charId: ch.id, skillId: 'sacrieur_sacrifice', delta: 1 }).ok, 'rangée fermée');
+    assert(!go({ type: 'CHAR_TALENT', charId: ch.id, skillId: 'sacrieur_peau_epaisse', delta: 2 }).ok, 'un point à la fois');
+    assert(go({ type: 'CHAR_TALENT', charId: ch.id, skillId: 'sacrieur_peau_epaisse', delta: 1 }).ok);
+    assert(!go({ type: 'CHAR_TALENT', charId: ch.id, skillId: 'sacrieur_peau_epaisse', delta: 1 }, { locked: new Set([ch.id]) }).ok, 'pas en pleine partie');
+    assert(go({ type: 'CHAR_TALENT_PRESET', charId: ch.id, tree: 'ecorche' }).ok);
+    eq(ch.talents, ['sacrieur_fureur', 'sacrieur_fureur', 'sacrieur_dechirure', 'sacrieur_festin'], 'niveau 5 : les 4 premiers points de la répartition de l\'Écorché');
+    assert(!go({ type: 'CHAR_TALENT_PRESET', charId: ch.id, tree: 'inconnu' }).ok);
+    assert(go({ type: 'CHAR_TALENT_RESET', charId: ch.id }).ok && ch.talents.length === 0);
+    assert(!go({ type: 'CHAR_SET_SPEC', charId: ch.id, spec: 'bastion' }).ok, 'plus de spécialisation à choisir');
+    // une ancienne sauvegarde : spé Bastion, un choix du palier 8 -> la répartition du Bastion
+    const old = sanitizeCharacter(content, { id: 'x', name: 'X', classId: 'sacrieur', level: 8, xp: 0, spec: 'bastion', skills: ['sacrieur_represailles'], deck: ['sacrieur_sacrifice', 'sacrieur_entaille'] });
+    eq(old.spec, null);
+    assert(!old.skills.includes('sacrieur_represailles'), 'les talents ne restent pas dans les compétences apprises');
+    eq(old.talents.length, 7, 'la spé devient la répartition toute faite de son arbre');
+    assert(old.talents.includes('sacrieur_punition_bastion') && old.deck.includes('sacrieur_sacrifice'), 'avec le talent clé, et la barre est gardée');
+    // une sauvegarde abîmée : on ne garde que les points valides
+    const bad = sanitizeCharacter(content, { id: 'y', name: 'Y', classId: 'sacrieur', level: 3, xp: 0, talents: ['sacrieur_fureur', 'sacrieur_dechirure', 'nope', 7, 'sacrieur_fureur', 'sacrieur_fureur'] });
+    eq(bad.talents, ['sacrieur_fureur', 'sacrieur_fureur'], 'rangée fermée, inconnu, rang de trop, points en trop : retirés');
+  });
+
+  test('la Punition évolue avec le talent clé de chaque arbre et ne se lance qu\'une fois par combat', () => {
+    const idsOf = (spec) => { const t = sac(spec, 8); t.players[0].deck = ['sacrieur_punition']; return getCombatView(t, 'p1').skills.map((x) => x.skillId); };
     assert(idsOf(null).includes('sacrieur_punition'));
     assert(idsOf('bastion').includes('sacrieur_punition_bastion') && !idsOf('bastion').includes('sacrieur_punition'));
     assert(idsOf('equilibre').includes('sacrieur_punition_equilibre'));
@@ -2295,7 +2344,7 @@ console.log('\n● Sacrieur : modes, 1re utilisation gratuite, PV manquants, sac
   });
 
   test('Dernier souffle : un coup mortel le laisse à 1 PV avec un bouclier, une seule fois par combat', () => {
-    const t = sac('bastion');
+    const t = sac('bastion', 8);
     const p = t.players[0];
     const m = t.combat.monsters[0];
     dealDamage(t, m, p, 99999);
@@ -2305,7 +2354,7 @@ console.log('\n● Sacrieur : modes, 1re utilisation gratuite, PV manquants, sac
     assert(!p.alive, 'la deuxième fois dans le même combat, il tombe');
     const t2 = sac(null);
     dealDamage(t2, t2.combat.monsters[0], t2.players[0], 99999);
-    assert(!t2.players[0].alive, 'sans la spécialisation Bastion, pas de Dernier souffle');
+    assert(!t2.players[0].alive, 'sans le talent, pas de Dernier souffle');
   });
 
   // ---------- palier 8, sorts qui lisent le mode, Provocation ----------
@@ -2368,17 +2417,19 @@ console.log('\n● Sacrieur : modes, 1re utilisation gratuite, PV manquants, sac
     eq(content.skills.sacrieur_provocation.level, 3, 'débloquée au niveau 3');
   });
 
-  test('chaque spécialisation donne de quoi jouer dès le niveau 4 (au moins 3 compétences automatiques ou évoluées) et affiche son rôle', () => {
-    for (const [id, sp] of Object.entries(content.classes.sacrieur.specs)) {
-      const gives = content.classes.sacrieur.skills.filter((x) => x.spec === id && x.level === 4 && (x.auto || x.replaces));
-      assert(gives.length >= 4, `${id} : ${gives.length} compétences au niveau 4 (${gives.map((x) => x.id).join(', ')})`);
-      assert(gives.some((x) => x.type === 'passive') && gives.some((x) => x.type === 'active'), `${id} : au moins une passive et un sort`);
-      assert(typeof sp.tag === 'string' && sp.tag, `${id} : une étiquette de rôle`);
+  test('chaque arbre : un rôle, un talent clé (une Punition évoluée) à 6 points, et sa répartition toute faite l\'atteint au niveau 8', () => {
+    const trees = talentTreesOf(content, 'sacrieur');
+    eq(trees.map((t) => t.id), ['bastion', 'equilibre', 'ecorche']);
+    for (const t of trees) {
+      assert(typeof t.tag === 'string' && t.tag && t.desc, `${t.id} : une étiquette de rôle et une phrase`);
+      const key = talentsOf(content, 'sacrieur', t.id).find((x) => x.replaces === 'sacrieur_punition');
+      assert(key && key.talent.row === 3 && content.rules.talents.rows[3] === 6, `${t.id} : la Punition évoluée, rangée 3 (6 points)`);
+      const ch = createCharacter(content, { id: 's', name: 'S', classId: 'sacrieur' });
+      ch.level = 8;
+      applyTalentPreset(content, ch, t.id);
+      assert(talentRanks(content, ch)[key.id] === 1 && talentPointsFree(content, ch) === 0, `${t.id} : la répartition toute faite prend le talent clé au niveau 8`);
+      assert(talentsOf(content, 'sacrieur', t.id).some((x) => x.talent.ranks > 1) && talentsOf(content, 'sacrieur', t.id).some((x) => x.type === 'active'), `${t.id} : des talents à rangs et des sorts`);
     }
-    const ch = createCharacter(content, { id: 's', name: 'S', classId: 'sacrieur' });
-    ch.level = 4;
-    setSpec(content, ch, 'equilibre');
-    eq(autoSkillIds(content, ch).sort(), ['sacrieur_lame_protectrice', 'sacrieur_sang_mele', 'sacrieur_souplesse']);
   });
 
   test('Équilibre : Souplesse rend le PA du changement de mode (une fois par tour), Lame protectrice frappe et protège', () => {
@@ -2402,30 +2453,14 @@ console.log('\n● Sacrieur : modes, 1re utilisation gratuite, PV manquants, sac
     assert(before - m.hp > 0 && totalShield(tank) > 0, 'des dégâts et un bouclier');
   });
 
-  test('palier 8 : un seul choix parmi trois par spécialisation, qu\'on peut changer gratuitement', () => {
-    for (const [spec, group, ids] of [
-      ['bastion', 'bastion_8', ['sacrieur_represailles', 'sacrieur_sang_partage', 'sacrieur_peau_de_pierre']],
-      ['equilibre', 'equilibre_8', ['sacrieur_transfusion', 'sacrieur_hemorragie', 'sacrieur_adaptation']],
-      ['ecorche', 'ecorche_8', ['sacrieur_saignee', 'sacrieur_execution', 'sacrieur_frenesie']]
-    ]) {
-      const ch = createCharacter(content, { id: 's', name: 'S', classId: 'sacrieur' });
-      ch.level = 7;
-      setSpec(content, ch, spec);
-      const r7 = learnSkill(content, ch, ids[0]);
-      assert(!r7.ok && r7.reason.includes('Niveau 8'), `${spec} : niveau 7, trop tôt (${r7.reason})`);
-      ch.level = 8;
-      for (const id of ids) {
-        assert(content.skills[id].choiceGroup === group && content.skills[id].level === 8 && content.skills[id].cost === 0 && content.skills[id].spec === spec, `${id} : groupe, niveau, coût, spé`);
-      }
-      assert(learnSkill(content, ch, ids[0]).ok);
-      eq(ch.skills.filter((id) => content.skills[id].choiceGroup === group), [ids[0]]);
-      assert(learnSkill(content, ch, ids[1]).ok);
-      eq(ch.skills.filter((id) => content.skills[id].choiceGroup === group), [ids[1]], `${spec} : le nouveau choix remplace l'ancien`);
-      eq(skillPointsFree(content, ch), 8, 'sans dépenser un point');
-      // le choix d'une autre spé n'est pas possible
-      const other = spec === 'bastion' ? 'sacrieur_transfusion' : 'sacrieur_represailles';
-      assert(!learnSkill(content, ch, other).ok, 'pas le choix d\'une autre spécialisation');
-    }
+  test('les trois Punitions évoluées s\'excluent : une seule à la fois, même avec assez de points', () => {
+    const ch = createCharacter(content, { id: 's', name: 'S', classId: 'sacrieur' });
+    ch.level = 20;
+    applyTalentPreset(content, ch, 'bastion');
+    for (const id of ['sacrieur_fureur', 'sacrieur_fureur', 'sacrieur_dechirure', 'sacrieur_festin', 'sacrieur_execution', 'sacrieur_frenesie']) changeTalent(content, ch, id, 1);
+    const r = canAddTalent(content, ch, 'sacrieur_punition_ecorche');
+    assert(!r.ok && /Punition protectrice/.test(r.reason), `6 points dans l\'Écorché, mais déjà la Punition protectrice : ${r.reason}`);
+    assert(canAddTalent(content, ch, 'sacrieur_saignee').ok, 'l\'autre talent de la rangée reste possible');
   });
 
   test('palier 8 Bastion : Représailles renvoie des dégâts, Sang partagé protège toute l\'équipe, Peau de pierre protège au départ', () => {
@@ -2494,24 +2529,31 @@ console.log('\n● Sacrieur : modes, 1re utilisation gratuite, PV manquants, sac
     eq(p.pa, 5, '+2 PA');
   });
 
-  test('paliers « à venir » : niveau 12 et ultime niveau 20 sont des aperçus (aucune compétence), et les fautes sont expliquées', () => {
-    for (const [id, spec] of Object.entries(content.classes.sacrieur.specs)) {
-      const up = spec.upcoming;
-      assert(Array.isArray(up) && up.some((x) => x.level === 12) && up.some((x) => x.level === 20 && x.desc), `${id} : un palier 12 et un ultime 20`);
+  test('rangées « à venir » : 9 points et l\'ultime à 15 points sont des aperçus, et les fautes dans les talents sont expliquées', () => {
+    for (const t of talentTreesOf(content, 'sacrieur')) {
+      const up = t.upcoming;
+      assert(Array.isArray(up) && up.some((x) => x.points === 9) && up.some((x) => x.points === 15 && x.desc), `${t.id} : 9 points et un ultime à 15`);
     }
-    assert(!content.classes.sacrieur.skills.some((x) => x.level >= 12), 'aucune vraie compétence au-delà du niveau 8 pour l\'instant');
+    assert(!talentsOf(content, 'sacrieur').some((x) => x.talent.row >= 4), 'aucun vrai talent au-delà de la rangée 3 pour l\'instant');
     const tryBuild = (fn) => { const raw = loadRaw(); fn(raw.classes.classes.sacrieur); try { buildContent(raw); return ''; } catch (e) { return e.message; } };
-    let msg = tryBuild((c) => { c.specs.bastion.upcoming = 'bientôt'; });
-    assert(msg.includes('upcoming') && msg.includes('liste'), msg);
-    msg = tryBuild((c) => { c.specs.bastion.upcoming = [{ name: 'Sans niveau' }]; });
-    assert(msg.includes('upcoming') && msg.includes('level'), msg);
-    msg = tryBuild((c) => { c.skills.find((x) => x.id === 'sacrieur_morsure').effects[0].if = { mode: 'colere' }; });
+    const sk = (c, id) => c.skills.find((x) => x.id === id);
+    let msg = tryBuild((c) => { c.talentTrees.bastion.upcoming = 'bientôt'; });
+    assert(msg.includes('upcoming'), msg);
+    msg = tryBuild((c) => { sk(c, 'sacrieur_sacrifice').talent.tree = 'rempart'; });
+    assert(msg.includes('rempart') && msg.includes('bastion'), msg);
+    msg = tryBuild((c) => { sk(c, 'sacrieur_sacrifice').talent.ranks = 3; });
+    assert(msg.includes('plusieurs rangs') && msg.includes('passif'), msg);
+    msg = tryBuild((c) => { sk(c, 'sacrieur_sacrifice').talent.row = 99; });
+    assert(msg.includes('row'), msg);
+    msg = tryBuild((c) => { c.talentTrees.bastion.preset = ['sacrieur_fureur']; });
+    assert(msg.includes('preset'), msg);
+    msg = tryBuild((c) => { c.specs = { x: { name: 'X' } }; });
+    assert(msg.includes('talentTrees') && msg.includes('specs'), msg);
+    msg = tryBuild((c) => { sk(c, 'sacrieur_morsure').effects[0].if = { mode: 'colere' }; });
     assert(msg.includes('colere') && msg.includes('reduction'), msg);
-    msg = tryBuild((c) => { c.skills.find((x) => x.id === 'sacrieur_morsure').effects[0].if = { nimporte: 1 }; });
-    assert(msg.includes('nimporte'), msg);
   });
 
-  test('les JSON : modes, effets et compétences automatiques mal écrits sont expliqués en français', () => {
+  test('les JSON : modes, effets et talents mal écrits sont expliqués en français', () => {
     const tryBuild = (fn) => { const raw = loadRaw(); fn(raw.classes.classes.sacrieur, raw); try { buildContent(raw); return ''; } catch (e) { return e.message; } };
     const sk = (c, id) => c.skills.find((x) => x.id === id);
     let msg = tryBuild((c) => { c.modes.default = 'rage'; });
@@ -2524,10 +2566,8 @@ console.log('\n● Sacrieur : modes, 1re utilisation gratuite, PV manquants, sac
     assert(msg.includes('colere') && msg.includes('reduction'), msg);
     msg = tryBuild((c) => { sk(c, 'sacrieur_pacte').freeFirst = 'oui'; });
     assert(msg.includes('freeFirst'), msg);
-    msg = tryBuild((c) => { delete sk(c, 'sacrieur_rempart').spec; });
-    assert(msg.includes('auto') && msg.includes('spécialisation'), msg);
-    msg = tryBuild((c) => { sk(c, 'sacrieur_rempart').innate = true; });
-    assert(msg.includes('auto') && msg.includes('innate'), msg);
+    msg = tryBuild((c) => { sk(c, 'sacrieur_sacrifice').innate = true; });
+    assert(msg.includes('talent') && msg.includes('innate'), msg);
     msg = tryBuild((c) => { sk(c, 'sacrieur_sacrifice').effects[0].turns = 0; });
     assert(msg.includes('redirect') && msg.includes('turns'), msg);
     msg = tryBuild((c) => { sk(c, 'sacrieur_carapace').effects[0] = { type: 'shield' }; });

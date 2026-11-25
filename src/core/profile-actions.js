@@ -16,7 +16,7 @@
 //
 // Ce fichier ne touche ni à l'écran, ni au navigateur, ni aux fichiers.
 
-import { createCharacter, learnSkill, resetSkills, setSpec, setDeck } from './progression.js';
+import { createCharacter, learnSkill, resetSkills, setSpec, setDeck, changeTalent, resetTalents, applyTalentPreset, hasTalents } from './progression.js';
 import { equipFromBag, unequipToBag, autoEquip } from './items.js';
 import { pickLoot } from './farm.js';
 import { startExpedition, claimExpedition, cancelExpedition } from './expeditions.js';
@@ -26,7 +26,7 @@ import { EQUIP_SLOTS } from './content.js';
 import { GameError, assert } from './util.js';
 
 /** Les actions acceptées (le champ `type` d'une demande). */
-export const CHARACTER_ACTIONS = ['CHAR_CREATE', 'CHAR_DELETE', 'CHAR_EQUIP', 'CHAR_AUTO_EQUIP', 'CHAR_UNEQUIP', 'CHAR_LEARN', 'CHAR_RESET_SKILLS', 'CHAR_SET_SPEC', 'CHAR_SET_DECK', 'CHAR_PICK_LOOT', 'CHAR_EXPEDITION_START', 'CHAR_EXPEDITION_CLAIM', 'CHAR_EXPEDITION_CANCEL',
+export const CHARACTER_ACTIONS = ['CHAR_CREATE', 'CHAR_DELETE', 'CHAR_EQUIP', 'CHAR_AUTO_EQUIP', 'CHAR_UNEQUIP', 'CHAR_LEARN', 'CHAR_RESET_SKILLS', 'CHAR_SET_SPEC', 'CHAR_TALENT', 'CHAR_TALENT_RESET', 'CHAR_TALENT_PRESET', 'CHAR_SET_DECK', 'CHAR_PICK_LOOT', 'CHAR_EXPEDITION_START', 'CHAR_EXPEDITION_CLAIM', 'CHAR_EXPEDITION_CANCEL',
   'CHAR_SALVAGE', 'CHAR_SALVAGE_BULK', 'CHAR_LOCK', 'CHAR_UPGRADE', 'CHAR_CRAFT'];
 
 /** Combien de personnages au maximum (une limite de sécurité pour une base de données partagée). */
@@ -106,6 +106,25 @@ export function applyCharacterAction(content, characters, action, ctx = {}) {
         // spec: l'identifiant d'une spécialisation de la classe, ou null pour n'en avoir aucune. Interdit en partie (voir `locked`).
         assert(action.spec === null || typeof action.spec === 'string', 'Spécialisation invalide.');
         const res = setSpec(content, ch, action.spec);
+        assert(res.ok, res.reason);
+        break;
+      }
+      case 'CHAR_TALENT': {
+        // Un rang de plus (delta: 1) ou de moins (delta: -1) dans un talent. Gratuit, mais jamais en pleine partie (voir `locked`).
+        assert(hasTalents(content, ch.classId), 'Cette classe n\'a pas d\'arbres de talents.');
+        assert(typeof action.skillId === 'string' && (action.delta === 1 || action.delta === -1), 'Talent invalide.');
+        const res = changeTalent(content, ch, action.skillId, action.delta);
+        assert(res.ok, res.reason);
+        break;
+      }
+      case 'CHAR_TALENT_RESET':
+        assert(hasTalents(content, ch.classId), 'Cette classe n\'a pas d\'arbres de talents.');
+        resetTalents(content, ch);
+        break;
+      case 'CHAR_TALENT_PRESET': {
+        // « Répartir pour moi » : la répartition toute faite d'un arbre (elle remplace les talents actuels).
+        assert(typeof action.tree === 'string', 'Arbre invalide.');
+        const res = applyTalentPreset(content, ch, action.tree);
         assert(res.ok, res.reason);
         break;
       }

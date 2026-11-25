@@ -103,18 +103,30 @@ const check = (cond, message) => { if (!cond) { failures.push(message); console.
     check(await page.$('.dslot[data-slot="chest"].empty') !== null, 'retirer vide le torse');
     check(await page.$('.bag-row[data-item="harnois_sombre"]') !== null, "l'objet est dans le sac");
 
-    // ---------- Compétences : une classe sans arbre à points (spécialisation, talents, barre)
+    // ---------- Compétences : une classe à arbres de talents (le Sacrieur), puis sa barre
+    const savedTalents = () => page.evaluate(() => JSON.parse(localStorage.getItem('donjon.profile.v1')).characters.find((c) => c.id === 'c1').talents);
     await page.click('.sheet-modal .tab[data-tab="skills"]');
     await sleep(250);
-    check((await page.$$('.spec-card')).length === 3, 'trois spécialisations');
-    check(await page.$('.sk-points') === null && await page.$('.sk-tree') === null, 'pas de points de compétence ni d\'arbre : rien ne s\'achète');
+    check((await page.$$('.tt-tree')).length === 3 && await page.$('.spec-card') === null, 'trois arbres de talents (plus de cartes de spécialisation)');
+    check(await page.$('.sk-points') === null && await page.$('.sk-tree') === null, 'pas de points de compétence ni d\'arbre à acheter');
+    check((await page.$eval('.tt-budget .tt-free', (e) => e.textContent)) === '7', 'niveau 8 : 7 points de talent à répartir');
+    check(await page.$('.sheet-modal .tab[data-tab="skills"] .tab-badge') !== null, 'une pastille sur l\'onglet Compétences');
     check((await page.$$('.deck-frame .deck-slot.is-filled')).length === 4, 'le deck de 4 sorts est rempli');
-    await page.click('.spec-card[data-spec-id="bastion"]');
+    if (phone) await page.click('[data-tree-tab="bastion"]');
+    await page.click('.tt-preset[data-preset="bastion"]');
     await sleep(300);
-    check(await page.$('.tier-block[data-level="8"].needs-choice') !== null, 'niveau 8 : le choix du palier est mis en évidence');
-    await page.click('.talent-card[data-skill="sacrieur_peau_de_pierre"]');
-    await sleep(300);
-    check((await savedSkills()).includes('sacrieur_peau_de_pierre'), 'le talent choisi est sauvegardé');
+    check((await savedTalents()).length === 7 && (await savedTalents()).includes('sacrieur_punition_bastion'), '« Répartir pour moi » : 7 points dans le Bastion, jusqu\'à la Punition protectrice');
+    check((await page.$eval('.tt-budget .tt-free', (e) => e.textContent)) === '0', 'plus rien à répartir');
+    check(await page.$('.tt-talent[data-talent="sacrieur_sacrifice"].is-maxed') !== null && await page.$('.tt-talent[data-talent="sacrieur_represailles"].is-blocked') !== null, 'les talents pris sont marqués, les autres attendent un point');
+    await page.click('.tt-talent[data-talent="sacrieur_punition_bastion"] .tt-minus');
+    await sleep(250);
+    check(!(await savedTalents()).includes('sacrieur_punition_bastion'), '« − » retire le point');
+    await page.click('.tt-talent[data-talent="sacrieur_represailles"] .tt-pick');
+    await sleep(200);
+    check(await page.$('.tt-detail') !== null && /Représailles/.test(await page.$eval('.tt-detail', (e) => e.textContent)), 'cliquer un talent ouvre son détail');
+    await page.click('.tt-detail .btn-primary');
+    await sleep(250);
+    check((await savedTalents()).includes('sacrieur_represailles'), 'et « + Mettre un point » le prend');
     await page.screenshot({ path: `${out}/81-fiche-comp-${phone ? 'tel' : 'bureau'}.png` });
 
     // ---------- Autres onglets

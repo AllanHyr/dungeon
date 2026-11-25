@@ -21,7 +21,8 @@ import { play } from '../sound.js';
 import {
   skillRequirements, skillPointsToSpend, skillPointsSpent, availableTranches, achievementsFor, achievementProgress,
   rewardTexts, titlesOf, gearLevel, deckSize, specLevel, specsOf, deckEligible, choiceMate, knownSkills, activeSets, canLearnSkill,
-  itemView, salvageValue, canUpgrade, craftableItems, ownedItems, bulkSalvageList, forgeRules, rarityOf
+  itemView, salvageValue, canUpgrade, craftableItems, ownedItems, bulkSalvageList, forgeRules, rarityOf,
+  hasTalents, talentTreesOf, talentsOf, talentMaxRank, talentRanks, talentPointsTotal, talentPointsFree, pointsInTree, rowCost, canAddTalent, canRemoveTalent, talentRules, mainTree
 } from '../../core/index.js';
 import { EQUIP_SLOTS } from '../../core/content.js';
 import { exportCode } from '../../storage/profile.js';
@@ -115,12 +116,12 @@ export function sheetBody(charId, state, api, opts = {}) {
               h('div', { class: 'sstat-val' }, fmt(stats[key]), bonus ? h('small', { class: bonus > 0 ? 'up' : 'down' }, `${bonus > 0 ? '+' : ''}${fmt(bonus)}`) : null));
           })));
 
-      const free = skillPointsToSpend(content, ch);
+      const free = skillPointsToSpend(content, ch) || (hasTalents(content, ch.classId) ? Math.max(0, talentPointsFree(content, ch)) : 0);
       const tabs = h('div', { class: 'tabs', role: 'tablist' },
         [['equip', 'Équipement', 'armor'], opts.page ? null : ['forge', `Forge ${ch.shards || 0}`, 'flame'], ['skills', 'Compétences', 'star'], ['ach', `Succès ${doneCount(content, ch)}/${achievementsFor(content, ch).length}`, 'check'], ['info', 'Infos', 'book']].filter(Boolean).map(([id, label, ic]) =>
           h('button', { class: `tab ${state.tab === id ? 'on' : ''}`, role: 'tab', 'aria-selected': state.tab === id ? 'true' : 'false', 'data-tab': id, onClick: () => { state.tab = id; api.refresh(); } },
             icon(ic, 16), label,
-            id === 'skills' && free > 0 ? h('span', { class: 'tab-badge', title: 'Points de compétence à dépenser' }, free) : null)));
+            id === 'skills' && free > 0 ? h('span', { class: 'tab-badge', title: hasTalents(content, ch.classId) ? 'Points de talent à répartir' : 'Points de compétence à dépenser' }, free) : null)));
 
       if (opts.page && state.tab === 'forge') state.tab = 'equip';
       let body;
@@ -445,7 +446,8 @@ function miniTags(sk) {
 
 /** La version « évoluée » d'une compétence de base pour ce personnage (ex. Punition → Punition protectrice), sinon son identifiant. */
 function evolvedOf(content, ch, id) {
-  return (content.replacedBy[id] || []).find((v) => content.skills[v].spec === ch.spec && ch.level >= content.skills[v].level) || id;
+  const ranks = hasTalents(content, ch.classId) ? talentRanks(content, ch) : {};
+  return (content.replacedBy[id] || []).find((v) => (content.skills[v].talent ? ranks[v] > 0 : content.skills[v].spec === ch.spec && ch.level >= content.skills[v].level)) || id;
 }
 
 /**
@@ -592,6 +594,103 @@ function talentsSection(content, ch, num, act, locked, hasLearned) {
     h('div', { class: 'tier-blocks' }, blocks));
 }
 
+/**
+ * 1 — Les ARBRES DE TALENTS (classes à `talentTrees`) : trois colonnes, une par arbre, rangée par rangée. On clique sur un talent pour le voir en détail,
+ * « + » met un point, « − » en retire un. Une rangée s'ouvre quand on a mis assez de points dans l'arbre (rules.json > talents.rows).
+ * Sur téléphone, une seule colonne à la fois (des onglets pour passer d'un arbre à l'autre).
+ */
+function talentTreeSection(content, ch, num, act, locked, state, api) {
+  const trees = talentTreesOf(content, ch.classId);
+  const ranks = talentRanks(content, ch);
+  const total = talentPointsTotal(content, ch);
+  const free = talentPointsFree(content, ch);
+  const rules = talentRules(content);
+  const main = mainTree(content, ch);
+  if (!state.tree || !trees.some((t) => t.id === state.tree)) state.tree = main || trees[0].id;
+  const sel = state.talent && content.skills[state.talent]?.talent ? content.skills[state.talent] : null;
+  const add = (id) => act({ type: 'CHAR_TALENT', charId: ch.id, skillId: id, delta: 1 });
+  const remove = (id) => act({ type: 'CHAR_TALENT', charId: ch.id, skillId: id, delta: -1 });
+  const pick = (id) => { state.talent = state.talent === id ? null : id; api.refresh(); };
+
+  const tile = (sk, rowOpen) => {
+    const rank = ranks[sk.id] || 0, max = talentMaxRank(sk);
+    const canAdd = !locked && canAddTalent(content, ch, sk.id).ok;
+    const canDel = !locked && rank > 0 && canRemoveTalent(content, ch, sk.id).ok;
+    const st = rank >= max ? 'maxed' : rank > 0 ? 'partial' : canAdd ? 'available' : rowOpen ? 'blocked' : 'locked';
+    return h('div', { class: `tt-talent is-${st} kind-${skillKind(sk)} ${sel?.id === sk.id ? 'is-selected' : ''}`, dataset: { talent: sk.id, rank: String(rank), state: st } },
+      h('button', { type: 'button', class: 'tt-pick', title: `${sk.name} — ${sk.desc}`, 'aria-pressed': String(sel?.id === sk.id), onClick: () => pick(sk.id) },
+        h('span', { class: `tt-icon ${sk.type === 'active' ? 'is-active' : 'is-passive'}` }, icon(skillIconName(content, sk), 'fluid')),
+        h('span', { class: 'tt-name' }, sk.name),
+        h('span', { class: 'tt-rank' }, `${rank}/${max}`)),
+      h('div', { class: 'tt-btns' },
+        h('button', { type: 'button', class: 'tt-btn tt-minus', 'aria-label': `Retirer un point de ${sk.name}`, disabled: !canDel, onClick: () => remove(sk.id) }, '−'),
+        h('button', { type: 'button', class: 'tt-btn tt-plus', 'aria-label': `Mettre un point dans ${sk.name}`, disabled: !canAdd, onClick: () => add(sk.id) }, '+')));
+  };
+
+  const column = (t) => {
+    const pts = pointsInTree(content, ranks, t.id);
+    const talents = talentsOf(content, ch.classId, t.id);
+    const rows = [...new Set(talents.map((s) => s.talent.row))].sort((a, b) => a - b);
+    const rowEls = rows.map((r) => {
+      const need = rowCost(content, r), have = pointsInTree(content, ranks, t.id, r);
+      const open = have >= need;
+      return h('div', { class: `tt-row ${open ? 'is-open' : 'is-closed'}`, dataset: { row: String(r) } },
+        h('div', { class: 'tt-row-head' }, open ? (need ? `${need} points` : 'Dès le départ') : [icon('lock', 11), ` ${need} points dans l'arbre (encore ${need - have})`]),
+        h('div', { class: 'tt-row-talents' }, talents.filter((s) => s.talent.row === r).map((s) => tile(s, open))),
+        sel && sel.talent.tree === t.id && sel.talent.row === r ? detailOf() : null); // (le détail du talent choisi, juste sous sa rangée)
+    });
+    const upcoming = (t.upcoming || []).map((u) => h('div', { class: 'tt-row is-upcoming', dataset: { upcomingPoints: String(u.points) }, title: `${u.name}${u.desc ? ` — ${u.desc}` : ''} (à venir)` },
+      h('div', { class: 'tt-row-head' }, icon('lock', 11), ` ${u.points} points · à venir`),
+      h('div', { class: 'tt-soon' }, h('b', null, u.points >= 15 ? `Ultime : ${u.name}` : u.name), u.desc ? h('span', { class: 'muted small' }, ` ${u.desc.replace(/^Ultime\s*:\s*/, '')}`) : null)));
+    return h('div', { class: `tt-tree ${state.tree === t.id ? 'is-shown' : ''} ${main === t.id ? 'is-main' : ''}`, dataset: { tree: t.id } },
+      h('header', { class: 'tt-head' },
+        h('span', { class: 'tt-head-icon' }, icon(t.icon || 'star', 18)),
+        h('div', { class: 'tt-head-id' }, h('b', null, t.name), t.tag ? h('span', { class: 'spec-tag' }, t.tag) : null),
+        h('span', { class: 'tt-pts', title: 'Points mis dans cet arbre' }, String(pts))),
+      h('p', { class: 'tt-desc' }, t.desc || ''),
+      h('button', { type: 'button', class: 'btn btn-small btn-ghost tt-preset', dataset: { preset: t.id }, disabled: locked || !total,
+        title: 'Remplace tes talents par une répartition toute faite dans cet arbre (gratuit, modifiable ensuite)',
+        onClick: async () => { if (!Object.keys(ranks).length || await confirmBox({ title: `Répartir pour toi dans ${t.name} ?`, text: 'Tes talents actuels seront remplacés par une répartition conseillée dans cet arbre. C\'est gratuit, et tu pourras tout changer ensuite.', okLabel: 'Répartir' })) act({ type: 'CHAR_TALENT_PRESET', charId: ch.id, tree: t.id }); } },
+      icon('star', 13), 'Répartir pour moi'),
+      rowEls, upcoming);
+  };
+
+  const detailOf = () => (() => {
+    const rank = ranks[sel.id] || 0, max = talentMaxRank(sel);
+    const can = canAddTalent(content, ch, sel.id), del = canRemoveTalent(content, ch, sel.id);
+    const base = sel.replaces ? content.skills[sel.replaces] : null;
+    const tree = content.classes[ch.classId].talentTrees[sel.talent.tree];
+    return h('div', { class: `tt-detail kind-${skillKind(sel)}`, role: 'region', 'aria-label': `Talent : ${sel.name}` },
+      h('div', { class: 'tc-head' },
+        h('span', { class: `tc-icon ${sel.type === 'active' ? 'is-active' : 'is-passive'}` }, icon(skillIconName(content, sel), 'fluid')),
+        h('div', { class: 'tc-id' }, h('b', { class: 'tc-name' }, sel.name), h('span', { class: 'tc-tags' }, `${tree.name} · ${miniTags(sel)} · rang ${rank}/${max}`)),
+        h('button', { type: 'button', class: 'btn btn-small btn-ghost tt-close', 'aria-label': 'Fermer', onClick: () => pick(sel.id) }, icon('close', 14))),
+      h('p', { class: 'tc-desc' }, sel.desc),
+      base ? h('p', { class: 'tc-evo' }, icon('up', 12), ` Évolution : prend la place de « ${base.name} » dans ta barre`) : null,
+      sel.type === 'active' && !base ? h('p', { class: 'muted small' }, 'Un sort actif : une fois pris, équipe-le dans ta barre de combat (section suivante).') : null,
+      !can.ok && rank < max && !locked ? h('p', { class: 'tt-why' }, icon('lock', 12), ` ${can.reason}`) : null,
+      h('div', { class: 'tt-detail-btns' },
+        h('button', { type: 'button', class: 'btn btn-small', disabled: locked || !del.ok, title: del.ok ? '' : del.reason || '', onClick: () => remove(sel.id) }, '− Retirer un point'),
+        h('button', { type: 'button', class: 'btn btn-small btn-primary', disabled: locked || !can.ok, onClick: () => add(sel.id) }, rank >= max ? 'Rang maximal' : '+ Mettre un point')));
+  })();
+
+  const reset = h('button', {
+    type: 'button', class: 'btn btn-small', disabled: locked || !Object.keys(ranks).length, title: 'Retire tous tes points de talent (gratuit)',
+    onClick: async () => { if (await confirmBox({ title: 'Retirer tous tes talents ?', text: 'Tous tes points de talent te seront rendus (gratuit). Tu pourras les répartir à nouveau.', okLabel: 'Tout retirer' })) act({ type: 'CHAR_TALENT_RESET', charId: ch.id }); }
+  }, icon('refresh', 14), 'Tout retirer');
+
+  return h('section', { class: 'sk-sec sec-tt', dataset: { sec: 'talent-trees' } },
+    secHead(num, 'Tes talents', total
+      ? `${rules.perLevel} point par niveau, à répartir dans trois arbres. Une rangée s'ouvre quand tu as mis assez de points dans son arbre. Gratuit, et modifiable entre deux parties.`
+      : `Les talents s'ouvrent au niveau ${rules.firstLevel} : ${rules.perLevel} point par niveau.`, reset),
+    h('div', { class: `tt-budget ${free > 0 ? 'has-free' : ''}`, role: 'status' },
+      h('b', { class: 'tt-free' }, String(Math.max(0, free))), ` point${Math.max(0, free) > 1 ? 's' : ''} à répartir`,
+      h('span', { class: 'muted small' }, ` · ${total - Math.max(0, free)} / ${total} mis${main ? ` · arbre principal : ${content.classes[ch.classId].talentTrees[main].name}` : ''}`)),
+    h('div', { class: 'tt-tabs', role: 'tablist' }, trees.map((t) => h('button', { type: 'button', role: 'tab', class: `tt-tab ${state.tree === t.id ? 'on' : ''}`, 'aria-selected': String(state.tree === t.id), dataset: { treeTab: t.id }, onClick: () => { state.tree = t.id; api.refresh(); } },
+      icon(t.icon || 'star', 14), t.name, h('span', { class: 'tt-tab-pts' }, String(pointsInTree(content, ranks, t.id)))))),
+    h('div', { class: 'tt-trees' }, trees.map(column)));
+}
+
 /** 3 — La barre de combat : les emplacements (corps à corps, sort de classe, deck), les sorts qu'on peut y mettre, et les passifs toujours actifs. */
 function deckSection(content, ch, num, act, locked, state, api) {
   const cls = content.classes[ch.classId];
@@ -642,6 +741,7 @@ function deckSection(content, ch, num, act, locked, state, api) {
   });
 
   const passives = knownSkills(content, ch).map((id) => content.skills[id]).filter((sk) => sk.type === 'passive' && ch.level >= sk.level && (!sk.spec || sk.spec === ch.spec));
+  const ranks = hasTalents(content, ch.classId) ? talentRanks(content, ch) : {};
 
   return h('section', { class: 'sk-sec sec-deck', dataset: { sec: 'deck' } },
     secHead(num, 'Ta barre de combat', `En donjon, tu disposes d'un corps à corps basique et d'un sort de classe (toujours là), plus ${size} sorts à ton choix.`),
@@ -659,7 +759,7 @@ function deckSection(content, ch, num, act, locked, state, api) {
           h('div', { class: 'sub-label' }, h('b', null, 'Passifs toujours actifs'), h('span', { class: 'muted small' }, ' · ils n\'occupent aucune place')),
           h('ul', { class: 'passive-list' }, passives.map((sk) => h('li', { class: `passive-item kind-${skillKind(sk)}`, dataset: { skill: sk.id } },
             h('span', { class: 'tc-icon is-passive' }, icon(skillIconName(content, sk), 'fluid')),
-            h('div', null, h('b', null, sk.name), h('p', null, sk.desc))))))
+            h('div', null, h('b', null, sk.name, talentMaxRank(sk) > 1 ? h('span', { class: 'muted small' }, ` · rang ${ranks[sk.id] || 0}/${talentMaxRank(sk)}`) : null), h('p', null, sk.desc))))))
       : null);
 }
 
@@ -799,9 +899,9 @@ function skillsTab(ch, api, state, tranche, locked) {
   const cls = content.classes[ch.classId];
   const hasSpecs = specsOf(content, ch.classId).length > 0;
   // Y a-t-il quelque chose à acheter avec des points ? (sinon pas d'arbre, pas de compteur : tout est de départ, automatique ou à choisir)
-  const buyable = cls.skills.some((s) => !s.innate && !s.auto && !s.replaces && !s.spec && !(s.unlockedBy && !s.cost) && (s.cost > 0 || !s.choiceGroup));
+  const buyable = cls.skills.some((s) => !s.innate && !s.auto && !s.replaces && !s.spec && !s.talent && !(s.unlockedBy && !s.cost) && (s.cost > 0 || !s.choiceGroup));
   // Sans arbre à points, les sorts qu'un succès débloque ont leur propre petite section
-  const rewards = buyable ? [] : cls.skills.filter((s) => s.unlockedBy && !s.innate && !s.auto && !s.spec);
+  const rewards = buyable ? [] : cls.skills.filter((s) => s.unlockedBy && !s.innate && !s.auto && !s.spec && !s.talent);
   const hasLearned = ch.skills.some((id) => !content.skills[id]?.innate && content.skills[id]?.spec); // un talent de spécialisation choisi ?
   const act = async (action) => {
     state.swap = null;
@@ -814,6 +914,8 @@ function skillsTab(ch, api, state, tranche, locked) {
   };
   let n = 0;
   const sections = [];
+  const trees = hasTalents(content, ch.classId);
+  if (trees) sections.push(talentTreeSection(content, ch, ++n, act, locked, state, api));
   if (hasSpecs) {
     sections.push(specSection(content, ch, ++n, act, locked));
     sections.push(talentsSection(content, ch, ++n, act, locked, hasLearned && !buyable));
@@ -827,6 +929,8 @@ function skillsTab(ch, api, state, tranche, locked) {
     h('details', { class: 'sk-help' },
       h('summary', null, 'Comment ça marche ?'),
       h('ul', null,
+        trees ? h('li', null, `Tu gagnes ${talentRules(content).perLevel} point de talent par niveau à partir du niveau ${talentRules(content).firstLevel}, à répartir dans les trois arbres de ta classe. Les talents du haut s'ouvrent tout de suite ; les rangées suivantes demandent des points dans le même arbre (le talent clé, tout en bas, en demande ${rowCost(content, 3)}). Te spécialiser donne accès aux talents les plus forts ; mélanger deux arbres donne plus de petits bonus. Changer ne coûte rien, mais jamais en pleine partie.`) : null,
+        trees ? h('li', null, 'Dans un donjon de plus bas niveau, seuls tes premiers points comptent (comme les compétences au-dessus du niveau du donjon).') : null,
         hasSpecs ? h('li', null, `La spécialisation (à partir du niveau ${specLevel(content)}) est gratuite et change ton style de jeu : elle te donne des talents automatiquement, puis des choix « un seul parmi trois » aux paliers suivants. Tu peux en changer entre deux parties.`) : null,
         h('li', null, `En donjon, tu ne peux utiliser que ${deckSize(content)} sorts actifs équipés dans ta barre, plus ton corps à corps basique et ton sort de classe. Les passifs sont toujours actifs et n'occupent aucune place.`),
         buyable ? h('li', null, "Tu gagnes 1 point par niveau : les paliers coûtent 1, 2 puis 3 points. Investir dans une direction coûte dans l'autre. Se tromper ne coûte rien : « Réinitialiser » rend tous les points.") : null,

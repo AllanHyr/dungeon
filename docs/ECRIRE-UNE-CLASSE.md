@@ -337,6 +337,48 @@ Le **Prêtre** (`data/classes.json`) n'a pas de ressource : sa **forme** est un 
 
 ---
 
+## 3 septies. Arbres de talents (le Sacrieur, prototype)
+
+Une classe peut avoir des **arbres de talents** à la place des spécialisations (`specs`) : le joueur gagne **1 point par niveau dès le niveau 2**
+(7 points au niveau 8, 19 au niveau 20) et les répartit comme il veut dans trois arbres. Rien d'autre à coder : tout s'écrit dans `classes.json`.
+
+**Les arbres** (dans la classe, à la place de `specs`) :
+
+```json
+"talentTrees": {
+  "bastion": { "name": "Bastion", "tag": "Tank", "icon": "shield", "desc": "Une phrase.",
+    "preset": ["sacrieur_peau_epaisse", "sacrieur_peau_epaisse", "sacrieur_peau_epaisse", "sacrieur_sacrifice", "..."],
+    "upcoming": [ { "points": 9, "name": "À venir", "desc": "..." }, { "points": 15, "name": "Forteresse", "desc": "Ultime : ..." } ] }
+}
+```
+
+* `preset` : la **répartition toute faite** (bouton « Répartir pour moi », robots, migration des héros qui avaient une spécialisation) :
+  un identifiant par point, **répété** pour un rang de plus, dans l'ordre. Elle doit atteindre le talent clé au niveau 8 (7 points).
+* `upcoming` : des rangées « à venir » montrées en pointillés (`points` = ce qu'il faudra mettre dans l'arbre).
+
+**Un talent** est une compétence ordinaire de la classe (passive ou active, avec ses `modifiers`, `triggers`, `effects`...) qui porte :
+
+```json
+"talent": { "tree": "bastion", "row": 0, "ranks": 3 }
+```
+
+* `row` : sa rangée. La rangée `row` s'ouvre quand on a mis **`rules.json > talents.rows[row]` points dans cet arbre** (en comptant les rangées du dessus) :
+  `[0, 2, 4, 6, 9, 12, 15]` → rangée 0 tout de suite, rangée 1 à 2 points, 2 à 4 points, **3 (le talent clé) à 6 points**…
+* `ranks` (1 par défaut, 5 au plus) : un talent à **plusieurs rangs** doit être un passif à `modifiers` seulement ; **chaque rang ajoute ses modificateurs une fois de plus**
+  (`pct`, `flat`, `pctPer`, `flatPer` sont multipliés). Écris la valeur **d'un** rang et dis-le dans `desc` (« Par rang : … (−12 % au rang 3) »).
+* `level: 1` et `cost: 0` (le niveau et le prix, ce sont les points). Pas de `spec`, `auto`, `innate` ni `choiceGroup`.
+* Un talent peut faire **évoluer** un sort de base (`replaces`) : il n'en remplace qu'un à la fois, et **deux talents qui font évoluer le même sort s'excluent**.
+
+**Ce que fait le moteur** (`src/core/progression.js`, « Arbres de talents ») :
+* le personnage garde ses points **dans l'ordre** (`talents: ["id", "id", ...]`) ; dans un donjon de plus bas niveau, **seuls les premiers points comptent**
+  (un héros de niveau 8 dans un donjon de niveau 4 n'a que ses 3 premiers points, comme les compétences au-dessus du niveau du donjon qui s'éteignent) ;
+* on ne retire un point que s'il ne ferme pas une rangée où il reste des points ; « Tout retirer » est gratuit ; jamais en pleine partie ;
+* l'**arbre principal** (celui qui a le plus de points) sert de spécialisation en partie : `unit.spec`, donc les conditions `{ "spec": "bastion" }` marchent avec un arbre ;
+* les actions : `CHAR_TALENT` (`skillId`, `delta` : 1 ou −1), `CHAR_TALENT_RESET`, `CHAR_TALENT_PRESET` (`tree`) — les mêmes en ligne, vérifiées par le serveur.
+
+**Équilibrer** : comparer avec l'ancienne version de la classe dans les mêmes équipes (robots), surtout **au niveau 8 avec la répartition toute faite** et **au niveau 4**
+(3 points seulement : la puissance arrive plus progressivement qu'avec une spécialisation qui donnait tout d'un coup au niveau 4).
+
 ## 4. Les effets (`effects`)
 
 Un effet est un petit objet `{ "type": ..., ... }`. Une compétence en a autant qu'on veut, appliqués dans l'ordre.

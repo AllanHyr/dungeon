@@ -97,14 +97,20 @@ for (let g = 0; g < N; g++) {
   const dungeon = R(content.dungeonsByTranche[tranche].filter((d) => d.available !== false)).id; // (un donjon au hasard : ses monstres et leurs mécaniques sont malmenés aussi)
   const setup = { tranche, dungeon, mode, stasisLevel: 1 + Math.floor(nextFloat(rs) * 3) };
   // Une fois sur deux, chaque héros prend une spécialisation au hasard (et, au niveau 8, un talent au hasard de son palier) : les sorts de spé sont malmenés aussi.
-  const specOf = (cid) => { const ids = Object.keys(content.classes[cid].specs || {}); return ids.length && level >= 4 && chance(0.6) ? R(ids) : null; };
+  // (une classe à arbres de talents : la répartition toute faite d'un arbre, ou des points tirés au hasard parmi tous ses talents — makeParty ne garde que les valides)
+  const specOf = (cid) => { const ids = Object.keys(content.classes[cid].specs || content.classes[cid].talentTrees || {}); return ids.length && level >= (content.classes[cid].talentTrees ? 2 : 4) && chance(0.6) ? R(ids) : null; };
   const specs = classes.map(specOf);
+  const talents = classes.map((cid, i) => {
+    if (!content.classes[cid].talentTrees || specs[i] || !chance(0.5)) return null;
+    const all = content.classes[cid].skills.filter((sk) => sk.talent).map((sk) => sk.id);
+    return Array.from({ length: 30 }, () => R(all));
+  });
   const learns = classes.map((cid, i) => {
     if (!specs[i] || level < 8) return [];
     const picks = content.classes[cid].skills.filter((sk) => sk.spec === specs[i] && sk.choiceGroup && sk.level <= level);
     return picks.length ? [R(picks).id] : [];
   });
-  const party = makeParty(content, classes, level, R(['none', 'decent', 'good']), g + 1, { specs, learns });
+  const party = makeParty(content, classes, level, R(['none', 'decent', 'good']), g + 1, { specs, learns, talents });
   const state = createRun(content, setup, party, g * 7777 + 5);
   const r = playChaos(state, `partie ${g}: donjon ${dungeon} (tranche ${tranche}) mode ${mode} niveau ${level} classes ${classes}`);
   rejected += r.rejected;
@@ -116,7 +122,7 @@ for (let g = 0; g < N; g++) {
 let trainingOk = 0;
 for (let g = 0; g < Math.ceil(N / 4); g++) {
   const size = 1 + Math.floor(nextFloat(rs) * 4);
-  const specs = Array.from({ length: size }, () => { const classId = R(CLASSES); const ids = Object.keys(content.classes[classId].specs || {}); return { classId, level: R([1, 4, 8, 12, 20]), ...(ids.length && chance(0.7) ? { spec: R(ids) } : {}) }; });
+  const specs = Array.from({ length: size }, () => { const classId = R(CLASSES); const ids = Object.keys(content.classes[classId].specs || content.classes[classId].talentTrees || {}); return { classId, level: R([1, 4, 8, 12, 20]), ...(ids.length && chance(0.7) ? { spec: R(ids) } : {}) }; });
   const state = createTraining(content, specs, { dummy: R(['mannequin', 'mannequin_agressif']), count: 1 + Math.floor(nextFloat(rs) * 3), atkScale: R([1, 2, 5]), seed: g + 1 });
   playChaos(state, `atelier ${g}: ${JSON.stringify(specs)}`);
   trainingOk++;

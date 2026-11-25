@@ -314,6 +314,31 @@ export function buildContent(raw) {
         for (const u of info.upcoming) if (!u || !(u.level > 0) || typeof u.name !== 'string' || !u.name || (u.desc !== undefined && typeof u.desc !== 'string')) fail(`${where} : specs["${sid}"].upcoming : chaque palier a besoin d'un 'level' (nombre) et d'un 'name' (texte), 'desc' est facultatif.`);
       }
     }
+    // 'talentTrees' (facultatif, à la place de 'specs') : les arbres de talents { "id": { "name", "tag", "icon", "desc", "upcoming": [{ "points", "name", "desc" }] } }.
+    // Les talents sont des compétences de la classe avec "talent": { "tree": "id", "row": 0, "ranks": 1 } (voir progression.js et docs/ECRIRE-UNE-CLASSE.md).
+    const trees = cls.talentTrees || {};
+    if (cls.talentTrees !== undefined) {
+      if (cls.specs !== undefined) fail(`${where} : une classe a des spécialisations ('specs') OU des arbres de talents ('talentTrees'), pas les deux.`);
+      if (!cls.talentTrees || typeof cls.talentTrees !== 'object' || !Object.keys(cls.talentTrees).length) fail(`${where} : 'talentTrees' doit être { "id": { "name": "...", "desc": "..." }, ... }.`);
+      for (const [tid, t] of Object.entries(trees)) {
+        if (!t || typeof t.name !== 'string' || !t.name) fail(`${where} : talentTrees["${tid}"] doit avoir un 'name'.`);
+        if (t.upcoming !== undefined && (!Array.isArray(t.upcoming) || t.upcoming.some((u) => !u || !(u.points >= 0) || typeof u.name !== 'string' || !u.name))) fail(`${where} : talentTrees["${tid}"].upcoming doit être une liste de [{ "points": 9, "name": "...", "desc": "..." }].`);
+      }
+    }
+    const talentRows = (raw.rules?.talents?.rows || []).length;
+    for (const sk of mine) {
+      if (sk.talent === undefined) continue;
+      const t = sk.talent;
+      if (!cls.talentTrees) fail(`compétence "${sk.id}" : 'talent' demande des arbres de talents ('talentTrees') dans la classe "${id}".`);
+      if (!t || !trees[t.tree]) fail(`compétence "${sk.id}" : talent.tree "${t?.tree}" inconnu (arbres : ${list(Object.keys(trees))}).`);
+      if (!Number.isInteger(t.row) || t.row < 0 || (talentRows && t.row >= talentRows)) fail(`compétence "${sk.id}" : talent.row doit être un numéro de rangée de 0 à ${Math.max(0, talentRows - 1)} (voir rules.json > talents.rows).`);
+      if (!Number.isInteger(t.ranks ?? 1) || (t.ranks ?? 1) < 1 || (t.ranks ?? 1) > 5) fail(`compétence "${sk.id}" : talent.ranks doit être un nombre entier de 1 à 5.`);
+      if ((t.ranks ?? 1) > 1 && (sk.type !== 'passive' || sk.triggers || !(sk.modifiers || []).length)) fail(`compétence "${sk.id}" : un talent à plusieurs rangs doit être un passif à 'modifiers' seulement (chaque rang les ajoute une fois de plus).`);
+      if (sk.innate || sk.spec !== undefined || sk.auto || sk.choiceGroup) fail(`compétence "${sk.id}" : un talent ne se combine pas avec 'innate', 'spec', 'auto' ni 'choiceGroup'.`);
+    }
+    for (const [tid, t] of Object.entries(trees)) {
+        if (t.preset !== undefined && (!Array.isArray(t.preset) || t.preset.some((pid) => !cls.skills.some((x) => x.id === pid && x.talent?.tree === tid)))) fail(`${where} : talentTrees["${tid}"].preset doit être une liste de talents DE CET ARBRE (un identifiant par point ; répété = un rang de plus).`);
+    }
     // 'modes' (facultatif) : un état propre à la classe, qu'un sort bascule (effet "mode") et dont dépendent des conditions { "mode": "..." }.
     if (cls.modes !== undefined) {
       const ml = cls.modes?.list;
@@ -326,12 +351,12 @@ export function buildContent(raw) {
         if (!Array.isArray(m.aura) || !m.aura.length) fail(`${where} : modes.list["${mid}"].aura doit être une liste de modificateurs : [{ "stat": "taken", "pct": -0.08 }].`);
         m.aura.forEach((a, i) => checkModifier(a, `${where} : modes.list["${mid}"].aura, modificateur n°${i + 1}`));
         for (const a of m.aura) for (const k of Object.keys(a.if || {})) if (!['spec', 'mode'].includes(k)) fail(`${where} : modes.list["${mid}"].aura : la condition "${k}" n'est pas possible ici. Une aura ne dépend que de la spécialisation ('spec') ou du mode ('mode') de celui qui la porte.`);
-        for (const a of m.aura) if (a.if?.spec !== undefined && !specs[a.if.spec]) fail(`${where} : modes.list["${mid}"].aura : condition 'spec' "${a.if.spec}" inconnue (spécialisations : ${Object.keys(specs).length ? list(Object.keys(specs)) : 'aucune'}).`);
+        for (const a of m.aura) if (a.if?.spec !== undefined && !specs[a.if.spec] && !cls.talentTrees?.[a.if.spec]) fail(`${where} : modes.list["${mid}"].aura : condition 'spec' "${a.if.spec}" inconnue (spécialisations : ${Object.keys(specs).length ? list(Object.keys(specs)) : 'aucune'}).`);
       }
     }
     const modeIds = Object.keys(cls.modes?.list || {});
     const checkModeRefs = (conds, label) => conds.forEach((cd) => {
-      if (cd?.spec !== undefined && !specs[cd.spec]) fail(`${label} : condition 'spec' "${cd.spec}" inconnue dans la classe "${id}" (spécialisations : ${Object.keys(specs).length ? list(Object.keys(specs)) : 'aucune'}).`);
+      if (cd?.spec !== undefined && !specs[cd.spec] && !cls.talentTrees?.[cd.spec]) fail(`${label} : condition 'spec' "${cd.spec}" inconnue dans la classe "${id}" (spécialisations : ${Object.keys(specs).length ? list(Object.keys(specs)) : 'aucune'}).`);
       if (cd?.mode !== undefined && !modeIds.includes(cd.mode)) fail(`${label} : condition 'mode' "${cd.mode}" inconnue dans la classe "${id}" (modes : ${modeIds.length ? list(modeIds) : 'aucun, ajoute "modes" à la classe'}).`);
     });
     for (const sk of mine) {
@@ -360,7 +385,7 @@ export function buildContent(raw) {
         const base = mine.find((s) => s.id === sk.replaces);
         if (!base) fail(`compétence "${sk.id}" : 'replaces' désigne "${sk.replaces}", qui n'existe pas dans la classe "${id}".`);
         if (sk.type !== 'active' || base.type !== 'active') fail(`compétence "${sk.id}" : 'replaces' ne remplace qu'une compétence ACTIVE par une autre active.`);
-        if (sk.spec === undefined) fail(`compétence "${sk.id}" : une version évoluée ('replaces') doit être rattachée à une spécialisation ('spec').`);
+        if (sk.spec === undefined && sk.talent === undefined) fail(`compétence "${sk.id}" : une version évoluée ('replaces') doit être rattachée à une spécialisation ('spec') ou être un talent ('talent').`);
         if (sk.innate) fail(`compétence "${sk.id}" : une version évoluée ('replaces') ne peut pas être 'innate' (elle s'active avec la spécialisation).`);
         if (base.replaces !== undefined) fail(`compétence "${sk.id}" : on ne peut pas remplacer une compétence qui en remplace déjà une ("${base.id}").`);
         (c.replacedBy[base.id] ||= []).push(sk.id);

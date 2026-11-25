@@ -10,7 +10,7 @@
 
 import { EQUIP_SLOTS } from '../core/content.js';
 import { equipFromBag, slotsFor } from '../core/items.js';
-import { createCharacter, specLevel, pruneDeck, fillDeck } from '../core/progression.js';
+import { createCharacter, specLevel, pruneDeck, fillDeck, talentRanks, applyTalentPreset } from '../core/progression.js';
 import { forgeRules, ownedItems } from '../core/forge.js';
 
 const PROFILE_KEY = 'donjon.profile.v1';
@@ -125,7 +125,7 @@ export function sanitizeCharacter(content, raw) {
   const known = new Set(ch.skills);
   for (const id of Array.isArray(raw.skills) ? raw.skills : []) {
     const sk = content.skills[id];
-    if (sk && sk.classId === ch.classId && sk.level <= ch.level) known.add(id);
+    if (sk && sk.classId === ch.classId && sk.level <= ch.level && !sk.talent) known.add(id); // (les talents ont leur propre liste : `talents`)
   }
   // Une compétence dont les prérequis manquent est retirée (ex. après une modification des JSON).
   for (let changed = true; changed; ) {
@@ -150,6 +150,18 @@ export function sanitizeCharacter(content, raw) {
   });
   // Spécialisation (si elle existe pour la classe et que le niveau le permet), puis deck.
   ch.spec = typeof raw.spec === 'string' && cls.specs?.[raw.spec] && ch.level >= specLevel(content) ? raw.spec : null;
+  // Talents (classes à arbres de talents) : les points dans l'ordre ; on ne garde que ceux qui existent encore et restent permis.
+  // Un héros d'avant les arbres, qui avait choisi une spécialisation devenue un arbre, reçoit la répartition toute faite de cet arbre : il ne perd rien.
+  ch.talents = [];
+  if (cls.talentTrees) {
+    if (Array.isArray(raw.talents)) {
+      ch.talents = raw.talents.filter((id) => typeof id === 'string');
+      const kept = Object.entries(talentRanks(content, ch)).flatMap(([id, r]) => Array(r).fill(id));
+      ch.talents = ch.talents.filter((id) => kept.includes(id) && kept.splice(kept.indexOf(id), 1));
+    } else if (typeof raw.spec === 'string' && cls.talentTrees[raw.spec]) {
+      applyTalentPreset(content, ch, raw.spec);
+    }
+  }
   if (Array.isArray(raw.deck)) {
     ch.deck = raw.deck.filter((id) => typeof id === 'string');
     pruneDeck(content, ch);

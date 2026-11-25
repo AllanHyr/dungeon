@@ -17,7 +17,9 @@ export { applyRunResult, newItemsOf, contribution } from './results.js';
 export {
   createCharacter, newCharacterStats, addXp, addXpCapped, previewXpCapped, xpForNext, levelCap, previewXp, skillPointsFree, skillPointsSpent,
   skillPointsToSpend, canLearnSkill, choiceMate, skillRequirements, learnSkill, resetSkills, levelFactor, trancheTopLevel,
-  deckSize, specLevel, pendingChoices, specsOf, deckEligible, pruneDeck, fillDeck, setSpec, setDeck, autoSkillIds, knownSkills
+  deckSize, specLevel, pendingChoices, specsOf, deckEligible, pruneDeck, fillDeck, setSpec, setDeck, autoSkillIds, knownSkills,
+  talentRules, hasTalents, talentTreesOf, talentsOf, talentMaxRank, talentRank, talentIds, talentPointsTotal, pointsInTree, talentPointsSpent, talentPointsFree,
+  rowCost, talentPointsAt, talentRanks, ranksFromPoints, canAddTalent, canRemoveTalent, changeTalent, resetTalents, applyTalentPreset, mainTree
 } from './progression.js';
 export { computeStats, unitStats, effectiveLevel, itemIsActive, skillIsActive, skillAvailable, evalCondition, describeStats, calcDamage, auraSources, activeSets } from './stats.js';
 export { getCombatView } from './combat.js';

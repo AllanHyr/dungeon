@@ -27,7 +27,7 @@ import { skillOf, activeSkillIds, checkUsable, needsPick, validTargets } from '.
 import { equipItem, unequipItem, giveItem, shopBuy, shopSell, ghostAct } from './inventory.js';
 import { playerRoll } from './dice.js';
 import { endRun } from './results.js';
-import { createCharacter, knownSkills } from './progression.js';
+import { createCharacter, knownSkills, mainTree, applyTalentPreset, hasTalents, talentRanks } from './progression.js';
 import { log, emit, getPlayer, currentTile, assert, GameError } from './util.js';
 
 /** Version du format de partie (si elle change, les anciennes parties sauvegardées sont abandonnées). */
@@ -57,6 +57,8 @@ function makePlayer(state, ch, index) {
   const equipment = {};
   for (const slot of EQUIP_SLOTS) equipment[slot] = ch.equipment[slot] ? { ...ch.equipment[slot] } : null;
   const bag = ch.inventory.map((it) => ({ ...it }));
+  const eff = effectiveLevel(ch.level, state.setup, state.setup.restrict);
+  const talents = hasTalents(state.content, ch.classId);
   const p = {
     id: `p${index + 1}`,
     kind: 'player',
@@ -64,15 +66,16 @@ function makePlayer(state, ch, index) {
     name: ch.name,
     classId: ch.classId,
     realLevel: ch.level, // niveau RÉEL (sauvegardé)
-    effLevel: effectiveLevel(ch.level, state.setup, state.setup.restrict), // niveau EFFECTIF dans ce donjon
+    effLevel: eff, // niveau EFFECTIF dans ce donjon
     xpStart: ch.xp,
     hp: 1,
     hpMaxPenalty: 0,
     alive: true,
     ghost: false,
     resurrected: false,
-    skills: knownSkills(state.content, ch), // appris + automatiques de la spécialisation
-    spec: ch.spec ?? null, // spécialisation choisie (hors partie)
+    skills: knownSkills(state.content, ch, eff), // appris + automatiques de la spécialisation + talents (ceux que permet le niveau effectif)
+    ranks: talents ? talentRanks(state.content, ch, eff) : {}, // rangs des talents (un passif à plusieurs rangs compte autant de fois : stats.js)
+    spec: ch.spec ?? (talents ? mainTree(state.content, ch, eff) : null), // spécialisation choisie (hors partie) ; arbres de talents : l'arbre principal
     deck: Array.isArray(ch.deck) ? ch.deck.slice() : null, // sorts équipés (null : tous, pour l'Atelier et les anciennes parties)
     equipment,
     bag,
@@ -184,8 +187,10 @@ export function createTraining(content, specs, opts = {}) {
     const cls = content.classes[s.classId];
     const ch = createCharacter(content, { id: `test${i + 1}`, name: s.name || cls.name, classId: s.classId });
     ch.level = Math.max(1, Math.min(content.rules.maxLevel, s.level || 1));
-    ch.skills = cls.skills.filter((sk) => sk.level <= ch.level).map((sk) => sk.id);
+    ch.skills = cls.skills.filter((sk) => sk.level <= ch.level && !sk.talent).map((sk) => sk.id);
     ch.spec = s.spec && cls.specs?.[s.spec] ? s.spec : null; // spécialisation à tester (facultatif)
+    if (s.spec && cls.talentTrees?.[s.spec]) applyTalentPreset(content, ch, s.spec); // arbres de talents : la répartition toute faite de cet arbre
+    if (s.talents && cls.talentTrees) ch.talents = s.talents.slice(); // (ou des points précis, dans l'ordre : tests)
     ch.deck = null; // Atelier : pas de limite de sorts, on teste tout
     return ch;
   });

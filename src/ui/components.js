@@ -5,7 +5,7 @@
 import { h } from './dom.js';
 import { icon } from './icons.js';
 import { app } from './state.js';
-import { xpForNext, computeStats, rarityOf } from '../core/index.js';
+import { xpForNext, computeStats, rarityOf, knownSkills, mainTree, talentRanks } from '../core/index.js';
 import { EQUIP_SLOTS } from '../core/content.js';
 import { heroSvg, monsterSvg } from './art.js';
 
@@ -86,7 +86,8 @@ export function previewStats(ch, tranche = null) {
   // Faux état + faux joueur : juste de quoi calculer les stats (PV pleins, pas de bonus de PV manquants).
   const fakeState = { content, setup: { tranche: tranche || 99, restrict: !!tranche }, players: [], combat: null };
   const fakePlayer = {
-    kind: 'player', classId: ch.classId, effLevel: eff, equipment: ch.equipment, skills: ch.skills,
+    kind: 'player', classId: ch.classId, effLevel: eff, equipment: ch.equipment, skills: knownSkills(content, ch, eff), spec: ch.spec ?? mainTree(content, ch, eff),
+    ranks: talentRanks(content, ch, eff), // (talents : un passif à plusieurs rangs compte autant de fois)
     statuses: [], hpMaxPenalty: 0, cursedUid: null, hp: 1e9, row: cls.startRow, resources: {}
   };
   return computeStats(fakeState, fakePlayer);

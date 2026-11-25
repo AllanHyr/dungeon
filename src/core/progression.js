@@ -2,7 +2,7 @@
 //  progression.js — Personnages persistants : niveaux, XP, compétences
 // ============================================================
 // Un "personnage" est un objet simple (facile à sauvegarder en JSON) :
-//   { id, name, classId, level, xp, skills:[ids], spec, deck:[ids], inventory:[objets],
+//   { id, name, classId, level, xp, skills:[ids], spec, talents:[ids], deck:[ids], inventory:[objets],
 //     equipment:{ head, neck, ... mainHand, offHand, relic }, stats:{runs,wins,deaths} }
 // Ici : création, gain d'XP, apprentissage de compétences, XP "anti-carry".
 
@@ -22,6 +22,7 @@ export function createCharacter(content, { id, name, classId }) {
     xp: 0,
     skills: cls.skills.filter((s) => s.innate).map((s) => s.id),
     spec: null, // spécialisation choisie (à partir de rules.specLevel)
+    talents: [], // les classes à arbres de talents : les points, dans l'ordre (voir « Arbres de talents » plus bas)
     deck: [], // les sorts actifs équipés (au plus rules.deckSize)
     inventory: [],
     equipment,
@@ -161,6 +162,7 @@ export function canLearnSkill(content, character, skillId) {
   const sk = content.skills[skillId];
   if (!sk || sk.classId !== character.classId) return { ok: false, reason: 'Compétence inconnue.' };
   if (character.skills.includes(skillId)) return { ok: false, reason: 'Déjà apprise.' };
+  if (sk.talent) return { ok: false, reason: 'C\'est un talent : il se prend dans les arbres de talents, avec les points de talent.' };
   if (sk.replaces) return { ok: false, reason: 'Version évoluée : elle remplace automatiquement sa compétence de base avec la spécialisation.' };
   if (sk.auto) return { ok: false, reason: `Automatique : elle se débloque en choisissant la spécialisation « ${specName(content, character.classId, sk.spec)} ».` };
   if (sk.spec && character.spec !== sk.spec) return { ok: false, reason: `Spécialisation « ${specName(content, character.classId, sk.spec)} » requise.` };
@@ -236,7 +238,8 @@ export const specLevel = (content) => content.rules.specLevel ?? 4;
 
 /**
  * Ce qu'il reste à CHOISIR à un personnage : `spec` (true si sa spécialisation est ouverte mais pas choisie) et `talents`
- * (le nombre de « un parmi N » de sa spécialisation, au niveau atteint, où il n'a encore rien pris). L'accueil le signale.
+ * (le nombre de « un parmi N » de sa spécialisation, au niveau atteint, où il n'a encore rien pris), et `points` (arbres de talents :
+ * les points de talent pas encore répartis). L'accueil le signale.
  */
 export function pendingChoices(content, character) {
   const cls = content.classes[character.classId];
@@ -246,7 +249,8 @@ export function pendingChoices(content, character) {
     for (const s of cls.skills) if (s.choiceGroup && s.spec === character.spec && s.level <= character.level) (groups.get(s.choiceGroup) || groups.set(s.choiceGroup, []).get(s.choiceGroup)).push(s.id);
   }
   const talents = [...groups.values()].filter((ids) => !ids.some((id) => character.skills.includes(id))).length;
-  return { spec, talents };
+  const points = hasTalents(content, character.classId) ? Math.max(0, talentPointsFree(content, character)) : 0; // (arbres de talents : les points à répartir)
+  return { spec, talents, points };
 }
 
 /**
@@ -258,9 +262,10 @@ export function autoSkillIds(content, character) {
   return content.classes[character.classId].skills.filter((s) => s.auto && s.spec === character.spec && s.level <= character.level).map((s) => s.id);
 }
 
-/** Toutes les compétences qu'un personnage possède : celles qu'il a apprises, plus les automatiques de sa spécialisation. */
-export function knownSkills(content, character) {
-  return [...character.skills, ...autoSkillIds(content, character).filter((id) => !character.skills.includes(id))];
+/** Toutes les compétences qu'un personnage possède : celles qu'il a apprises, plus les automatiques de sa spécialisation, plus ses talents (au moins 1 rang ; au niveau `level`). */
+export function knownSkills(content, character, level = character.level) {
+  const extra = [...autoSkillIds(content, character), ...talentIds(content, character, level)];
+  return [...character.skills, ...extra.filter((id) => !character.skills.includes(id))];
 }
 
 /** Les spécialisations d'une classe : [{ id, name, desc }] (liste vide si la classe n'en a pas). */
@@ -340,4 +345,180 @@ export function levelFactor(content, realLevel, trancheId) {
   const gap = Math.max(0, realLevel - top);
   const { lossPerLevel, minFactor } = content.rules.antiCarry;
   return Math.max(minFactor, 1 - lossPerLevel * gap);
+}
+
+// ---------------- Arbres de talents ----------------
+// Une classe peut avoir des ARBRES DE TALENTS (`talentTrees` dans classes.json) à la place des spécialisations. Un talent est une compétence
+// de la classe avec "talent": { "tree": "bastion", "row": 0, "ranks": 3 }.
+// Le personnage garde ses points DANS L'ORDRE où il les a mis : `talents` = [id, id, ...] (un identifiant par point ; répété = un rang de plus).
+//  - On gagne `perLevel` point(s) par niveau à partir du niveau `firstLevel` (rules.json > talents).
+//  - La rangée `row` d'un arbre s'ouvre quand on a mis `rows[row]` points DANS CET ARBRE, en comptant seulement les rangées du dessus.
+//  - Un talent à plusieurs rangs est un passif : chaque rang ajoute ses modificateurs une fois de plus (stats.js).
+//  - Deux talents qui font évoluer le même sort (`replaces`) s'excluent : un seul à la fois.
+//  - Dans un donjon de plus bas niveau (niveau effectif), seuls les PREMIERS points comptent, comme les compétences au-dessus de ce niveau qui s'éteignent.
+//  - L'arbre « principal » (celui où il y a le plus de points) sert de spécialisation en partie (`unit.spec`) : conditions { "spec": ... }, affichage.
+// Changer ses talents est gratuit, mais jamais en pleine partie (contrôle dans profile-actions).
+
+const DEFAULT_TALENTS = { firstLevel: 2, perLevel: 1, rows: [0, 2, 4, 6, 9, 12, 15] };
+
+/** Les réglages des talents (rules.json > talents). */
+export const talentRules = (content) => ({ ...DEFAULT_TALENTS, ...(content.rules.talents || {}) });
+
+/** Cette classe a-t-elle des arbres de talents ? */
+export const hasTalents = (content, classId) => !!content.classes[classId]?.talentTrees;
+
+/** Les arbres d'une classe : [{ id, name, tag, icon, desc, preset, upcoming }] (vide sans arbres). */
+export function talentTreesOf(content, classId) {
+  return Object.entries(content.classes[classId]?.talentTrees || {}).map(([id, t]) => ({ id, ...t }));
+}
+
+/** Les talents d'une classe (les compétences avec un champ `talent`), éventuellement d'un seul arbre, dans l'ordre des données. */
+export function talentsOf(content, classId, tree = null) {
+  return (content.classes[classId]?.skills || []).filter((s) => s.talent && (!tree || s.talent.tree === tree));
+}
+
+/** Nombre de rangs maximal d'un talent. */
+export const talentMaxRank = (sk) => sk?.talent?.ranks ?? 1;
+
+/** Points de talent gagnés à ce niveau (0 pour une classe sans arbres). */
+export function talentPointsAt(content, classId, level) {
+  if (!hasTalents(content, classId)) return 0;
+  const r = talentRules(content);
+  return Math.max(0, level - r.firstLevel + 1) * r.perLevel;
+}
+export const talentPointsTotal = (content, character) => talentPointsAt(content, character.classId, character.level);
+
+/** Points à mettre dans un arbre pour ouvrir cette rangée. */
+export const rowCost = (content, row) => talentRules(content).rows[row] ?? Infinity;
+
+/** Points mis dans un arbre, d'après des rangs { id: rang } (si `beforeRow` est donné : seulement dans les rangées au-dessus de celle-ci). */
+export function pointsInTree(content, ranks, tree, beforeRow = Infinity) {
+  let n = 0;
+  for (const [id, rank] of Object.entries(ranks || {})) {
+    const t = content.skills[id]?.talent;
+    if (t && t.tree === tree && t.row < beforeRow) n += rank;
+  }
+  return n;
+}
+
+/**
+ * Pourquoi ce point ne peut-il pas s'ajouter à ces rangs ? (null : il peut). Vérifie le talent, son rang maximal, l'ouverture de sa rangée
+ * et les évolutions en double. Le nombre de points disponibles est vérifié à part.
+ */
+function addProblem(content, classId, ranks, id) {
+  const sk = content.skills[id];
+  if (!sk?.talent || sk.classId !== classId) return 'Talent inconnu.';
+  if ((ranks[id] || 0) >= talentMaxRank(sk)) return 'Déjà au rang maximal.';
+  const need = rowCost(content, sk.talent.row), have = pointsInTree(content, ranks, sk.talent.tree, sk.talent.row);
+  if (have < need) return `Il faut ${need} points dans l'arbre ${content.classes[classId].talentTrees[sk.talent.tree].name} (au-dessus de cette rangée) : il y en a ${have}.`;
+  if (sk.replaces) {
+    const other = Object.keys(ranks).find((o) => o !== id && ranks[o] > 0 && content.skills[o]?.replaces === sk.replaces);
+    if (other) return `« ${content.skills[other].name} » fait déjà évoluer ce sort : un seul des deux.`;
+  }
+  return null;
+}
+
+/**
+ * Les rangs EFFECTIFS { id: rang } d'une liste de points, au niveau donné : on reprend les points dans l'ordre, tant qu'il en reste à ce niveau,
+ * en sautant ceux qui ne sont plus permis (rangée fermée, talent disparu...). Toujours une répartition valide.
+ */
+export function ranksFromPoints(content, classId, points, level) {
+  const budget = talentPointsAt(content, classId, level);
+  const ranks = {};
+  let used = 0;
+  for (const id of Array.isArray(points) ? points : []) {
+    if (used >= budget) break;
+    if (addProblem(content, classId, ranks, id)) continue;
+    ranks[id] = (ranks[id] || 0) + 1;
+    used++;
+  }
+  return ranks;
+}
+
+/** Les rangs du personnage { id: rang } (à son niveau réel, ou à `level` : le niveau effectif d'un donjon). */
+export const talentRanks = (content, character, level = character.level) => ranksFromPoints(content, character.classId, character.talents, level);
+
+/** Le rang d'un talent chez un personnage (0 = pas pris). */
+export const talentRank = (content, character, id) => talentRanks(content, character)[id] || 0;
+
+/** Les talents pris (au moins 1 rang) au niveau donné : leurs identifiants. */
+export const talentIds = (content, character, level = character.level) => (hasTalents(content, character.classId) ? Object.keys(talentRanks(content, character, level)) : []);
+
+/** Points de talent dépensés / encore libres. */
+export const talentPointsSpent = (content, character) => Object.values(talentRanks(content, character)).reduce((s, r) => s + r, 0);
+export const talentPointsFree = (content, character) => talentPointsTotal(content, character) - talentPointsSpent(content, character);
+
+/** Peut-on ajouter un rang à ce talent ? { ok, reason }. */
+export function canAddTalent(content, character, id) {
+  const sk = content.skills[id];
+  if (!sk?.talent || sk.classId !== character.classId) return { ok: false, reason: 'Talent inconnu.' };
+  if (talentPointsFree(content, character) < 1) return { ok: false, reason: talentPointsTotal(content, character) ? 'Plus de point de talent : il en vient un à chaque niveau.' : `Les talents s'ouvrent au niveau ${talentRules(content).firstLevel}.` };
+  const problem = addProblem(content, character.classId, talentRanks(content, character), id);
+  return problem ? { ok: false, reason: problem } : { ok: true };
+}
+
+/** La liste de points sans le DERNIER rang de ce talent. */
+const withoutLast = (points, id) => { const i = points.lastIndexOf(id); return i < 0 ? points.slice() : [...points.slice(0, i), ...points.slice(i + 1)]; };
+
+/** Peut-on retirer un rang à ce talent (sans fermer une rangée où il reste des points) ? { ok, reason }. */
+export function canRemoveTalent(content, character, id) {
+  const sk = content.skills[id];
+  if (!sk?.talent || sk.classId !== character.classId) return { ok: false, reason: 'Talent inconnu.' };
+  const ranks = talentRanks(content, character);
+  if (!ranks[id]) return { ok: false, reason: 'Ce talent n\'est pas pris.' };
+  const after = ranksFromPoints(content, character.classId, withoutLast(character.talents, id), character.level);
+  const lost = Object.values(ranks).reduce((s, r) => s + r, 0) - Object.values(after).reduce((s, r) => s + r, 0);
+  return lost > 1 ? { ok: false, reason: 'Des talents plus bas dans l\'arbre en ont besoin : retire-les d\'abord.' } : { ok: true };
+}
+
+/** Ajoute (delta +1) ou retire (delta −1) un rang. Le deck suit : un sort pris s'équipe s'il y a de la place, un sort retiré sort du deck. */
+export function changeTalent(content, character, id, delta) {
+  const check = delta > 0 ? canAddTalent(content, character, id) : canRemoveTalent(content, character, id);
+  if (!check.ok) return check;
+  // (on ne garde que les points qui comptent vraiment : la liste reste propre)
+  const kept = Object.entries(talentRanks(content, character)).flatMap(([tid, r]) => Array(r).fill(tid));
+  const ordered = (character.talents || []).filter((tid) => kept.includes(tid) && kept.splice(kept.indexOf(tid), 1));
+  character.talents = delta > 0 ? [...ordered, id] : withoutLast(ordered, id);
+  if (!Array.isArray(character.deck)) character.deck = [];
+  pruneDeck(content, character);
+  if (delta > 0 && deckEligible(content, character, id) && !character.deck.includes(id) && character.deck.length < deckSize(content)) character.deck.push(id);
+  return { ok: true };
+}
+
+/** Retire tous les talents (gratuit). Le deck est refait. */
+export function resetTalents(content, character) {
+  character.talents = [];
+  fillDeck(content, character);
+}
+
+/**
+ * La répartition « toute faite » d'un arbre, pour le bouton « Répartir pour moi », les robots et la migration des anciennes spécialisations :
+ * l'ordre `preset` de l'arbre (un identifiant par point), puis les autres talents de l'arbre, aussi loin que les points du niveau le permettent.
+ * Elle remplace les talents actuels. Renvoie { ok, reason }.
+ */
+export function applyTalentPreset(content, character, tree) {
+  const def = content.classes[character.classId]?.talentTrees?.[tree];
+  if (!def) return { ok: false, reason: 'Arbre de talents inconnu.' };
+  const order = [...(def.preset || []), ...talentsOf(content, character.classId, tree).flatMap((s) => Array(talentMaxRank(s)).fill(s.id))];
+  const ranks = {};
+  const points = [];
+  for (const id of order) {
+    if (addProblem(content, character.classId, ranks, id)) continue;
+    ranks[id] = (ranks[id] || 0) + 1;
+    points.push(id);
+  }
+  character.talents = points.slice(0, talentPointsTotal(content, character));
+  fillDeck(content, character);
+  return { ok: true };
+}
+
+/** L'arbre où le personnage a mis le plus de points (le premier en cas d'égalité), ou null s'il n'en a mis aucun. */
+export function mainTree(content, character, level = character.level) {
+  const ranks = talentRanks(content, character, level);
+  let best = null, bestPts = 0;
+  for (const t of talentTreesOf(content, character.classId)) {
+    const pts = pointsInTree(content, ranks, t.id);
+    if (pts > bestPts) { best = t.id; bestPts = pts; }
+  }
+  return best;
 }

@@ -49,6 +49,12 @@ export function skillAvailable(skillDef, unit) {
 //  Modificateurs
 // ============================================================
 
+/** Un modificateur multiplié (les rangs d'un talent) : pct, flat, pctPer et flatPer. */
+function scaleModifier(m, k) {
+  const scale = (o) => (o ? Object.fromEntries(Object.entries(o).map(([key, v]) => [key, v * k])) : o);
+  return { ...m, ...(m.pct !== undefined ? { pct: m.pct * k } : {}), ...(m.flat !== undefined ? { flat: m.flat * k } : {}), ...(m.pctPer ? { pctPer: scale(m.pctPer) } : {}), ...(m.flatPer ? { flatPer: scale(m.flatPer) } : {}) };
+}
+
 /** Tous les modificateurs qui s'appliquent à une unité (passifs, objets, statuts). */
 export function collectModifiers(state, unit) {
   const c = state.content;
@@ -56,7 +62,9 @@ export function collectModifiers(state, unit) {
   if (unit.kind === 'player') {
     for (const id of unit.skills) {
       const sk = c.skills[id];
-      if (sk?.type === 'passive' && skillAvailable(sk, unit)) out.push(...(sk.modifiers || []));
+      if (sk?.type !== 'passive' || !skillAvailable(sk, unit)) continue;
+      const rank = unit.ranks?.[id] || 1; // un talent à plusieurs rangs : ses modificateurs comptent autant de fois
+      out.push(...(rank > 1 ? (sk.modifiers || []).map((m) => scaleModifier(m, rank)) : (sk.modifiers || [])));
     }
     for (const slot of EQUIP_SLOTS) {
       const inst = unit.equipment[slot];

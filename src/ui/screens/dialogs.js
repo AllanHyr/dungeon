@@ -10,7 +10,10 @@ import { portrait, previewStats, statsLine } from '../components.js';
 import { itemCard, skillIconName } from '../format.js';
 import { firstKeys } from '../keys.js';
 import { openSheet } from './sheet.js';
-import { salvageValue, levelCap, specsOf, characterSlots } from '../../core/index.js';
+import { salvageValue, levelCap, specsOf as specsOnly, talentTreesOf, characterSlots, talentRules } from '../../core/index.js';
+
+/** Les spécialisations d'une classe, ou ses arbres de talents (même forme : name, tag, desc, upcoming). */
+const specsOf = (content, classId) => (content.classes[classId]?.talentTrees ? talentTreesOf(content, classId) : specsOnly(content, classId));
 import { exportCode, importCode, addImported } from '../../storage/profile.js';
 import { play } from '../sound.js';
 
@@ -40,7 +43,8 @@ export function classShowcase(content, cls) {
   const modes = cls.modes ? Object.entries(cls.modes.list) : [];
   const noun = cls.modes?.noun || (modes.some(([, m]) => m.aura) ? 'aura' : 'mode');
   const plural = `${noun}s`;
-  const ult = (spec) => (spec.upcoming || []).find((u) => u.level >= 20);
+  const ult = (spec) => (spec.upcoming || []).find((u) => u.level >= 20 || u.points >= 15);
+  const trees = !!cls.talentTrees;
   const block = (title, ...body) => h('section', { class: 'cs-block' }, h('h4', null, title), ...body);
   return h('div', { class: 'class-showcase', dataset: { classId: cls.id } },
     h('div', { class: 'cs-head' },
@@ -57,7 +61,7 @@ export function classShowcase(content, cls) {
       passives.length ? block('Toujours actif', passives.map((p) => h('div', { class: 'cs-skill' }, h('span', { class: 'cs-ico is-passive' }, icon(skillIconName(content, p), 18)), h('div', null, h('b', null, p.name), h('p', null, p.desc))))) : null,
       spells.length ? block('Sorts de départ', h('ul', { class: 'cs-spells' }, spells.map((sp) => h('li', { title: sp.desc }, icon(skillIconName(content, sp), 15), h('span', null, sp.name), sp.level > 1 ? h('small', { class: 'muted' }, ` niv. ${sp.level}`) : null)))) : null),
     specs.length
-      ? block(`Spécialisations (niveau ${content.rules.specLevel ?? 4})`,
+      ? block(trees ? `Arbres de talents (${talentRules(content).perLevel} point par niveau dès le niveau ${talentRules(content).firstLevel})` : `Spécialisations (niveau ${content.rules.specLevel ?? 4})`,
           h('div', { class: 'cs-specs' }, specs.map((sp) => h('div', { class: 'cs-spec', dataset: { spec: sp.id } },
             h('div', { class: 'cs-spec-head' }, h('b', null, sp.name), sp.tag ? h('span', { class: 'role-tag' }, sp.tag) : null),
             h('p', null, sp.desc),
@@ -314,7 +318,7 @@ export function openTrainingModal() {
           h('select', { id: `train-class-${i}`, class: 'input', onChange: (e) => { s.classId = e.target.value; s.spec = null; api.refresh(); } },
             classIds.map((id) => h('option', { value: id, selected: s.classId === id }, content.classes[id].name))),
           specsOf(content, s.classId).length
-            ? h('select', { id: `train-spec-${i}`, class: 'input', title: 'Spécialisation à tester (niveau 4 et plus)', onChange: (e) => { s.spec = e.target.value || null; api.refresh(); } },
+            ? h('select', { id: `train-spec-${i}`, class: 'input', title: content.classes[s.classId].talentTrees ? 'Arbre de talents à tester : sa répartition toute faite, au niveau choisi' : 'Spécialisation à tester (niveau 4 et plus)', onChange: (e) => { s.spec = e.target.value || null; api.refresh(); } },
                 h('option', { value: '' }, 'Sans spécialisation'),
                 specsOf(content, s.classId).map((sp) => h('option', { value: sp.id, selected: s.spec === sp.id }, sp.name)))
             : null,

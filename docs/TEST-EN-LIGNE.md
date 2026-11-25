@@ -23,6 +23,17 @@ Sur le VPS :
 - [ ] `curl -s http://127.0.0.1:8000/api/health` → `{"ok":true,...}`.
 - [ ] `node -v` → `v22.13` ou plus.
 - [ ] Le service a bien `DONJON_TRUST_PROXY=1` et un `DONJON_INVITE_CODE` (`systemctl cat donjon`).
+- [ ] **La sauvegarde de chaque nuit** (une seule fois, elle reste ensuite) : `sudo crontab -e`, puis ajouter tout en bas la ligne
+  ```
+  17 4 * * * cd /opt/donjon && sudo -u donjon /usr/bin/node server/admin.mjs backup >> /var/log/donjon-backup.log 2>&1
+  ```
+  (même chemin de `node` que dans le fichier de service : `which node`). Elle copie la base chaque nuit à 4 h 17 (heure du VPS) dans
+  `var/backups/` et garde les 14 dernières. Pour vérifier tout de suite qu'elle marche, lancer la même commande à la main :
+  ```bash
+  cd /opt/donjon && sudo -u donjon node server/admin.mjs backup && ls -l var/backups
+  ```
+  Un fichier `donjon-AAAAMMJJ-HHMMSS.sqlite` doit apparaître. *(Facultatif : une copie hors du VPS, par les instantanés de ton hébergeur
+  ou un `scp` de temps en temps, voir §6 de SERVEUR.md.)*
 - [ ] Garder une fenêtre ouverte sur le journal pendant tout le test : `journalctl -u donjon -f`.
 
 Depuis ton ordinateur (avec Node 22 et Playwright, dans le dossier du jeu) :
@@ -102,6 +113,7 @@ Chaque ami, sur son propre appareil :
 - [ ] `sudo -u donjon node server/admin.mjs stats` : le nombre de comptes, de personnages et de parties en cours (0 si tout le monde a fini).
 - [ ] Supprimer les comptes de test restants (`admin.mjs users`, puis `delete … --yes`).
 - [ ] Une sauvegarde : `sudo -u donjon node server/admin.mjs backup`.
+- [ ] Le lendemain : `ls -l /opt/donjon/var/backups` montre la sauvegarde de la nuit, et `/var/log/donjon-backup.log` ne contient pas d'erreur.
 
 ## 5. Les questions à poser aux joueurs
 

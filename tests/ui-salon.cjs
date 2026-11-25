@@ -111,10 +111,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         if (shots && !seen.has(`mine-${s.kind}`)) { seen.add(`mine-${s.kind}`); await page.screenshot({ path: `${out}/${shots}-${p.name}-${s.kind}-a-toi.png` }); }
         const click = (sel) => page.click(sel, { timeout: 2500 }).then(() => true, () => false);
         let ok = false;
-        if (s.kind === 'advance') ok = await click('#advance-btn');
+        if (s.kind === 'advance') ok = (await page.$('.fork-route')) ? await click('.fork-route >> nth=0') : await click('#advance-btn'); // (une bifurcation : la première route)
         else if (s.kind === 'roll') ok = await click('#roll-btn');
         else if (s.kind === 'loot') ok = await click('.loot-card .btn-primary');
-        else if (s.kind === 'choice') ok = (await click('.choice-card .btn-primary')) || (await click('.choice-card .btn:not([disabled])'));
+        else if (s.kind === 'choice') ok = (await click('.choice-card .btn-primary')) || (await click('.choice-card .fork-route:not([disabled])')) || (await click('.choice-card .btn:not([disabled])'));
         else if (s.kind === 'shop') ok = await click('#shop-leave');
         else if (s.kind === 'camp') ok = await click('.camp-act[data-activity="rest"]'); // (au feu de camp : chacun à son tour)
         else if (s.kind === 'over') ok = await click('.center-card .btn-primary');

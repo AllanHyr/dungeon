@@ -27,6 +27,7 @@ import { applyPrefs, emptyProfile } from '../src/net/common.js';
 import { rollItem, rollShopItem } from '../src/core/loot.js';
 import { queueLoot, endTurn as endBoardTurn } from '../src/core/flow.js';
 import { endRun } from '../src/core/results.js';
+import { trapOdds as trapOddsOf } from '../src/core/tiles.js';
 import { getPlayer as playerOf } from '../src/core/util.js';
 import { shopPrice as shopPriceOf } from '../src/core/tiles.js';
 import { itemPrice as itemPriceOf } from '../src/core/items.js';
@@ -3822,6 +3823,71 @@ test('à une bifurcation, on choisit sa route en avançant (branch « alt ») ; 
   eq(t.type, alt); eq(t.skipped, main); assert(!t.alt, 'la bifurcation est passée');
   assert(t.revealed);
 });
+
+console.log('\n● Une option avant le jet (piège, coffre)');
+{
+  /** Une run arrêtée juste avant une case du type voulu (sans bifurcation). */
+  const before = (type, seed = 5) => {
+    const s = createRun(content, { tranche: 4, mode: 'tranche' }, makeParty(content, ['guerrier', 'pretre'], 4, 'decent', seed), seed);
+    const t = s.dungeon.board[1];
+    t.type = type; delete t.alt;
+    s.dungeon.position = 0; s.pending = { kind: 'advance', actor: s.players[0].id }; s.phase = 'advance';
+    return s;
+  };
+  test('piège : le désarmer (jet, chances affichées) ou le contourner (quelques PV à coup sûr, sans dé)', () => {
+    const s = before('trap');
+    assert(dispatch(s, { type: 'ADVANCE' }).ok);
+    eq(s.pending.kind, 'choice'); eq(s.pending.subtype, 'trap');
+    eq(s.pending.options.map((o) => o.id), ['disarm', 'avoid']);
+    const odds = trapOddsOf(s, s.players[0], s.pending.dc);
+    assert(s.pending.options[0].label.includes(`${Math.round(odds * 100)} %`), `les chances sont affichées (${s.pending.options[0].label})`);
+    const p = s.players[0], hp0 = p.hp;
+    assert(dispatch(s, { type: 'CHOOSE', option: 'avoid' }).ok);
+    const tr = dungeonRules(content, s.setup);
+    const expected = Math.round(computeStats(s, p).hpMax * tr.trapDamagePct * content.rules.tileChoices.trap.avoidDamage);
+    assert(hp0 - p.hp > 0 && hp0 - p.hp <= expected, `contourner coûte une part des dégâts (${hp0 - p.hp} ≤ ${expected} : ses réductions de dégâts comptent)`);
+    assert(!p.statuses.some((st) => st.id === 'poison'), 'sans poison');
+    eq(s.pending.kind, 'advance', 'pas de dé : la case est finie');
+    const s2 = before('trap');
+    dispatch(s2, { type: 'ADVANCE' });
+    assert(dispatch(s2, { type: 'CHOOSE', option: 'disarm' }).ok);
+    eq(s2.pending.kind, 'roll'); eq(s2.pending.purpose, 'trap');
+  });
+  test('piège désarmé : quelques pièces récupérées ; les chances suivent la sauvegarde (20 toujours, 1 jamais)', () => {
+    const s = before('trap', 9);
+    dispatch(s, { type: 'ADVANCE' });
+    dispatch(s, { type: 'CHOOSE', option: 'disarm' });
+    const g0 = s.gold;
+    s.players[0].equipment = s.players[0].equipment; // (inchangé)
+    s.bonus.rollMod = 40; // (le jet réussit à coup sûr, sauf un 1)
+    let tries = 0;
+    while (s.pending.kind === 'roll' && tries++ < 1) dispatch(s, { type: 'ROLL' });
+    assert(s.gold > g0 || s.log.some((l) => /se déclenche/.test(l.text)), 'réussi : de l\'or en plus (sauf un 1 naturel)');
+    const u = s.players[0];
+    s.bonus.rollMod = 99; eq(trapOddsOf(s, u, 15), 0.95, 'un 1 échoue toujours');
+    s.bonus.rollMod = -99; eq(trapOddsOf(s, u, 15), 0.05, 'un 20 réussit toujours');
+    s.bonus.rollMod = 0;
+  });
+  test('coffre : le forcer (jet) ou l\'ouvrir prudemment (pas de dé, un objet, aucun piège)', () => {
+    const s = before('treasure');
+    assert(dispatch(s, { type: 'ADVANCE' }).ok);
+    eq(s.pending.subtype, 'treasure');
+    const bag0 = s.players[0].bag.length, hp0 = s.players[0].hp, g0 = s.gold;
+    assert(dispatch(s, { type: 'CHOOSE', option: 'careful' }).ok);
+    eq(s.players[0].bag.length, bag0 + 1, 'un objet'); eq(s.players[0].hp, hp0, 'aucun piège'); assert(s.gold > g0, 'et de l\'or');
+    eq(s.pending.kind, 'advance');
+    const s2 = before('treasure');
+    dispatch(s2, { type: 'ADVANCE' });
+    assert(dispatch(s2, { type: 'CHOOSE', option: 'force' }).ok);
+    eq(s2.pending.kind, 'roll'); eq(s2.pending.purpose, 'treasure');
+  });
+  test('le pilote automatique (joueur absent) choisit la prudence : contourner le piège, ouvrir le coffre doucement', () => {
+    const s = before('trap'); dispatch(s, { type: 'ADVANCE' });
+    eq(afkAction(s), { type: 'CHOOSE', option: 'avoid' });
+    const s2 = before('treasure'); dispatch(s2, { type: 'ADVANCE' });
+    eq(afkAction(s2), { type: 'CHOOSE', option: 'careful' });
+  });
+}
 
 console.log('\n● Feu de camp');
 {

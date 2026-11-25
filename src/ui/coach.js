@@ -56,8 +56,8 @@ function placeBubble(root, bubble, target) {
 export const TILE_TIPS = {
   board: ['Le plateau', 'Chaque tour, le héros « sous les projecteurs » avance d\'une case. Les cases restent cachées (?) jusqu\'à ce qu\'on y arrive ; le boss attend au bout. À gauche ton équipe et ses sacs, à droite le journal.'],
   combat: ['Une rencontre', 'Avant le combat, un D20 décide qui frappe en premier. Vaincre les monstres rapporte de l\'XP (gagnée à la fin du donjon) et parfois un objet.'],
-  treasure: ['Un coffre', 'Le D20 décide de la qualité du butin : plus il est haut, mieux c\'est. Un 20 donne deux objets... un 1 déclenche un piège.'],
-  trap: ['Un piège', 'Un jet de sauvegarde pour l\'éviter. Raté, le héros perd des PV.'],
+  treasure: ['Un coffre', 'Le forcer : le D20 décide de la qualité du butin (un 20 donne deux objets... un 1 déclenche un piège). L\'ouvrir prudemment : pas de dé, un butin moyen, aucun risque.'],
+  trap: ['Un piège', 'Le désarmer : un jet de sauvegarde (les chances sont affichées) ; réussi, quelques pièces ; raté, des PV perdus. Le contourner : un peu de PV perdus à coup sûr, sans dé.'],
   xp_fountain: ['Une fontaine d\'expérience', 'Boire rapporte de l\'XP à tout le groupe... sauf si l\'eau est empoisonnée (5 ou moins au dé).'],
   life_fountain: ['Une fontaine de vie', 'Rare et précieuse : elle soigne, et peut même ramener un héros tombé... si l\'eau n\'est pas souillée.'],
   low_blow: ['Le coup bas', 'Jouer un sale tour à un allié pour un petit gain, ou passer un pacte avec les ombres. Rien n\'oblige : on peut rester honnête.'],

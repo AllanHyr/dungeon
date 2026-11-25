@@ -79,7 +79,8 @@ const out = process.argv[3] || '/tmp/shots';
     if (await page.$('.choice-card')) {
       const isBlow = await page.$('.blow-group');
       await shot(isBlow ? '07-coup-bas' : '07b-choix');
-      const btn = (await page.$('.choice-card .btn-primary')) || (await page.$('.choice-card .btn'));
+      if (await page.$('.choice-duo')) await shot('07c-piege-ou-coffre');
+      const btn = (await page.$('.choice-card .btn-primary')) || (await page.$('.choice-card .fork-route')) || (await page.$('.choice-card .btn'));
       await btn.click();
       await sleep(150);
       continue;

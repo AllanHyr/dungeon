@@ -331,7 +331,9 @@ Cibles : une équipe équilibrée gagne ~85-90 % en tranche 4, ~70-75 % en tranc
 ✅ **Bifurcations** (`rules.json > forks` : à partir de la case 3, toutes les 3 cases ; jamais au camp ni au boss) : un combat d'un côté, une case calme de l'autre,
 visibles juste avant (le plateau marque d'avance les bifurcations à venir). Robots, équipe A : toujours le combat → T4 87 % / T8 76 % de victoires, ~7 combats, 374 / 779 XP par victoire ;
 toujours la route calme → T4 96 % / T8 88 %, ~3 combats, 245 / 528 XP (≈ −30 %), un peu moins d'objets et d'éclats. Le robot « malin » prend le combat si le groupe a ≥ 60 % de ses PV.
-Piste : une **option avant les jets** (désarmer ou contourner un piège, forcer ou ouvrir prudemment un coffre).
+✅ **Une option avant le jet** (`rules.json > tileChoices`) : **piège** — le désarmer (jet de sauvegarde, chances affichées ; réussi : 60 % de l'or d'un coffre en pièces ; raté : les dégâts habituels)
+ou le contourner (40 % des dégâts du piège à coup sûr, sans dé ni poison) ; **coffre** — le forcer (jet : qualité du butin, 20 = deux objets, 1 = piégé) ou l'ouvrir prudemment
+(pas de dé : comme un jet de 8, ni double ni piège). Le pilote automatique choisit la prudence. Taux de victoire inchangés (robots : ils désarment quand les chances sont ≥ 55 % et les PV ≥ 50 %).
 
 ## 6 bis. Équilibrage des spécialisations ✅ *(robots — à confirmer en jouant)*
 

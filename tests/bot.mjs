@@ -262,6 +262,13 @@ export function chooseAction(state, rand, combatMode = 'smart', opts = {}) {
         return { type: 'CHOOSE', option: 'pass' };
       }
       if (p.subtype === 'xp_fountain') return { type: 'CHOOSE', option: rand.pick(opts.map((o) => o.id)) };
+      // Coffre : on force (le prudent si le héros est très bas) ; piège : on désarme si on a de bonnes chances et des PV, sinon on contourne
+      if (p.subtype === 'treasure') return { type: 'CHOOSE', option: hpRatio(state, state.players.find((x) => x.id === p.actor)) < 0.3 ? 'careful' : 'force' };
+      if (p.subtype === 'trap') {
+        const me = state.players.find((x) => x.id === p.actor);
+        const odds = Number(/(\d+) %/.exec(opts.find((o) => o.id === 'disarm').label)?.[1] || 0);
+        return { type: 'CHOOSE', option: odds >= 55 && hpRatio(state, me) >= 0.5 ? 'disarm' : 'avoid' };
+      }
       const revive = opts.find((o) => o.id.startsWith('revive:'));
       if (revive) return { type: 'CHOOSE', option: revive.id };
       return { type: 'CHOOSE', option: rand.pick(opts).id };

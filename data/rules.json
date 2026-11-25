@@ -45,6 +45,11 @@
   "postCombatHealPct": 0.04,
   "_regen": "Récupération AUTOMATIQUE, volontairement faible : un combat ordinaire doit laisser des traces jusqu'au boss (sinon potions, repos, fontaines et soins hors combat ne servent à rien). regenPerTurnPct : à chaque case ; postCombatHealPct : après un combat gagné (pas le boss).",
   "forks": { "first": 2, "every": 3, "_note": "BIFURCATIONS : à partir de la case 'first' (0 = la première), puis toutes les 'every' cases, le chemin se sépare en deux (jamais sur le feu de camp ni le boss). D'un côté un combat, de l'autre une autre case (trésor, fontaine, marchand...) : les deux sont visibles juste avant, le joueur sous les projecteurs choisit. Une tranche ou un donjon peut l'enlever (\"forks\": false) ou régler 'first' / 'every'. every: 0 = aucune bifurcation." },
+  "tileChoices": {
+    "_note": "UNE OPTION AVANT LE JET. Piège : le désarmer (jet de sauvegarde ; réussi, on récupère des pièces : 'disarmGold' × l'or d'un coffre de la tranche ; raté, les dégâts habituels) ou le contourner (pas de jet : 'avoidDamage' × les dégâts du piège, à coup sûr, sans poison). Coffre : le forcer (jet : plus il est haut, meilleur est le butin ; 20 = deux objets, 1 = piégé) ou l'ouvrir prudemment (pas de jet : comme un jet de 'carefulTotal', sans double ni piège).",
+    "trap": { "avoidDamage": 0.4, "disarmGold": 0.6 },
+    "treasure": { "carefulTotal": 8 }
+  },
   "goldToShards": { "goldPerShard": 20, "_note": "À la VICTOIRE, l'or qui reste est changé en éclats de forge : (or restant / goldPerShard), partagé entre les héros (arrondi à l'unité, au moins 0). Perdu en cas de défaite ou d'abandon." },
 
   "poison": {"pct": 0.06, "turns": 4},

@@ -574,6 +574,12 @@ function sceneChoice(run, tile) {
           h('b', null, o.label), h('small', null, o.desc))))) : null,
       h('button', { class: 'btn btn-primary', disabled: !yourTurn(run), onClick: () => act({ type: 'CHOOSE', option: 'pass' }) }, 'Ne rien faire (rester honnête)')
     ].filter(Boolean);
+  } else if (pend.options.some((o) => o.hint)) {
+    // Une option avant le jet (piège, coffre) : deux cartes côte à côte, chacune avec ce qu'elle implique
+    const optIcon = { disarm: 'd20', force: 'd20', avoid: 'skip', careful: 'eye' };
+    options = [h('div', { class: 'fork-routes choice-duo' }, pend.options.map((o) =>
+      h('button', { type: 'button', class: 'fork-route', dataset: { option: o.id }, disabled: !yourTurn(run), onClick: () => { play('click'); act({ type: 'CHOOSE', option: o.id }); } },
+        icon(optIcon[o.id] || 'star', 30), h('b', null, o.label), h('span', { class: 'muted small' }, o.hint || ''))))];
   } else {
     options = [h('div', { class: 'choice-list' }, pend.options.map((o, i) =>
       h('button', { class: `btn ${i === 0 ? 'btn-primary' : ''} btn-wide`, disabled: !yourTurn(run), onClick: () => act({ type: 'CHOOSE', option: o.id }) }, o.label)))];

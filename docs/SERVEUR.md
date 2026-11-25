@@ -275,6 +275,9 @@ sudo ufw enable
    l'apprendre. Tout doit être en vert, avec des délais de quelques dizaines de millisecondes. Les commandes pour supprimer les deux comptes
    sont affichées à la fin.
 
+Pour le **premier vrai test avec des amis** (salons, incidents provoqués, questions à leur poser) : la liste de vérifications
+[TEST-EN-LIGNE.md](TEST-EN-LIGNE.md).
+
 ---
 
 ## 4. Les réglages

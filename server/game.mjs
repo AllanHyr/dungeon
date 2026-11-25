@@ -84,10 +84,18 @@ export const randomSeed = () => randomInt(0, 2 ** 32);
  * Copie de l'état à envoyer aux navigateurs :
  *  - sans les événements (envoyés à part) et avec un journal limité aux 400 dernières lignes ;
  *  - SANS la graine ni l'état du hasard (qui permettraient de prévoir les dés) ;
- *  - avec les cases pas encore découvertes vidées de leur contenu (type, monstres, butin) : le boss, lui, est annoncé.
+ *  - avec les cases pas encore découvertes vidées de leur contenu (type, monstres, butin) : le boss, lui, est annoncé,
+ *    et la bifurcation juste devant le groupe montre le type de ses deux routes.
  */
 export function transport(state) {
-  const board = state.dungeon.board.map((t) => (t.revealed || t.type === 'boss' ? t : { index: t.index, type: 'hidden', flavor: 0, revealed: false, resolved: false }));
+  // (une bifurcation : juste devant le groupe, on montre les DEUX routes, leur type seulement ; plus loin, seulement qu'il y en aura une)
+  const next = state.dungeon.position + 1;
+  const board = state.dungeon.board.map((t) => {
+    if (t.revealed || t.type === 'boss') return t;
+    const hidden = { index: t.index, type: 'hidden', flavor: 0, revealed: false, resolved: false };
+    if (!t.alt) return hidden;
+    return t.index === next ? { ...hidden, type: t.type, alt: { type: t.alt.type, flavor: 0 } } : { ...hidden, alt: { type: 'hidden', flavor: 0 } };
+  });
   return {
     ...state, seed: 0, rng: 0, events: [],
     log: state.log.length > 400 ? state.log.slice(-400) : state.log,

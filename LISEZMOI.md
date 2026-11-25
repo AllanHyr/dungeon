@@ -30,7 +30,7 @@ Deux façons de jouer, avec **le même jeu** :
 | Pour y jouer | rien à installer côté joueur | un compte (pseudo + mot de passe, éventuellement un code d'invitation) |
 
 La suite de ce paragraphe décrit le jeu **hors ligne**. Pour le jeu **en ligne** (essai en une minute, puis mise en service sur un
-VPS avec HTTPS, sauvegardes, mises à jour) : **[`docs/SERVEUR.md`](docs/SERVEUR.md)**.
+VPS avec HTTPS, sauvegardes, mises à jour) : **[`docs/SERVEUR.md`](docs/SERVEUR.md)**. Le premier test avec des amis : [`docs/TEST-EN-LIGNE.md`](docs/TEST-EN-LIGNE.md).
 
 ### Hors ligne
 
@@ -280,6 +280,7 @@ donjon/
 ├── var/                  (créé au premier lancement du serveur) la base de données `donjon.sqlite` et les sauvegardes
 ├── docs/
 │   ├── SERVEUR.md             mettre le jeu en ligne : VPS, HTTPS, sauvegardes, mises à jour, sécurité, API, dépannage
+│   ├── TEST-EN-LIGNE.md       la liste de vérifications du premier vrai test en ligne, avec des amis
 │   ├── ECRIRE-UNE-CLASSE.md   le guide pour écrire des classes, compétences, monstres et objets à effets
 │   ├── FARM-ET-SUCCES.md      le guide de la zone de farm, de la récompense au choix, de la forge et des succès
 │   ├── DIRECTION-ARTISTIQUE.md  le guide du style : variables, briques réutilisables, écran de combat
